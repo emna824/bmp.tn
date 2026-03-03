@@ -111,6 +111,7 @@ router.post('/register', async (req, res) => {
                 patent: newUser.patent || null,
                 address: newUser.address || null,
                 companyPhone: newUser.companyPhone || null,
+                profileImage: newUser.profileImage || '',
             },
         });
     } catch (err) {
@@ -148,8 +149,123 @@ router.post('/login', async (req, res) => {
                 patent: user.patent || null,
                 address: user.address || null,
                 companyPhone: user.companyPhone || null,
+                profileImage: user.profileImage || '',
             },
         });
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
+    }
+});
+
+router.get('/:id/profile', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await User.findById(id).select('name email role patent address companyPhone profileImage');
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        return res.status(200).json({
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                patent: user.patent || null,
+                address: user.address || null,
+                companyPhone: user.companyPhone || null,
+                profileImage: user.profileImage || '',
+            },
+        });
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
+    }
+});
+
+router.put('/:id/profile', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, profileImage } = req.body;
+
+        if ((!name || !String(name).trim()) && typeof profileImage === 'undefined') {
+            return res.status(400).json({ message: 'name or profileImage is required' });
+        }
+
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (name && String(name).trim()) {
+            user.name = String(name).trim();
+        }
+
+        if (typeof profileImage !== 'undefined') {
+            const normalizedProfileImage = String(profileImage || '').trim();
+            if (normalizedProfileImage) {
+                const isValidFormat = /^data:image\/(png|jpe?g|webp);base64,/i.test(normalizedProfileImage);
+                const MAX_IMAGE_STRING_LENGTH = 3_000_000;
+
+                if (!isValidFormat) {
+                    return res.status(400).json({ message: 'Invalid image format' });
+                }
+
+                if (normalizedProfileImage.length > MAX_IMAGE_STRING_LENGTH) {
+                    return res.status(400).json({ message: 'Image is too large' });
+                }
+            }
+
+            user.profileImage = normalizedProfileImage;
+        }
+
+        await user.save();
+
+        return res.status(200).json({
+            message: 'Profile updated successfully',
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                patent: user.patent || null,
+                address: user.address || null,
+                companyPhone: user.companyPhone || null,
+                profileImage: user.profileImage || '',
+            },
+        });
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
+    }
+});
+
+router.put('/:id/password', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ message: 'currentPassword and newPassword are required' });
+        }
+
+        if (String(newPassword).length < 8) {
+            return res.status(400).json({ message: 'Password must be at least 8 characters' });
+        }
+
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const isCurrentPasswordValid = await bcrypt.compare(String(currentPassword), user.password);
+        if (!isCurrentPasswordValid) {
+            return res.status(401).json({ message: 'Current password is invalid' });
+        }
+
+        user.password = await bcrypt.hash(String(newPassword), 10);
+        await user.save();
+
+        return res.status(200).json({ message: 'Password updated successfully' });
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }

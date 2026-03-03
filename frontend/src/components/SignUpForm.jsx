@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import api from '../api'
+import { LockIcon, MailIcon, ShieldIcon, UserIcon } from './Icons'
 
 const initialForm = {
   name: '',
@@ -136,13 +137,19 @@ function SignUpForm() {
           </div>
 
           <label>
-            Name
+            <span className="label-with-icon">
+              <UserIcon className="icon tiny" />
+              Name
+            </span>
             <input name="name" value={form.name} onChange={onChange} placeholder="Your full name" />
             {errors.name && <small>{errors.name}</small>}
           </label>
 
           <label>
-            Email
+            <span className="label-with-icon">
+              <MailIcon className="icon tiny" />
+              Email
+            </span>
             <input
               name="email"
               type="email"
@@ -154,7 +161,10 @@ function SignUpForm() {
           </label>
 
           <label>
-            Password
+            <span className="label-with-icon">
+              <LockIcon className="icon tiny" />
+              Password
+            </span>
             <input
               name="password"
               type="password"
@@ -168,7 +178,10 @@ function SignUpForm() {
           {isManufacturer && (
             <>
               <label>
-                Patent
+                <span className="label-with-icon">
+                  <ShieldIcon className="icon tiny" />
+                  Patent
+                </span>
                 <input
                   name="patent"
                   value={form.patent}
@@ -179,7 +192,10 @@ function SignUpForm() {
               </label>
 
               <label>
-                Address
+                <span className="label-with-icon">
+                  <UserIcon className="icon tiny" />
+                  Address
+                </span>
                 <input
                   name="address"
                   value={form.address}
@@ -190,7 +206,10 @@ function SignUpForm() {
               </label>
 
               <label>
-                Company Phone
+                <span className="label-with-icon">
+                  <ShieldIcon className="icon tiny" />
+                  Company Phone
+                </span>
                 <input
                   name="companyPhone"
                   value={form.companyPhone}
@@ -203,6 +222,7 @@ function SignUpForm() {
           )}
 
           <button disabled={loading} type="submit">
+            <UserIcon className="icon tiny" />
             {loading ? <span className="btn-loader" aria-hidden="true" /> : null}
             {loading ? 'Submitting...' : 'Create account'}
           </button>

@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import api from '../api'
+import { LockIcon, MailIcon, SettingsIcon } from './Icons'
 
 const initialForm = {
   email: '',
   password: '',
 }
 
-function SignInForm() {
+function SignInForm({ onLoginSuccess }) {
   const [form, setForm] = useState(initialForm)
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
@@ -147,6 +148,9 @@ function SignInForm() {
         type: 'success',
         text: 'Signed in successfully.',
       })
+      if (onLoginSuccess && response.data?.user) {
+        onLoginSuccess(response.data.user)
+      }
       setForm(initialForm)
       setErrors({})
     } catch (error) {
@@ -174,7 +178,10 @@ function SignInForm() {
 
         <form onSubmit={onSubmit} noValidate>
           <label>
-            Email
+            <span className="label-with-icon">
+              <MailIcon className="icon tiny" />
+              Email
+            </span>
             <input
               name="email"
               type="email"
@@ -186,7 +193,10 @@ function SignInForm() {
           </label>
 
           <label>
-            Password
+            <span className="label-with-icon">
+              <LockIcon className="icon tiny" />
+              Password
+            </span>
             <input
               name="password"
               type="password"
@@ -205,6 +215,7 @@ function SignInForm() {
               setForgotForm((prev) => ({ ...prev, email: form.email }))
             }}
           >
+            <SettingsIcon className="icon tiny" />
             {showForgotPassword ? 'Close forgot password' : 'Forgot password?'}
           </button>
 
@@ -228,6 +239,7 @@ function SignInForm() {
                 onClick={onSendResetCode}
                 disabled={forgotLoading}
               >
+                <MailIcon className="icon tiny" />
                 {forgotLoading ? 'Sending...' : 'Send reset code'}
               </button>
 
@@ -261,12 +273,14 @@ function SignInForm() {
                 onClick={onResetPassword}
                 disabled={forgotLoading}
               >
+                <LockIcon className="icon tiny" />
                 {forgotLoading ? 'Resetting...' : 'Reset password'}
               </button>
             </div>
           ) : null}
 
           <button disabled={loading} type="submit">
+            <LockIcon className="icon tiny" />
             {loading ? <span className="btn-loader" aria-hidden="true" /> : null}
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
