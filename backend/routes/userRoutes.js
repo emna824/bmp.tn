@@ -1,7 +1,48 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const nodemailer = require('nodemailer');
 const router = express.Router();
 const User = require('../models/user');
+const passwordResetStore = new Map();
+const VERIFICATION_CODE_TTL_MS = 10 * 60 * 1000;
+
+const smtpConfigured =
+    process.env.SMTP_HOST &&
+    process.env.SMTP_PORT &&
+    process.env.SMTP_USER &&
+    process.env.SMTP_PASS &&
+    process.env.SMTP_FROM;
+
+const mailTransporter = smtpConfigured
+    ? nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: Number(process.env.SMTP_PORT),
+          secure: Number(process.env.SMTP_PORT) === 465,
+          auth: {
+              user: process.env.SMTP_USER,
+              pass: process.env.SMTP_PASS,
+          },
+      })
+    : null;
+
+function generateCode() {
+    return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+async function sendPasswordResetCodeEmail(email, code) {
+    if (!mailTransporter) {
+        throw new Error(
+            'SMTP is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS and SMTP_FROM in backend/.env'
+        );
+    }
+
+    await mailTransporter.sendMail({
+        from: process.env.SMTP_FROM,
+        to: email,
+        subject: 'Your password reset code',
+        text: `Your password reset code is ${code}. It expires in 10 minutes.`,
+    });
+}
 
 // Route test GET
 router.get('/', async (req, res) => {
@@ -72,6 +113,124 @@ router.post('/register', async (req, res) => {
                 companyPhone: newUser.companyPhone || null,
             },
         });
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
+    }
+});
+
+router.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({ message: 'email and password are required' });
+        }
+
+        const normalizedEmail = String(email).toLowerCase().trim();
+        const user = await User.findOne({ email: normalizedEmail });
+
+        if (!user) {
+            return res.status(401).json({ message: 'Invalid email or password' });
+        }
+
+        const isPasswordValid = await bcrypt.compare(String(password), user.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({ message: 'Invalid email or password' });
+        }
+
+        return res.status(200).json({
+            message: 'Login successful',
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                patent: user.patent || null,
+                address: user.address || null,
+                companyPhone: user.companyPhone || null,
+            },
+        });
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
+    }
+});
+
+router.post('/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ message: 'email is required' });
+        }
+
+        const normalizedEmail = String(email).toLowerCase().trim();
+        const user = await User.findOne({ email: normalizedEmail });
+
+        if (!user) {
+            return res.status(200).json({
+                message: 'If an account exists with this email, a reset code has been sent.',
+            });
+        }
+
+        const generatedCode = generateCode();
+        passwordResetStore.set(normalizedEmail, {
+            code: generatedCode,
+            expiresAt: Date.now() + VERIFICATION_CODE_TTL_MS,
+        });
+
+        await sendPasswordResetCodeEmail(normalizedEmail, generatedCode);
+
+        return res.status(200).json({
+            message: 'If an account exists with this email, a reset code has been sent.',
+        });
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
+    }
+});
+
+router.post('/reset-password', async (req, res) => {
+    try {
+        const { email, code, newPassword } = req.body;
+
+        if (!email || !code || !newPassword) {
+            return res.status(400).json({ message: 'email, code and newPassword are required' });
+        }
+
+        if (String(newPassword).length < 8) {
+            return res.status(400).json({ message: 'Password must be at least 8 characters' });
+        }
+
+        const normalizedEmail = String(email).toLowerCase().trim();
+        const pendingReset = passwordResetStore.get(normalizedEmail);
+
+        if (!pendingReset) {
+            return res.status(400).json({
+                message: 'No active reset code. Please request a new reset code.',
+            });
+        }
+
+        if (Date.now() > pendingReset.expiresAt) {
+            passwordResetStore.delete(normalizedEmail);
+            return res.status(400).json({
+                message: 'Reset code expired. Please request a new reset code.',
+            });
+        }
+
+        if (String(code).trim() !== pendingReset.code) {
+            return res.status(401).json({ message: 'Invalid reset code' });
+        }
+
+        const user = await User.findOne({ email: normalizedEmail });
+        if (!user) {
+            passwordResetStore.delete(normalizedEmail);
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        user.password = await bcrypt.hash(String(newPassword), 10);
+        await user.save();
+        passwordResetStore.delete(normalizedEmail);
+
+        return res.status(200).json({ message: 'Password reset successful' });
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }
