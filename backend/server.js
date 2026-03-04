@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const userRoutes = require('./routes/userRoutes');
 const expertRoutes = require('./routes/expertRoutes');
 const artisanRoutes = require('./routes/artisanRoutes');
+const manufacturerRoutes = require('./routes/manufacturerRoutes');
 
 dotenv.config();
 
@@ -16,7 +17,9 @@ app.use(
         origin: 'http://localhost:5173',
     })
 );
-app.use(express.json());
+const JSON_LIMIT = '15mb';
+app.use(express.json({ limit: JSON_LIMIT }));
+app.use(express.urlencoded({ extended: true, limit: JSON_LIMIT }));
 
 mongoose
     .connect(process.env.MONGO_URI)
@@ -34,6 +37,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/users', userRoutes);
 app.use('/api/experts', expertRoutes);
 app.use('/api/assignments', artisanRoutes);
+app.use('/api/manufacturers', manufacturerRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);

@@ -3,6 +3,7 @@ import SignInForm from './components/SignInForm'
 import SignUpForm from './components/SignUpForm'
 import ArtisanProfile from './components/ArtisanProfile'
 import ExpertProfile from './components/ExpertProfile'
+import ManufacturerProfile from './components/ManufacturerProfile'
 import { LockIcon, UserIcon } from './components/Icons'
 import './App.css'
 
@@ -34,6 +35,9 @@ function App() {
   }
   if (user?.role === 'expert') {
     return <ExpertProfile user={user} onLogout={handleLogout} onProfileUpdate={handleProfileUpdate} />
+  }
+  if (user?.role === 'manufacturer') {
+    return <ManufacturerProfile user={user} onLogout={handleLogout} />
   }
 
   return (

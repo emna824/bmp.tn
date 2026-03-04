@@ -1,8 +1,18 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import api from '../api'
-import { HomeIcon, LockIcon, LogoutIcon, SettingsIcon, UserIcon } from './Icons'
+import { LockIcon, SettingsIcon, UserIcon } from './Icons'
+import DashboardLayout from './DashboardLayout'
+import { downloadDataUrlFile } from '../utils/fileHelpers'
+
+const MENU_ITEMS = [
+  { key: 'overview', label: 'Overview', subtitle: 'Snapshot' },
+  { key: 'invitations', label: 'Invitations', subtitle: 'Respond to experts' },
+  { key: 'marketplace', label: 'Marketplace', subtitle: 'Manufacturer docs' },
+  { key: 'settings', label: 'Settings', subtitle: 'Profile & security' },
+]
 
 function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
+  const [activeView, setActiveView] = useState('overview')
   const [profile, setProfile] = useState(user)
   const [name, setName] = useState(user?.name || '')
   const [profileImage, setProfileImage] = useState(user?.profileImage || '')
@@ -12,17 +22,32 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
   const [savingName, setSavingName] = useState(false)
   const [savingImage, setSavingImage] = useState(false)
   const [savingPassword, setSavingPassword] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [notification, setNotification] = useState({ show: false, type: '', text: '' })
-  const menuRef = useRef(null)
   const [invitations, setInvitations] = useState([])
   const [loadingInvitations, setLoadingInvitations] = useState(false)
   const [respondingChantier, setRespondingChantier] = useState(null)
+  const [marketplaceProducts, setMarketplaceProducts] = useState([])
+  const [loadingMarketplace, setLoadingMarketplace] = useState(false)
+  const [downloadingProductId, setDownloadingProductId] = useState(null)
+  const [filters, setFilters] = useState({ search: '', manufacturer: '' })
 
   const showNotification = useCallback((type, text) => {
     setNotification({ show: true, type, text })
   }, [])
+
+  const fetchMarketplace = useCallback(async () => {
+    setLoadingMarketplace(true)
+    try {
+      const response = await api.get('/manufacturers/products')
+      setMarketplaceProducts(response.data?.products || [])
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to load marketplace'
+      showNotification('error', message)
+    } finally {
+      setLoadingMarketplace(false)
+    }
+  }, [showNotification])
 
   useEffect(() => {
     if (!notification.show) return undefined
@@ -31,32 +56,21 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
   }, [notification])
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setMenuOpen(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  useEffect(() => {
-    const fetchProfile = async () => {
+    const loadProfile = async () => {
       if (!user?.id) return
       setLoadingProfile(true)
       try {
         const response = await api.get(`/users/${user.id}/profile`)
-        const apiUser = response.data?.user || user
-        const resolvedProfile = {
-          ...profile,
-          ...apiUser,
-          profileImage:
-            typeof apiUser?.profileImage === 'string' ? apiUser.profileImage : profile?.profileImage || '',
+        const apiUser = response.data?.user
+        if (apiUser) {
+          const resolvedProfile = {
+            ...apiUser,
+            profileImage: typeof apiUser.profileImage === 'string' ? apiUser.profileImage : '',
+          }
+          setProfile(resolvedProfile)
+          setName(resolvedProfile.name || '')
+          setProfileImage(resolvedProfile.profileImage || '')
         }
-        setProfile(resolvedProfile)
-        setName(resolvedProfile.name || '')
-        setProfileImage(resolvedProfile.profileImage || '')
       } catch (error) {
         const message = error.response?.data?.message || 'Failed to load profile'
         showNotification('error', message)
@@ -65,8 +79,8 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
       }
     }
 
-    fetchProfile()
-  }, [user, profile, showNotification])
+    loadProfile()
+  }, [user?.id, showNotification])
 
   useEffect(() => {
     const loadInvitations = async () => {
@@ -85,6 +99,10 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
 
     loadInvitations()
   }, [user?.id, showNotification])
+
+  useEffect(() => {
+    fetchMarketplace()
+  }, [fetchMarketplace])
 
   const handleSaveName = async (event) => {
     event.preventDefault()
@@ -191,6 +209,25 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
     }
   }
 
+  const handleDownloadMarketplaceDocument = async (productId, fallbackName) => {
+    if (!productId) return
+    setDownloadingProductId(productId)
+    try {
+      const response = await api.get(`/manufacturers/products/${productId}/document`)
+      const { document, documentName } = response.data || {}
+      if (!document) {
+        throw new Error('Document unavailable')
+      }
+      downloadDataUrlFile(document, documentName || fallbackName || 'product.pdf')
+      showNotification('success', 'Document downloaded')
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || 'Failed to download document'
+      showNotification('error', message)
+    } finally {
+      setDownloadingProductId(null)
+    }
+  }
+
   const handleChangePassword = async (event) => {
     event.preventDefault()
     if (!currentPassword || !newPassword) {
@@ -219,8 +256,58 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
     }
   }
 
+  const pendingInvitations = invitations.filter((invite) => invite.status === 'pending').length
+  const acceptedInvitations = invitations.filter((invite) => invite.status === 'accepted').length
+  const declinedInvitations = invitations.filter((invite) => invite.status === 'declined').length
+
+  const filteredMarketplaceProducts = useMemo(() => {
+    const searchTerm = filters.search.trim().toLowerCase()
+    return marketplaceProducts.filter((product) => {
+      const matchesManufacturer =
+        !filters.manufacturer ||
+        product.manufacturer?.name?.toLowerCase() === filters.manufacturer.toLowerCase()
+      const matchesSearch =
+        !searchTerm ||
+        product.name.toLowerCase().includes(searchTerm) ||
+        product.description?.toLowerCase().includes(searchTerm)
+      return matchesManufacturer && matchesSearch
+    })
+  }, [filters, marketplaceProducts])
+
+  const manufacturerOptions = useMemo(() => {
+    const names = new Set()
+    marketplaceProducts.forEach((product) => {
+      if (product.manufacturer?.name) {
+        names.add(product.manufacturer.name)
+      }
+    })
+    return Array.from(names)
+  }, [marketplaceProducts])
+
+  const overviewStats = [
+    {
+      label: 'Invitations',
+      value: invitations.length || 0,
+      detail: `${pendingInvitations} pending`,
+    },
+    {
+      label: 'Accepted',
+      value: acceptedInvitations,
+      detail: `${declinedInvitations} declined`,
+    },
+    {
+      label: 'Marketplace docs',
+      value: marketplaceProducts.length,
+      detail: `${filteredMarketplaceProducts.length} showing`,
+    },
+  ]
+
+  const handleFilterChange = (field, value) => {
+    setFilters((prev) => ({ ...prev, [field]: value }))
+  }
+
   return (
-    <div className="dashboard-page">
+    <div className="artisan-profile">
       <div
         className={`notification ${notification.show ? 'show' : ''} ${notification.type || ''}`}
         role="status"
@@ -229,127 +316,222 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
         {notification.text}
       </div>
 
-      <header className="dashboard-topbar">
-        <h2 className="brand-title">
-          <HomeIcon className="icon tiny" />
-          Artisan Dashboard
-        </h2>
-        <div className="profile-menu-wrapper" ref={menuRef}>
-          <button
-            type="button"
-            className="avatar-btn"
-            onClick={() => setMenuOpen((prev) => !prev)}
-            aria-haspopup="menu"
-            aria-expanded={menuOpen}
-          >
-            {profile?.profileImage ? (
-              <img src={profile.profileImage} alt="Profile" className="avatar-image" />
+      <DashboardLayout
+        user={profile}
+        menuItems={MENU_ITEMS}
+        activeView={activeView}
+        onNavigate={setActiveView}
+        onLogout={onLogout}
+      >
+        {activeView === 'overview' && (
+          <>
+            <div className="dashboard-overview">
+              {overviewStats.map((stat) => (
+                <div key={stat.label} className="summary-pill">
+                  <strong>{stat.value}</strong>
+                  <span>{stat.label}</span>
+                  <small>{stat.detail}</small>
+                </div>
+              ))}
+            </div>
+            <section className="dashboard-card">
+              <div className="section-header">
+                <h3>Quick actions</h3>
+                <p className="subtitle">Jump straight to what matters</p>
+              </div>
+              <div className="quick-actions">
+                <button type="button" className="secondary-btn" onClick={() => setActiveView('invitations')}>
+                  Review invitations
+                </button>
+                <button type="button" className="secondary-btn" onClick={() => setActiveView('marketplace')}>
+                  Browse marketplace
+                </button>
+                <button type="button" className="secondary-btn" onClick={() => setSettingsOpen(true)}>
+                  <SettingsIcon className="icon tiny" />
+                  Edit profile
+                </button>
+              </div>
+            </section>
+          </>
+        )}
+
+        {activeView === 'invitations' && (
+          <section className="dashboard-card">
+            <div className="section-header">
+              <h3>Chantier invitations</h3>
+              <p className="subtitle">Respond to expert requests for new work.</p>
+            </div>
+            {loadingInvitations ? (
+              <p className="subtitle">Loading invitations...</p>
+            ) : invitations.length ? (
+              <div className="table-wrap">
+                <table className="artisan-table invitations-table">
+                  <thead>
+                    <tr>
+                      <th>Project</th>
+                      <th>Chantier</th>
+                      <th>Job</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {invitations.map((invite) => (
+                      <tr key={`${invite.chantierId}-${invite.jobTitle}`}>
+                        <td>{invite.projectName || '—'}</td>
+                        <td>
+                          <strong>{invite.chantierName}</strong>
+                          <p className="subtitle small">{invite.chantierDescription}</p>
+                        </td>
+                        <td>{invite.jobTitle}</td>
+                        <td>
+                          <span className={`status-pill status-${invite.status}`}>{invite.status}</span>
+                        </td>
+                        <td>
+                          <div className="invitation-actions">
+                            <button
+                              type="button"
+                              className="mini-btn"
+                              disabled={invite.status !== 'pending' || respondingChantier === invite.chantierId}
+                              onClick={() => handleAssignmentResponse(invite.chantierId, 'accepted')}
+                            >
+                              Accept
+                            </button>
+                            <button
+                              type="button"
+                              className="secondary-btn mini-btn"
+                              disabled={invite.status !== 'pending' || respondingChantier === invite.chantierId}
+                              onClick={() => handleAssignmentResponse(invite.chantierId, 'declined')}
+                            >
+                              Decline
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             ) : (
-              profile?.name?.charAt(0)?.toUpperCase() || 'A'
+              <p className="subtitle">You have no pending invitations right now.</p>
             )}
-          </button>
-          {menuOpen ? (
-            <div className="profile-menu" role="menu">
+          </section>
+        )}
+
+        {activeView === 'marketplace' && (
+          <section className="dashboard-card">
+            <div className="section-header">
+              <h3>Marketplace</h3>
+              <p className="subtitle">Filter published PDFs before downloading.</p>
+            </div>
+            <div className="dashboard-filters">
+              <input
+                placeholder="Search by product or description"
+                value={filters.search}
+                onChange={(event) => handleFilterChange('search', event.target.value)}
+              />
+              <select
+                value={filters.manufacturer}
+                onChange={(event) => handleFilterChange('manufacturer', event.target.value)}
+              >
+                <option value="">All manufacturers</option>
+                {manufacturerOptions.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
               <button
                 type="button"
-                className="profile-menu-item"
+                className="secondary-btn"
                 onClick={() => {
-                  setSettingsOpen(true)
-                  setMenuOpen(false)
+                  handleFilterChange('search', '')
+                  handleFilterChange('manufacturer', '')
                 }}
               >
-                <SettingsIcon className="icon tiny" />
-                Settings
+                Clear filters
               </button>
-              <button type="button" className="profile-menu-item logout-item" onClick={onLogout}>
-                <LogoutIcon className="icon tiny" />
-                Log out
+              <button type="button" className="secondary-btn" onClick={fetchMarketplace}>
+                Refresh
               </button>
             </div>
-          ) : null}
-        </div>
-      </header>
-
-      <main className="dashboard-content">
-        <section className="dashboard-card">
-          <div className="section-header">
-            <h3>Chantier invitations</h3>
-            <p className="subtitle">See which experts need you and respond to their invitations.</p>
-          </div>
-          {loadingInvitations ? (
-            <p className="subtitle">Loading invitations...</p>
-          ) : invitations.length ? (
-            <div className="table-wrap">
-              <table className="artisan-table invitations-table">
-                <thead>
-                  <tr>
-                    <th>Project</th>
-                    <th>Chantier</th>
-                    <th>Job</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {invitations.map((invite) => (
-                    <tr key={`${invite.chantierId}-${invite.jobTitle}`}>
-                      <td>{invite.projectName || '—'}</td>
-                      <td>
-                        <strong>{invite.chantierName}</strong>
-                        <p className="subtitle small">{invite.chantierDescription}</p>
-                      </td>
-                      <td>{invite.jobTitle}</td>
-                      <td>
-                        <span className={`status-pill status-${invite.status}`}>{invite.status}</span>
-                      </td>
-                      <td>
-                        <div className="invitation-actions">
-                          <button
-                            type="button"
-                            className="mini-btn"
-                            disabled={
-                              invite.status !== 'pending' || respondingChantier === invite.chantierId
-                            }
-                            onClick={() => handleAssignmentResponse(invite.chantierId, 'accepted')}
-                          >
-                            Accept
-                          </button>
+            {loadingMarketplace ? (
+              <p className="subtitle">Loading marketplace...</p>
+            ) : filteredMarketplaceProducts.length ? (
+              <div className="table-wrap">
+                <table className="artisan-table invitations-table">
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th>Description</th>
+                      <th>Manufacturer</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredMarketplaceProducts.map((product) => (
+                      <tr key={product.id}>
+                        <td>
+                          <strong>{product.name}</strong>
+                          <p className="subtitle small">{product.documentName}</p>
+                        </td>
+                        <td>{product.description || '—'}</td>
+                        <td>
+                          {product.manufacturer?.name || '—'}
+                          {product.manufacturer?.companyPhone ? (
+                            <p className="subtitle small">{product.manufacturer.companyPhone}</p>
+                          ) : null}
+                        </td>
+                        <td>
                           <button
                             type="button"
                             className="secondary-btn mini-btn"
-                            disabled={
-                              invite.status !== 'pending' || respondingChantier === invite.chantierId
-                            }
-                            onClick={() => handleAssignmentResponse(invite.chantierId, 'declined')}
+                            disabled={downloadingProductId === product.id}
+                            onClick={() => handleDownloadMarketplaceDocument(product.id, product.documentName)}
                           >
-                            Decline
+                            {downloadingProductId === product.id ? 'Downloading...' : 'Download PDF'}
                           </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="subtitle">You have no pending invitations right now.</p>
-          )}
-        </section>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="subtitle">No marketplace listings match your filters.</p>
+            )}
+          </section>
+        )}
 
-        <section className="dashboard-card">
-          <h3>Quick Actions</h3>
-          <div className="quick-actions">
-            <button type="button" className="secondary-btn" onClick={() => setSettingsOpen(true)}>
-              <SettingsIcon className="icon tiny" />
-              Open Settings
-            </button>
-            <button type="button" className="secondary-btn" onClick={onLogout}>
-              <LogoutIcon className="icon tiny" />
-              Log out
-            </button>
-          </div>
-        </section>
-      </main>
+        {activeView === 'settings' && (
+          <section className="dashboard-card">
+            <div className="section-header">
+              <h3>Profile settings</h3>
+              <p className="subtitle">Edit your information securely.</p>
+            </div>
+            <div className="settings-content">
+              <p>
+                <strong>Name:</strong> {profile?.name || '—'}
+              </p>
+              <p>
+                <strong>Email:</strong> {profile?.email || '—'}
+              </p>
+              <p>
+                <strong>Role:</strong> Artisan
+              </p>
+              <div className="quick-actions">
+                <button type="button" className="secondary-btn" onClick={() => setSettingsOpen(true)}>
+                  <SettingsIcon className="icon tiny" />
+                  Manage profile
+                </button>
+                <button type="button" className="secondary-btn" onClick={() => setActiveView('overview')}>
+                  Back to overview
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+      </DashboardLayout>
 
       {settingsOpen ? (
         <div className="settings-overlay" role="dialog" aria-modal="true" aria-label="Profile settings">
@@ -367,11 +549,7 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                   <UserIcon className="icon tiny" />
                   Name
                 </span>
-                <input
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder="Your full name"
-                />
+                <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Your full name" />
               </label>
               <button type="submit" disabled={savingName}>
                 {savingName ? 'Saving...' : 'Save name'}
