@@ -3,6 +3,8 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const userRoutes = require('./routes/userRoutes');
+const expertRoutes = require('./routes/expertRoutes');
+const artisanRoutes = require('./routes/artisanRoutes');
 
 dotenv.config();
 
@@ -30,6 +32,8 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/users', userRoutes);
+app.use('/api/experts', expertRoutes);
+app.use('/api/assignments', artisanRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import api from '../api'
 import { HomeIcon, LockIcon, LogoutIcon, SettingsIcon, UserIcon } from './Icons'
 
@@ -16,10 +16,13 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [notification, setNotification] = useState({ show: false, type: '', text: '' })
   const menuRef = useRef(null)
+  const [invitations, setInvitations] = useState([])
+  const [loadingInvitations, setLoadingInvitations] = useState(false)
+  const [respondingChantier, setRespondingChantier] = useState(null)
 
-  const showNotification = (type, text) => {
+  const showNotification = useCallback((type, text) => {
     setNotification({ show: true, type, text })
-  }
+  }, [])
 
   useEffect(() => {
     if (!notification.show) return undefined
@@ -63,7 +66,25 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
     }
 
     fetchProfile()
-  }, [user])
+  }, [user, profile, showNotification])
+
+  useEffect(() => {
+    const loadInvitations = async () => {
+      if (!user?.id) return
+      setLoadingInvitations(true)
+      try {
+        const response = await api.get(`/assignments/invitations/${user.id}`)
+        setInvitations(response.data?.invitations || [])
+      } catch (error) {
+        const message = error.response?.data?.message || 'Failed to load invitations'
+        showNotification('error', message)
+      } finally {
+        setLoadingInvitations(false)
+      }
+    }
+
+    loadInvitations()
+  }, [user?.id, showNotification])
 
   const handleSaveName = async (event) => {
     event.preventDefault()
@@ -142,6 +163,31 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
       showNotification('error', message)
     } finally {
       setSavingImage(false)
+    }
+  }
+
+  const handleAssignmentResponse = async (chantierId, responseText) => {
+    if (!chantierId) return
+    setRespondingChantier(chantierId)
+    try {
+      await api.post('/assignments/respond', {
+        artisanId: user.id,
+        chantierId,
+        response: responseText,
+      })
+      setInvitations((prev) =>
+        prev.map((inv) =>
+          String(inv.chantierId) === String(chantierId)
+            ? { ...inv, status: responseText, respondedAt: new Date().toISOString() }
+            : inv,
+        ),
+      )
+      showNotification('success', `Assignment ${responseText}`)
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to send response'
+      showNotification('error', message)
+    } finally {
+      setRespondingChantier(null)
     }
   }
 
@@ -226,19 +272,68 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
 
       <main className="dashboard-content">
         <section className="dashboard-card">
-          <h1>Welcome, {profile?.name}</h1>
-          <p className="subtitle">Your artisan account overview</p>
-
-          {loadingProfile ? <p className="subtitle">Loading profile...</p> : null}
-
-          <div className="profile-details">
-            <p>
-              <strong>Email:</strong> {profile?.email}
-            </p>
-            <p>
-              <strong>Role:</strong> {profile?.role}
-            </p>
+          <div className="section-header">
+            <h3>Chantier invitations</h3>
+            <p className="subtitle">See which experts need you and respond to their invitations.</p>
           </div>
+          {loadingInvitations ? (
+            <p className="subtitle">Loading invitations...</p>
+          ) : invitations.length ? (
+            <div className="table-wrap">
+              <table className="artisan-table invitations-table">
+                <thead>
+                  <tr>
+                    <th>Project</th>
+                    <th>Chantier</th>
+                    <th>Job</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invitations.map((invite) => (
+                    <tr key={`${invite.chantierId}-${invite.jobTitle}`}>
+                      <td>{invite.projectName || '—'}</td>
+                      <td>
+                        <strong>{invite.chantierName}</strong>
+                        <p className="subtitle small">{invite.chantierDescription}</p>
+                      </td>
+                      <td>{invite.jobTitle}</td>
+                      <td>
+                        <span className={`status-pill status-${invite.status}`}>{invite.status}</span>
+                      </td>
+                      <td>
+                        <div className="invitation-actions">
+                          <button
+                            type="button"
+                            className="mini-btn"
+                            disabled={
+                              invite.status !== 'pending' || respondingChantier === invite.chantierId
+                            }
+                            onClick={() => handleAssignmentResponse(invite.chantierId, 'accepted')}
+                          >
+                            Accept
+                          </button>
+                          <button
+                            type="button"
+                            className="secondary-btn mini-btn"
+                            disabled={
+                              invite.status !== 'pending' || respondingChantier === invite.chantierId
+                            }
+                            onClick={() => handleAssignmentResponse(invite.chantierId, 'declined')}
+                          >
+                            Decline
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="subtitle">You have no pending invitations right now.</p>
+          )}
         </section>
 
         <section className="dashboard-card">

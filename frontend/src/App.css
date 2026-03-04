@@ -74,6 +74,23 @@ input:focus {
   box-shadow: 0 0 0 4px rgba(11, 132, 243, 0.16);
 }
 
+select,
+textarea {
+  border: 1px solid #d4d9e2;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 0.96rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  font-family: inherit;
+}
+
+select:focus,
+textarea:focus {
+  border-color: #0b84f3;
+  box-shadow: 0 0 0 4px rgba(11, 132, 243, 0.16);
+}
+
 small {
   color: #c0352b;
   font-size: 0.8rem;
@@ -376,6 +393,65 @@ button:disabled {
   box-shadow: 0 16px 36px rgba(21, 33, 56, 0.12);
 }
 
+.section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.section-header .subtitle {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #5c6a82;
+}
+
+.subtitle.small {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #6c7a8a;
+}
+
+.invitations-table td {
+  vertical-align: top;
+}
+
+.invitation-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.status-pill {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f3f6ff;
+  color: #1b2435;
+  font-size: 0.85rem;
+  text-transform: capitalize;
+}
+
+.status-pill.status-pending {
+  background: #fff4de;
+  color: #a86400;
+}
+
+.status-pill.status-accepted {
+  background: #e2f5ea;
+  color: #1a7b40;
+}
+
+.status-pill.status-declined {
+  background: #ffe7e7;
+  color: #9e2b2b;
+}
+
 .profile-menu-wrapper {
   position: relative;
 }
@@ -504,8 +580,203 @@ button:disabled {
   margin-top: 0;
 }
 
+.expert-content {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.two-column-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.journal-textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.expert-projects {
+  grid-column: 1 / -1;
+}
+
+.projects-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.project-tile {
+  border: 1px solid #e4eaf4;
+  border-radius: 14px;
+  padding: 14px;
+  background: #fbfdff;
+}
+
+.project-tile h4 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.project-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.project-metrics p {
+  margin: 0;
+}
+
+.progress-bar-track {
+  margin-top: 8px;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: #e8eef8;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3aa657 0%, #7ed957 100%);
+  border-radius: inherit;
+}
+
+.chantier-line {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e4eaf4;
+}
+
+.chantier-line p {
+  margin: 0 0 6px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.artisan-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.artisan-table th,
+.artisan-table td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e4eaf4;
+}
+
+.artisan-table th {
+  color: #3b4a63;
+  font-size: 0.9rem;
+  background: #f6f9ff;
+}
+
+.selection-table input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  border-radius: 4px;
+  box-shadow: none;
+}
+
+.expert-topbar-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.burger-btn {
+  margin-top: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #eef3fb;
+  color: #1b2435;
+  padding: 0;
+}
+
+.burger-btn:hover {
+  transform: none;
+  filter: none;
+  background: #e2eaf7;
+}
+
+.expert-shell {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 16px;
+  max-width: 1300px;
+  margin: 20px auto;
+  padding: 0 16px 20px;
+}
+
+.expert-sidebar {
+  background: #fff;
+  border-radius: 16px;
+  padding: 14px;
+  border: 1px solid #e4eaf4;
+  box-shadow: 0 12px 28px rgba(21, 33, 56, 0.08);
+  height: fit-content;
+  position: sticky;
+  top: 88px;
+}
+
+.expert-sidebar h3 {
+  margin-top: 0;
+}
+
+.sidebar-nav,
+.expert-sidebar {
+  display: grid;
+  gap: 8px;
+}
+
+.sidebar-item {
+  margin-top: 0;
+  justify-content: flex-start;
+  background: #f4f8ff;
+  color: #1b2435;
+  border: 1px solid #dde6f4;
+}
+
+.sidebar-item.active {
+  border-color: #0b84f3;
+  color: #0b84f3;
+  background: #e9f4ff;
+}
+
+.expert-main {
+  display: grid;
+  gap: 14px;
+}
+
 @media (max-width: 900px) {
   .dashboard-content {
     grid-template-columns: 1fr;
+  }
+
+  .expert-content {
+    grid-template-columns: 1fr;
+  }
+
+  .two-column-grid,
+  .project-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .expert-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .expert-sidebar {
+    display: none;
+    position: static;
+  }
+
+  .expert-sidebar.open {
+    display: grid;
   }
 }
