@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import api from '../api'
-import { LockIcon, MailIcon, SettingsIcon } from './Icons'
+import { BmpLogo, LockIcon, MailIcon, SettingsIcon } from './Icons'
 
 const initialForm = {
   email: '',
@@ -163,7 +163,7 @@ function SignInForm({ onLoginSuccess }) {
   }
 
   return (
-    <div className="register-page">
+    <>
       <div
         className={`notification ${notification.show ? 'show' : ''} ${notification.type || ''}`}
         role="status"
@@ -173,6 +173,13 @@ function SignInForm({ onLoginSuccess }) {
       </div>
 
       <section className="register-card">
+        <div className="brand-lockup">
+          <BmpLogo className="auth-brand-logo" />
+          <div>
+            <strong>BMP.tn</strong>
+            <p>Smart Building Marketplace</p>
+          </div>
+        </div>
         <h1>Welcome Back</h1>
         <p className="subtitle">Sign in to your account</p>
 
@@ -288,7 +295,7 @@ function SignInForm({ onLoginSuccess }) {
 
         {result.text ? <p className={`result ${result.type}`}>{result.text}</p> : null}
       </section>
-    </div>
+    </>
   )
 }
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import api from '../api'
-import { LockIcon, MailIcon, ShieldIcon, UserIcon } from './Icons'
+import { BmpLogo, LockIcon, MailIcon, ShieldIcon, UserIcon } from './Icons'
 
 const initialForm = {
   name: '',
@@ -12,7 +12,7 @@ const initialForm = {
   companyPhone: '',
 }
 
-function SignUpForm() {
+function SignUpForm({ onRegisterSuccess }) {
   const [form, setForm] = useState(initialForm)
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
@@ -98,6 +98,9 @@ function SignUpForm() {
       })
       setForm(initialForm)
       setErrors({})
+      if (typeof onRegisterSuccess === 'function') {
+        onRegisterSuccess()
+      }
     } catch (error) {
       const message = error.response?.data?.message || 'Registration failed'
       setResult({ type: 'error', text: message })
@@ -108,7 +111,7 @@ function SignUpForm() {
   }
 
   return (
-    <div className="register-page">
+    <>
       <div
         className={`notification ${notification.show ? 'show' : ''} ${notification.type || ''}`}
         role="status"
@@ -117,6 +120,13 @@ function SignUpForm() {
         {notification.text}
       </div>
       <section className="register-card">
+        <div className="brand-lockup">
+          <BmpLogo className="auth-brand-logo" />
+          <div>
+            <strong>BMP.tn</strong>
+            <p>Smart Building Marketplace</p>
+          </div>
+        </div>
         <h1>Create Account</h1>
         <p className="subtitle">Register as expert, artisan or manufacturer</p>
 
@@ -230,7 +240,7 @@ function SignUpForm() {
 
         {result.text ? <p className={`result ${result.type}`}>{result.text}</p> : null}
       </section>
-    </div>
+    </>
   )
 }
 
