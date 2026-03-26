@@ -1,0 +1,4 @@
+[dotenv@17.3.1] injecting env (3) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+[config] GOOGLE_CLIENT_ID loaded: true
+Server started on port 5000
+MongoDB connected successfully

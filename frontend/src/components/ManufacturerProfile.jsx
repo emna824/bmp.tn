@@ -15,13 +15,15 @@ function ManufacturerProfile({ user, onLogout }) {
   const [activeView, setActiveView] = useState('overview')
   const [products, setProducts] = useState([])
   const [loadingProducts, setLoadingProducts] = useState(false)
-  const [form, setForm] = useState({ name: '', description: '' })
+  const [form, setForm] = useState({ name: '', description: '', price: '', priceUnit: 'TND', image: '' })
   const [selectedDocument, setSelectedDocument] = useState(null)
   const [selectedDocumentName, setSelectedDocumentName] = useState('')
+  const [selectedImageName, setSelectedImageName] = useState('')
   const [creatingProduct, setCreatingProduct] = useState(false)
   const [notification, setNotification] = useState({ show: false, type: '', text: '' })
   const [downloadingProductId, setDownloadingProductId] = useState(null)
   const [filters, setFilters] = useState({ search: '' })
+  const [previewProduct, setPreviewProduct] = useState(null)
 
   const showNotification = useCallback((type, text) => {
     setNotification({ show: true, type, text })
@@ -77,6 +79,34 @@ function ManufacturerProfile({ user, onLogout }) {
     setSelectedDocumentName(file.name)
   }
 
+  const handleImagePick = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file) {
+      setForm((prev) => ({ ...prev, image: '' }))
+      setSelectedImageName('')
+      return
+    }
+
+    const allowed = ['image/png', 'image/jpeg', 'image/webp']
+    const maxBytes = 2 * 1024 * 1024
+    if (!allowed.includes(file.type)) {
+      showNotification('error', 'Image must be PNG, JPG or WEBP')
+      return
+    }
+    if (file.size > maxBytes) {
+      showNotification('error', 'Image must be 2 MB or less')
+      return
+    }
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file)
+      setForm((prev) => ({ ...prev, image: dataUrl }))
+      setSelectedImageName(file.name)
+    } catch (err) {
+      showNotification('error', 'Failed to read image')
+    }
+  }
+
   const handleCreateProduct = async (event) => {
     event.preventDefault()
     if (!form.name.trim()) {
@@ -87,20 +117,33 @@ function ManufacturerProfile({ user, onLogout }) {
       showNotification('error', 'Please attach a PDF for the product')
       return
     }
+    if (!form.image) {
+      showNotification('error', 'Please add a product image')
+      return
+    }
+    if (form.price === '' || Number(form.price) < 0) {
+      showNotification('error', 'Please enter a valid price')
+      return
+    }
 
     setCreatingProduct(true)
     try {
       const documentData = await readFileAsDataUrl(selectedDocument)
+      const numericPrice = form.price === '' ? null : Number(form.price)
       await api.post('/manufacturers/products', {
         manufacturerId: user.id,
         name: form.name.trim(),
         description: form.description.trim(),
         document: documentData,
         documentName: selectedDocumentName || selectedDocument.name,
+        price: Number.isFinite(numericPrice) ? numericPrice : null,
+        priceUnit: form.priceUnit || 'TND',
+        image: form.image,
       })
-      setForm({ name: '', description: '' })
+      setForm({ name: '', description: '', price: '', priceUnit: 'TND', image: '' })
       setSelectedDocument(null)
       setSelectedDocumentName('')
+      setSelectedImageName('')
       setFilters({ search: '' })
       showNotification('success', 'Product added to marketplace')
       fetchProducts()
@@ -131,6 +174,14 @@ function ManufacturerProfile({ user, onLogout }) {
     }
   }
 
+  const openPreview = (product) => {
+    setPreviewProduct(product)
+  }
+
+  const closePreview = () => {
+    setPreviewProduct(null)
+  }
+
   const filteredProducts = useMemo(() => {
     const term = filters.search.trim().toLowerCase()
     return products.filter(
@@ -155,6 +206,7 @@ function ManufacturerProfile({ user, onLogout }) {
   ]
 
   return (
+    <>
     <div className="manufacturer-profile">
       <div
         className={`notification ${notification.show ? 'show' : ''} ${notification.type || ''}`}
@@ -211,6 +263,36 @@ function ManufacturerProfile({ user, onLogout }) {
                 ) : (
                   <p className="subtitle small">Maximum file size 6 MB.</p>
                 )}
+                <label>
+                  <span className="label-with-icon">Image (PNG/JPG/WEBP)</span>
+                  <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handleImagePick} />
+                </label>
+                {form.image ? (
+                  <p className="subtitle small">Selected image: {selectedImageName || 'Preview ready'}</p>
+                ) : (
+                  <p className="subtitle small">Optional thumbnail, max 2 MB.</p>
+                )}
+                <label>
+                  <span className="label-with-icon">Price</span>
+                  <div className="price-row">
+                    <input
+                      name="price"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={form.price}
+                      onChange={handleFormChange}
+                      placeholder="e.g. 120"
+                    />
+                    <input
+                      name="priceUnit"
+                      value={form.priceUnit}
+                      onChange={handleFormChange}
+                      placeholder="TND"
+                      className="price-unit"
+                    />
+                  </div>
+                </label>
                 <button type="submit" disabled={creatingProduct}>
                   {creatingProduct ? 'Uploading...' : 'Publish product'}
                 </button>
@@ -244,6 +326,7 @@ function ManufacturerProfile({ user, onLogout }) {
                     <tr>
                       <th>Product</th>
                       <th>Description</th>
+                      <th>Price</th>
                       <th>Uploaded</th>
                       <th>Actions</th>
                     </tr>
@@ -256,8 +339,12 @@ function ManufacturerProfile({ user, onLogout }) {
                           <p className="subtitle small">{product.documentName}</p>
                         </td>
                         <td>{product.description || '—'}</td>
+                        <td>{product.price ? `${product.price} ${product.priceUnit || 'TND'}` : '—'}</td>
                         <td>{new Date(product.createdAt).toLocaleDateString()}</td>
                         <td>
+                          <button type="button" className="mini-btn" onClick={() => openPreview(product)}>
+                            View details
+                          </button>
                           <button
                             type="button"
                             className="secondary-btn mini-btn"
@@ -305,6 +392,50 @@ function ManufacturerProfile({ user, onLogout }) {
         )}
       </DashboardLayout>
     </div>
+
+    {previewProduct ? (
+      <div className="settings-overlay" role="dialog" aria-modal="true" aria-label="Product details">
+        <section className="settings-modal product-preview">
+          <div className="settings-header">
+            <h3>{previewProduct.name}</h3>
+            <button type="button" className="text-btn close-btn" onClick={closePreview}>
+              Close
+            </button>
+          </div>
+          <div className="product-preview-body">
+            <div className="product-preview-media">
+              {previewProduct.image ? (
+                <img src={previewProduct.image} alt={previewProduct.name} />
+              ) : (
+                <div className="market-img-fallback">{previewProduct.name?.charAt(0) || 'P'}</div>
+              )}
+            </div>
+            <div className="product-preview-meta">
+              <p className="subtitle">{previewProduct.description || 'No description provided.'}</p>
+              <p>
+                <strong>Price: </strong>
+                {previewProduct.price ? `${previewProduct.price} ${previewProduct.priceUnit || 'TND'}` : '—'}
+              </p>
+              <p className="subtitle small">Document: {previewProduct.documentName}</p>
+              <div className="product-preview-actions">
+                <button
+                  type="button"
+                  className="mini-btn"
+                  disabled={downloadingProductId === previewProduct.id}
+                  onClick={() => handleDownloadDocument(previewProduct.id, previewProduct.documentName)}
+                >
+                  {downloadingProductId === previewProduct.id ? 'Downloading...' : 'Download PDF'}
+                </button>
+                <button type="button" className="secondary-btn mini-btn" onClick={closePreview}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    ) : null}
+    </>
   )
 }
 

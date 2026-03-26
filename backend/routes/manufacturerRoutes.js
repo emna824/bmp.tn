@@ -24,14 +24,32 @@ async function assertManufacturer(manufacturerId) {
 }
 
 const MAX_DOCUMENT_LENGTH = 12_000_000; // ~12 MB string length
+const MAX_IMAGE_LENGTH = 8_000_000; // ~8 MB string length
 const DOCUMENT_PREFIX = 'data:application/pdf;base64,';
+const IMAGE_PREFIX = /^data:image\/(png|jpe?g|webp);base64,/i;
+
+// Debug logger for product routes
+router.use('/products', (req, res, next) => {
+    console.log(`[product:req] ${req.method} body keys:`, Object.keys(req.body || {}));
+    next();
+});
 
 router.post('/products', async (req, res) => {
     try {
-        const { manufacturerId, name, description, document, documentName } = req.body;
+        const { manufacturerId, name, description, document, documentName, price, priceUnit, image } = req.body;
+        console.log('[product:create] incoming', {
+            manufacturerId,
+            name,
+            hasDoc: Boolean(document),
+            hasImage: Boolean(image),
+            price,
+            priceUnit,
+        });
 
         if (!manufacturerId || !name || !document || !documentName) {
-            return res.status(400).json({ message: 'manufacturerId, name, document and documentName are required' });
+            return res
+                .status(400)
+                .json({ message: 'manufacturerId, name, document and documentName are required' });
         }
 
         const manufacturerCheck = await assertManufacturer(manufacturerId);
@@ -56,12 +74,37 @@ router.post('/products', async (req, res) => {
             return res.status(400).json({ message: 'document exceeds the allowed size', maxBytes: MAX_DOCUMENT_LENGTH });
         }
 
+        let normalizedImage = '';
+        if (image) {
+            normalizedImage = String(image).trim();
+            if (!IMAGE_PREFIX.test(normalizedImage)) {
+                return res.status(400).json({ message: 'image must be PNG, JPG or WEBP data URL' });
+            }
+            if (normalizedImage.length > MAX_IMAGE_LENGTH) {
+                return res
+                    .status(400)
+                    .json({ message: 'image exceeds the allowed size', maxBytes: MAX_IMAGE_LENGTH });
+            }
+        }
+
+        let numericPrice = null;
+        if (typeof price !== 'undefined' && price !== null && price !== '') {
+            const parsed = Number(price);
+            if (Number.isNaN(parsed) || parsed < 0) {
+                return res.status(400).json({ message: 'price must be a positive number' });
+            }
+            numericPrice = parsed;
+        }
+
         const createdProduct = await Product.create({
             manufacturerId,
             name: String(name).trim(),
             description: String(description || '').trim(),
             documentName: String(documentName).trim(),
             document: normalizedDocument,
+            price: numericPrice,
+            priceUnit: String(priceUnit || 'TND').trim(),
+            image: normalizedImage,
         });
 
         // notify artisans and experts about new marketplace item
@@ -92,6 +135,9 @@ router.post('/products', async (req, res) => {
                 name: createdProduct.name,
                 description: createdProduct.description,
                 documentName: createdProduct.documentName,
+                price: createdProduct.price,
+                priceUnit: createdProduct.priceUnit,
+                image: createdProduct.image,
                 manufacturerId: createdProduct.manufacturerId,
                 createdAt: createdProduct.createdAt,
             },
@@ -123,6 +169,9 @@ router.get('/products', async (req, res) => {
             name: product.name,
             description: product.description,
             documentName: product.documentName,
+            price: product.price,
+            priceUnit: product.priceUnit || 'TND',
+            image: product.image || '',
             manufacturer: product.manufacturerId
                 ? {
                       id: product.manufacturerId._id,

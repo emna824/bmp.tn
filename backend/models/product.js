@@ -17,6 +17,20 @@ const productSchema = new mongoose.Schema(
             default: '',
             trim: true,
         },
+        price: {
+            type: Number,
+            default: null,
+            min: 0,
+        },
+        priceUnit: {
+            type: String,
+            default: '',
+            trim: true,
+        },
+        image: {
+            type: String,
+            default: '',
+        },
         documentName: {
             type: String,
             required: true,

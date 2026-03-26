@@ -35,7 +35,12 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
   const [loadingMarketplace, setLoadingMarketplace] = useState(false)
   const [downloadingProductId, setDownloadingProductId] = useState(null)
   const [filters, setFilters] = useState({ search: '', manufacturer: '' })
+  const [invitationSearch, setInvitationSearch] = useState('')
   const [notificationCount, setNotificationCount] = useState(user?.notificationCount || 0)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [notificationsList, setNotificationsList] = useState([])
+  const [loadingNotifications, setLoadingNotifications] = useState(false)
+  const [previewProduct, setPreviewProduct] = useState(null)
 
   const showNotification = useCallback((type, text) => {
     setNotification({ show: true, type, text })
@@ -123,11 +128,33 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
     }
   }, [user?.id])
 
+  const loadNotificationsList = useCallback(async () => {
+    if (!user?.id) return
+    setLoadingNotifications(true)
+    try {
+      const res = await api.get(`/notifications/${user.id}`)
+      setNotificationsList(res.data?.notifications || [])
+    } catch (err) {
+      // silent fail
+    } finally {
+      setLoadingNotifications(false)
+    }
+  }, [user?.id])
+
   useEffect(() => {
     refreshNotifications()
     const interval = setInterval(refreshNotifications, 20000)
     return () => clearInterval(interval)
   }, [refreshNotifications])
+
+  useEffect(() => {
+    if (notificationsOpen) {
+      // Mark badge as cleared
+      setNotificationCount(0)
+      setProfile((prev) => ({ ...prev, notificationCount: 0 }))
+      loadNotificationsList()
+    }
+  }, [notificationsOpen, loadNotificationsList])
 
   const handleNavigate = (view) => {
     setActiveView(view)
@@ -289,6 +316,14 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
     }
   }
 
+  const openProductPreview = (product) => {
+    setPreviewProduct(product)
+  }
+
+  const closeProductPreview = () => {
+    setPreviewProduct(null)
+  }
+
   const handleChangePassword = async (event) => {
     event.preventDefault()
     if (!currentPassword || !newPassword) {
@@ -335,6 +370,18 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
     })
   }, [filters, marketplaceProducts])
 
+  const filteredInvitations = useMemo(() => {
+    const term = invitationSearch.trim().toLowerCase()
+    if (!term) return invitations
+    return invitations.filter((inv) => {
+      return (
+        inv.projectName?.toLowerCase().includes(term) ||
+        inv.chantierName?.toLowerCase().includes(term) ||
+        inv.jobTitle?.toLowerCase().includes(term)
+      )
+    })
+  }, [invitationSearch, invitations])
+
   const manufacturerOptions = useMemo(() => {
     const names = new Set()
     marketplaceProducts.forEach((product) => {
@@ -361,6 +408,11 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
       value: marketplaceProducts.length,
       detail: `${filteredMarketplaceProducts.length} showing`,
     },
+    {
+      label: 'Unread',
+      value: notificationCount,
+      detail: 'Notifications',
+    },
   ]
 
   const handleFilterChange = (field, value) => {
@@ -383,37 +435,116 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
         activeView={activeView}
         onNavigate={handleNavigate}
         onLogout={onLogout}
+        onToggleNotifications={() => setNotificationsOpen((open) => !open)}
+        notificationsOpen={notificationsOpen}
       >
         {activeView === 'overview' && (
-          <>
-            <div className="dashboard-overview">
+          <div className="artisan-dashboard">
+            <div className="dash-top">
+              <input
+                className="dash-search"
+                type="search"
+                placeholder="Search invitations, jobs or products..."
+                value={invitationSearch}
+                onChange={(e) => setInvitationSearch(e.target.value)}
+              />
+              <div className="dash-actions">
+                <button type="button" className="secondary-btn" onClick={() => setActiveView('invitations')}>
+                  Invitations
+                </button>
+                <button type="button" className="secondary-btn" onClick={() => setActiveView('marketplace')}>
+                  Marketplace
+                </button>
+              </div>
+            </div>
+
+            <div className="stat-grid">
               {overviewStats.map((stat) => (
-                <div key={stat.label} className="summary-pill">
-                  <strong>{stat.value}</strong>
-                  <span>{stat.label}</span>
-                  <small>{stat.detail}</small>
+                <div key={stat.label} className="stat-card">
+                  <div className="stat-value">{stat.value}</div>
+                  <div className="stat-label">{stat.label}</div>
+                  <div className="stat-detail">{stat.detail}</div>
+                  <div className="stat-bar" />
                 </div>
               ))}
             </div>
-            <section className="dashboard-card">
-              <div className="section-header">
-                <h3>Quick actions</h3>
-                <p className="subtitle">Jump straight to what matters</p>
-              </div>
-              <div className="quick-actions">
-                <button type="button" className="secondary-btn" onClick={() => setActiveView('invitations')}>
-                  Review invitations
-                </button>
-                <button type="button" className="secondary-btn" onClick={() => setActiveView('marketplace')}>
-                  Browse marketplace
-                </button>
-                <button type="button" className="secondary-btn" onClick={() => setSettingsOpen(true)}>
-                  <SettingsIcon className="icon tiny" />
-                  Edit profile
-                </button>
-              </div>
-            </section>
-          </>
+
+            <div className="cards-grid">
+              <section className="card-panel">
+                <div className="panel-header">
+                  <h3>Recent Invitations</h3>
+                  <button type="button" className="text-btn" onClick={() => setActiveView('invitations')}>
+                    View all
+                  </button>
+                </div>
+                <div className="invitation-list">
+                  {invitations.slice(0, 4).map((invite) => (
+                    <article key={`${invite.chantierId}-${invite.jobTitle}`} className="invitation-card">
+                      <div className="inv-meta">
+                        <div>
+                          <p className="inv-title">{invite.projectName || 'Project'}</p>
+                          <p className="inv-subtitle">{invite.chantierName}</p>
+                          <p className="inv-desc">{invite.chantierDescription}</p>
+                          <div className="inv-tags">
+                            <span className="badge">{invite.jobTitle}</span>
+                            <span className={`pill status-${invite.status}`}>{invite.status}</span>
+                          </div>
+                        </div>
+                        <div className="inv-actions">
+                          <button
+                            type="button"
+                            className="secondary-btn mini-btn"
+                            disabled={invite.status !== 'pending' || respondingChantier === invite.chantierId}
+                            onClick={() => handleAssignmentResponse(invite.chantierId, 'declined')}
+                          >
+                            Decline
+                          </button>
+                          <button
+                            type="button"
+                            className="mini-btn"
+                            disabled={invite.status !== 'pending' || respondingChantier === invite.chantierId}
+                            onClick={() => handleAssignmentResponse(invite.chantierId, 'accepted')}
+                          >
+                            {respondingChantier === invite.chantierId ? 'Sending...' : 'Accept'}
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                  {!invitations.length ? <p className="subtitle">No invitations yet.</p> : null}
+                </div>
+              </section>
+
+              <section className="card-panel">
+                <div className="panel-header">
+                  <h3>Marketplace Spotlight</h3>
+                  <button type="button" className="text-btn" onClick={() => setActiveView('marketplace')}>
+                    Browse
+                  </button>
+                </div>
+                <div className="product-cards">
+                  {filteredMarketplaceProducts.slice(0, 4).map((product) => (
+                    <article key={product.id} className="product-card">
+                      <div className="product-meta">
+                        <h4>{product.name}</h4>
+                        <p className="subtitle small">{product.manufacturer?.name || 'Manufacturer'}</p>
+                        <p className="product-desc">{product.description || '—'}</p>
+                      </div>
+                      <button
+                        type="button"
+                        className="mini-btn"
+                        disabled={downloadingProductId === product.id}
+                        onClick={() => handleDownloadMarketplaceDocument(product.id, product.documentName)}
+                      >
+                        {downloadingProductId === product.id ? 'Downloading...' : 'View Details'}
+                      </button>
+                    </article>
+                  ))}
+                  {!filteredMarketplaceProducts.length ? <p className="subtitle">No marketplace items.</p> : null}
+                </div>
+              </section>
+            </div>
+          </div>
         )}
 
         {activeView === 'invitations' && (
@@ -422,56 +553,51 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
               <h3>Chantier invitations</h3>
               <p className="subtitle">Respond to expert requests for new work.</p>
             </div>
+            <div className="dash-filter-row">
+              <input
+                type="search"
+                placeholder="Search invitations..."
+                value={invitationSearch}
+                onChange={(e) => setInvitationSearch(e.target.value)}
+              />
+            </div>
             {loadingInvitations ? (
               <p className="subtitle">Loading invitations...</p>
-            ) : invitations.length ? (
-              <div className="table-wrap">
-                <table className="artisan-table invitations-table">
-                  <thead>
-                    <tr>
-                      <th>Project</th>
-                      <th>Chantier</th>
-                      <th>Job</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {invitations.map((invite) => (
-                      <tr key={`${invite.chantierId}-${invite.jobTitle}`}>
-                        <td>{invite.projectName || '—'}</td>
-                        <td>
-                          <strong>{invite.chantierName}</strong>
-                          <p className="subtitle small">{invite.chantierDescription}</p>
-                        </td>
-                        <td>{invite.jobTitle}</td>
-                        <td>
-                          <span className={`status-pill status-${invite.status}`}>{invite.status}</span>
-                        </td>
-                        <td>
-                          <div className="invitation-actions">
-                            <button
-                              type="button"
-                              className="mini-btn"
-                              disabled={invite.status !== 'pending' || respondingChantier === invite.chantierId}
-                              onClick={() => handleAssignmentResponse(invite.chantierId, 'accepted')}
-                            >
-                              Accept
-                            </button>
-                            <button
-                              type="button"
-                              className="secondary-btn mini-btn"
-                              disabled={invite.status !== 'pending' || respondingChantier === invite.chantierId}
-                              onClick={() => handleAssignmentResponse(invite.chantierId, 'declined')}
-                            >
-                              Decline
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            ) : filteredInvitations.length ? (
+              <div className="invitation-list grid">
+                {filteredInvitations.map((invite) => (
+                  <article key={`${invite.chantierId}-${invite.jobTitle}`} className="invitation-card">
+                    <div className="inv-meta">
+                      <div>
+                        <p className="inv-title">{invite.projectName || 'Project'}</p>
+                        <p className="inv-subtitle">{invite.chantierName}</p>
+                        <p className="inv-desc">{invite.chantierDescription}</p>
+                        <div className="inv-tags">
+                          <span className="badge">{invite.jobTitle}</span>
+                          <span className={`pill status-${invite.status}`}>{invite.status}</span>
+                        </div>
+                      </div>
+                      <div className="inv-actions">
+                        <button
+                          type="button"
+                          className="secondary-btn mini-btn"
+                          disabled={invite.status !== 'pending' || respondingChantier === invite.chantierId}
+                          onClick={() => handleAssignmentResponse(invite.chantierId, 'declined')}
+                        >
+                          Decline
+                        </button>
+                        <button
+                          type="button"
+                          className="mini-btn"
+                          disabled={invite.status !== 'pending' || respondingChantier === invite.chantierId}
+                          onClick={() => handleAssignmentResponse(invite.chantierId, 'accepted')}
+                        >
+                          {respondingChantier === invite.chantierId ? 'Sending...' : 'Accept'}
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
               </div>
             ) : (
               <p className="subtitle">You have no pending invitations right now.</p>
@@ -480,86 +606,86 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
         )}
 
         {activeView === 'marketplace' && (
-          <section className="dashboard-card">
-            <div className="section-header">
-              <h3>Marketplace</h3>
-              <p className="subtitle">Filter published PDFs before downloading.</p>
-            </div>
-            <div className="dashboard-filters">
+          <section className="dashboard-card marketplace-card">
+            <div className="market-top">
               <input
-                placeholder="Search by product or description"
+                type="search"
+                className="market-search"
+                placeholder="Search products..."
                 value={filters.search}
                 onChange={(event) => handleFilterChange('search', event.target.value)}
               />
-              <select
-                value={filters.manufacturer}
-                onChange={(event) => handleFilterChange('manufacturer', event.target.value)}
-              >
-                <option value="">All manufacturers</option>
-                {manufacturerOptions.map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                className="secondary-btn"
-                onClick={() => {
-                  handleFilterChange('search', '')
-                  handleFilterChange('manufacturer', '')
-                }}
-              >
-                Clear filters
-              </button>
-              <button type="button" className="secondary-btn" onClick={fetchMarketplace}>
-                Refresh
-              </button>
+              <div className="market-filters">
+                <select
+                  value={filters.manufacturer}
+                  onChange={(event) => handleFilterChange('manufacturer', event.target.value)}
+                >
+                  <option value="">All Categories</option>
+                  {manufacturerOptions.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+                <select disabled>
+                  <option>Location</option>
+                </select>
+                <select disabled>
+                  <option>Price Range</option>
+                </select>
+                <select disabled>
+                  <option>Sort: Newest</option>
+                </select>
+              </div>
             </div>
+
             {loadingMarketplace ? (
               <p className="subtitle">Loading marketplace...</p>
-            ) : filteredMarketplaceProducts.length ? (
-              <div className="table-wrap">
-                <table className="artisan-table invitations-table">
-                  <thead>
-                    <tr>
-                      <th>Product</th>
-                      <th>Description</th>
-                      <th>Manufacturer</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredMarketplaceProducts.map((product) => (
-                      <tr key={product.id}>
-                        <td>
-                          <strong>{product.name}</strong>
-                          <p className="subtitle small">{product.documentName}</p>
-                        </td>
-                        <td>{product.description || '—'}</td>
-                        <td>
-                          {product.manufacturer?.name || '—'}
-                          {product.manufacturer?.companyPhone ? (
-                            <p className="subtitle small">{product.manufacturer.companyPhone}</p>
-                          ) : null}
-                        </td>
-                        <td>
-                          <button
-                            type="button"
-                            className="secondary-btn mini-btn"
-                            disabled={downloadingProductId === product.id}
-                            onClick={() => handleDownloadMarketplaceDocument(product.id, product.documentName)}
-                          >
-                            {downloadingProductId === product.id ? 'Downloading...' : 'Download PDF'}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
             ) : (
-              <p className="subtitle">No marketplace listings match your filters.</p>
+              <div className="market-grid">
+                {filteredMarketplaceProducts.length ? (
+                  filteredMarketplaceProducts.map((product) => (
+                    <article key={product.id} className="market-card">
+                      <div className="market-card-image">
+                        {product.image || product.imageUrl || product.thumbnail ? (
+                          <img
+                            src={product.image || product.imageUrl || product.thumbnail}
+                            alt={product.name}
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="market-img-fallback">{product.name?.charAt(0) || 'P'}</div>
+                        )}
+                      </div>
+                      <div className="market-card-body">
+                        <p className="market-title">{product.name}</p>
+                        <p className="market-subtitle">{product.manufacturer?.name || 'Manufacturer'}</p>
+                        <p className="market-desc">{product.description || 'No description provided.'}</p>
+                        <div className="market-meta">
+                          <span className="meta-chip">{product.manufacturer?.city || 'Location'}</span>
+                          <span className="meta-chip">{product.documentName || 'PDF'}</span>
+                          {product.price ? (
+                            <span className="meta-chip price-chip">
+                              {product.price} {product.priceUnit || 'TND'}
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="market-card-actions">
+                        <button
+                          type="button"
+                          className="mini-btn"
+                          onClick={() => openProductPreview(product)}
+                        >
+                          View Details
+                        </button>
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  <p className="subtitle">No marketplace listings match your filters.</p>
+                )}
+              </div>
             )}
           </section>
         )}
@@ -707,6 +833,83 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
               </button>
             </form>
           </section>
+        </div>
+      ) : null}
+
+      {previewProduct ? (
+        <div className="settings-overlay" role="dialog" aria-modal="true" aria-label="Product details">
+          <section className="settings-modal product-preview">
+            <div className="settings-header">
+              <h3>{previewProduct.name}</h3>
+              <button type="button" className="text-btn close-btn" onClick={() => setPreviewProduct(null)}>
+                Close
+              </button>
+            </div>
+            <div className="product-preview-body">
+              <div className="product-preview-media">
+                {previewProduct.image ? (
+                  <img src={previewProduct.image} alt={previewProduct.name} />
+                ) : (
+                  <div className="market-img-fallback">{previewProduct.name?.charAt(0) || 'P'}</div>
+                )}
+              </div>
+              <div className="product-preview-meta">
+                <p className="subtitle">{previewProduct.description || 'No description provided.'}</p>
+                <p>
+                  <strong>Manufacturer: </strong>
+                  {previewProduct.manufacturer?.name || '—'}
+                </p>
+                <p>
+                  <strong>Price: </strong>
+                  {previewProduct.price ? `${previewProduct.price} ${previewProduct.priceUnit || 'TND'}` : '—'}
+                </p>
+                <p className="subtitle small">Document: {previewProduct.documentName}</p>
+                <div className="product-preview-actions">
+                  <button
+                    type="button"
+                    className="mini-btn"
+                    disabled={downloadingProductId === previewProduct.id}
+                    onClick={() => handleDownloadMarketplaceDocument(previewProduct.id, previewProduct.documentName)}
+                  >
+                    {downloadingProductId === previewProduct.id ? 'Downloading...' : 'Download PDF'}
+                  </button>
+                  <button type="button" className="secondary-btn mini-btn" onClick={() => setPreviewProduct(null)}>
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {notificationsOpen ? (
+        <div className="notifications-sider" role="dialog" aria-modal="true" aria-label="Notifications panel">
+          <div className="notifications-sider-header">
+            <h3>Notifications</h3>
+            <button type="button" className="text-btn close-btn" onClick={() => setNotificationsOpen(false)}>
+              Close
+            </button>
+          </div>
+          <div className="notifications-sider-body">
+            {loadingNotifications ? (
+              <p className="subtitle">Loading...</p>
+            ) : notificationsList.length ? (
+              <ul className="notifications-list">
+                {notificationsList.map((n) => (
+                  <li key={n._id || `${n.type}-${n.title}`}>
+                    <div className="notif-title">{n.title || n.type || 'Notification'}</div>
+                    <div className="notif-message">{n.message || ''}</div>
+                    <div className="notif-meta">
+                      <span>{new Date(n.createdAt || n.date || Date.now()).toLocaleString()}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="subtitle">No notifications.</p>
+            )}
+          </div>
         </div>
       ) : null}
     </div>

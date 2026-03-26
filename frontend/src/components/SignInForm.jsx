@@ -21,6 +21,7 @@ function SignInForm({ onLoginSuccess }) {
   const [forgotErrors, setForgotErrors] = useState({})
   const [result, setResult] = useState({ type: '', text: '' })
   const [notification, setNotification] = useState({ show: false, type: '', text: '' })
+  const [staySignedIn, setStaySignedIn] = useState(false)
   const googleButtonRef = useRef(null)
   const googleInitializedRef = useRef(false)
 
@@ -180,7 +181,7 @@ function SignInForm({ onLoginSuccess }) {
         text: 'Signed in successfully.',
       })
       if (onLoginSuccess && response.data?.user) {
-        onLoginSuccess(response.data.user)
+        onLoginSuccess(response.data.user, staySignedIn)
       }
       setForm(initialForm)
       setErrors({})
@@ -206,7 +207,7 @@ function SignInForm({ onLoginSuccess }) {
       setNotification({ show: true, type: 'success', text: message })
 
       if (onLoginSuccess && response.data?.user) {
-        onLoginSuccess(response.data.user)
+        onLoginSuccess(response.data.user, staySignedIn)
       }
     } catch (error) {
       const message = error.response?.data?.message || 'Google sign-in failed'
@@ -252,7 +253,8 @@ function SignInForm({ onLoginSuccess }) {
               placeholder="you@email.com"
             />
             {errors.email && <small>{errors.email}</small>}
-          </label>
+        </label>
+
 
           <label>
             <span className="label-with-icon">
@@ -267,6 +269,15 @@ function SignInForm({ onLoginSuccess }) {
               placeholder="Your password"
             />
             {errors.password && <small>{errors.password}</small>}
+          </label>
+
+          <label className="stay-signed-in">
+            <input
+              type="checkbox"
+              checked={staySignedIn}
+              onChange={(e) => setStaySignedIn(e.target.checked)}
+            />
+            <span>Stay signed in</span>
           </label>
 
           <button

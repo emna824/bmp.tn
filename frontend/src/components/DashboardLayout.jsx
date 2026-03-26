@@ -1,8 +1,17 @@
 import { useMemo, useState } from 'react'
 import { BellIcon, BmpLogo, CloseIcon, LogoutIcon, MarketplaceIcon, MenuIcon, SettingsIcon } from './Icons'
 
-function DashboardLayout({ user, menuItems, activeView, onNavigate, onLogout, children }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+function DashboardLayout({
+  user,
+  menuItems,
+  activeView,
+  onNavigate,
+  onLogout,
+  onToggleNotifications,
+  notificationsOpen = false,
+  children,
+}) {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
 
   const userInitials = useMemo(() => {
@@ -34,12 +43,11 @@ function DashboardLayout({ user, menuItems, activeView, onNavigate, onLogout, ch
 
   const notificationCount = user?.notificationCount ?? user?.notifications ?? 0
 
+  const shellClass = `dashboard-shell ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`
+
   return (
-    <div className="dashboard-shell">
-      <aside className={`dashboard-sidebar ${isSidebarOpen ? 'open' : ''}`}>
-        <button type="button" className="sidebar-close-btn" onClick={() => setIsSidebarOpen(false)} aria-label="Close menu">
-          <CloseIcon className="icon" />
-        </button>
+    <div className={shellClass}>
+      <aside className={`dashboard-sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-brand">
           <BmpLogo className="sidebar-brand-icon" />
           <div>
@@ -59,45 +67,22 @@ function DashboardLayout({ user, menuItems, activeView, onNavigate, onLogout, ch
             </button>
           ))}
         </nav>
-        <div className="sidebar-footer">
-          <div className={`sidebar-user-card ${isUserMenuOpen ? 'open' : ''}`}>
-            <button
-              type="button"
-              className="sidebar-user"
-              onClick={() => setIsUserMenuOpen((open) => !open)}
-              aria-haspopup="true"
-              aria-expanded={isUserMenuOpen}
-            >
-              <div className="sidebar-avatar">
-                {user?.profileImage ? <img src={user.profileImage} alt="Profile" /> : <span>{userInitials}</span>}
-              </div>
-              <div className="sidebar-user-meta">
-                <strong>{user?.name || 'Guest'}</strong>
-                <small>{user?.email || 'Tap for options'}</small>
-              </div>
-              <span className="sidebar-caret" aria-hidden="true">
-                {isUserMenuOpen ? '▴' : '▾'}
-              </span>
-            </button>
-            <div className="sidebar-user-menu" role="menu">
-              <button type="button" className="sidebar-item small" onClick={handleSettings} role="menuitem">
-                <SettingsIcon className="icon tiny" />
-                Settings
-              </button>
-              <button type="button" className="sidebar-item small" onClick={handleLogout} role="menuitem">
-                <LogoutIcon className="icon tiny" />
-                Log out
-              </button>
-            </div>
-          </div>
-        </div>
+        
       </aside>
-      {isSidebarOpen ? <button type="button" className="sidebar-backdrop" onClick={() => setIsSidebarOpen(false)} aria-label="Close menu overlay" /> : null}
       <div className="dashboard-main">
         <header className="dashboard-header">
-          <div>
-            <p className="header-eyebrow">Welcome back</p>
-            <h1 className="header-title">BMP.tn Dashboard</h1>
+          <div className="header-left">
+            <button
+              type="button"
+              className={`sidebar-burger-btn ${isSidebarOpen ? 'is-open' : ''}`}
+              onClick={() => setIsSidebarOpen((open) => !open)}
+              aria-label={isSidebarOpen ? 'Collapse menu' : 'Open menu'}
+            >
+              <MenuIcon className="icon" />
+            </button>
+            <div>
+           
+            </div>
           </div>
           <div className="header-actions">
             <button
@@ -107,13 +92,16 @@ function DashboardLayout({ user, menuItems, activeView, onNavigate, onLogout, ch
               aria-label="Go to marketplace"
             >
               <MarketplaceIcon className="icon" />
+              
             </button>
             <button
               type="button"
-              className="header-icon-btn has-badge"
+              className={`header-icon-btn has-badge ${notificationsOpen ? 'active' : ''}`}
               aria-label={notificationCount ? `${notificationCount} notifications` : 'Notifications'}
+              onClick={() => onToggleNotifications && onToggleNotifications()}
             >
               <BellIcon className="icon" />
+              
               <span className={`header-badge ${notificationCount ? 'show' : ''}`}>
                 {notificationCount > 9 ? '9+' : notificationCount}
               </span>
@@ -148,9 +136,6 @@ function DashboardLayout({ user, menuItems, activeView, onNavigate, onLogout, ch
                 </button>
               </div>
             </div>
-            <button type="button" className="sidebar-burger-btn" onClick={() => setIsSidebarOpen(true)} aria-label="Open menu">
-              <MenuIcon className="icon" />
-            </button>
           </div>
         </header>
         <div className="dashboard-main-content">{children}</div>

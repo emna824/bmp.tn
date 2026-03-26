@@ -9,20 +9,31 @@ import './App.css'
 
 function App() {
   const [user, setUser] = useState(() => {
-    const raw = localStorage.getItem('authUser')
+    const raw =
+      localStorage.getItem('authUser') ||
+      sessionStorage.getItem('authUser')
     return raw ? JSON.parse(raw) : null
   })
   const [mode, setMode] = useState('signin')
+  const [navOpen, setNavOpen] = useState(false)
 
-  const handleLoginSuccess = (loggedInUser) => {
+  const handleLoginSuccess = (loggedInUser, staySignedIn = false) => {
     setUser(loggedInUser)
-    localStorage.setItem('authUser', JSON.stringify(loggedInUser))
+    if (staySignedIn) {
+      localStorage.setItem('authUser', JSON.stringify(loggedInUser))
+      sessionStorage.removeItem('authUser')
+    } else {
+      sessionStorage.setItem('authUser', JSON.stringify(loggedInUser))
+      localStorage.removeItem('authUser')
+    }
   }
 
   const handleLogout = () => {
     setUser(null)
     localStorage.removeItem('authUser')
+    sessionStorage.removeItem('authUser')
     setMode('signin')
+    setNavOpen(false)
   }
 
   const handleProfileUpdate = (nextUser) => {
@@ -42,17 +53,28 @@ function App() {
 
   return (
     <div className="home-page-shell">
-      <header className="home-navbar">
+      <header className={`home-navbar ${navOpen ? 'open' : ''}`}>
         <div className="nav-brand">
           <BmpLogo className="nav-logo" />
           <strong>BMP.tn</strong>
         </div>
-        <nav className="nav-links" aria-label="Main navigation">
+        <button
+          type="button"
+          className="nav-burger"
+          aria-label={navOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={navOpen}
+          onClick={() => setNavOpen((prev) => !prev)}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+        <nav className={`nav-links ${navOpen ? 'show' : ''}`} aria-label="Main navigation">
           <a href="#about">About</a>
           <a href="#auth">Access</a>
           <a href="#contact">Contact</a>
         </nav>
-        <div className="nav-actions">
+        <div className={`nav-actions ${navOpen ? 'show' : ''}`}>
           <button type="button" className="secondary-btn nav-btn" onClick={() => setMode('signin')}>
             Sign In
           </button>
