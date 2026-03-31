@@ -6,6 +6,7 @@ import { downloadDataUrlFile } from '../utils/fileHelpers'
 
 const MENU_ITEMS = [
   { key: 'overview', label: 'Overview', subtitle: 'Snapshot' },
+  { key: 'offers', label: 'Offers', subtitle: 'Apply to projects' },
   { key: 'invitations', label: 'Invitations', subtitle: 'Respond to experts' },
   { key: 'marketplace', label: 'Marketplace', subtitle: 'Manufacturer docs' },
   { key: 'settings', label: 'Settings', subtitle: 'Profile & security' },
@@ -14,6 +15,7 @@ const MENU_ITEMS = [
 const JOB_OPTIONS = ['Painter', 'Mason', 'Electrician', 'Plumber', 'Carpenter', 'Metalworker', 'Laborer']
 
 function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
+  const userId = user?.id || user?._id || ''
   const [activeView, setActiveView] = useState('overview')
   const [profile, setProfile] = useState(user)
   const [name, setName] = useState(user?.name || '')
@@ -26,27 +28,96 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
   const [savingImage, setSavingImage] = useState(false)
   const [savingPassword, setSavingPassword] = useState(false)
   const [savingJob, setSavingJob] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
   const [notification, setNotification] = useState({ show: false, type: '', text: '' })
   const [invitations, setInvitations] = useState([])
   const [loadingInvitations, setLoadingInvitations] = useState(false)
   const [respondingChantier, setRespondingChantier] = useState(null)
+  const [offers, setOffers] = useState([])
+  const [loadingOffers, setLoadingOffers] = useState(false)
+  const [applyingOfferId, setApplyingOfferId] = useState(null)
+  const [salaryByOffer, setSalaryByOffer] = useState({})
+  const [offerJobFilter, setOfferJobFilter] = useState(user?.job || '')
   const [marketplaceProducts, setMarketplaceProducts] = useState([])
   const [loadingMarketplace, setLoadingMarketplace] = useState(false)
   const [downloadingProductId, setDownloadingProductId] = useState(null)
   const [filters, setFilters] = useState({ search: '', manufacturer: '' })
   const [invitationSearch, setInvitationSearch] = useState('')
-  const [notificationCount, setNotificationCount] = useState(user?.notificationCount || 0)
-  const [notificationsOpen, setNotificationsOpen] = useState(false)
-  const [notificationsList, setNotificationsList] = useState([])
-  const [loadingNotifications, setLoadingNotifications] = useState(false)
+  const [offerSearch, setOfferSearch] = useState('')
   const [previewProduct, setPreviewProduct] = useState(null)
 
   const showNotification = useCallback((type, text) => {
     setNotification({ show: true, type, text })
   }, [])
 
-  const fetchMarketplace = useCallback(async () => {
+  useEffect(() => {
+    if (!notification.show) return undefined
+    const timer = setTimeout(() => setNotification({ show: false, type: '', text: '' }), 3000)
+    return () => clearTimeout(timer)
+  }, [notification])
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!userId) return
+      setLoadingProfile(true)
+      try {
+        const response = await api.get(`/users/${userId}/profile`)
+        const apiUser = response.data?.user
+        if (apiUser) {
+          const nextProfile = {
+            ...apiUser,
+            profileImage: typeof apiUser.profileImage === 'string' ? apiUser.profileImage : '',
+          }
+          setProfile(nextProfile)
+          setName(nextProfile.name || '')
+          setProfileImage(nextProfile.profileImage || '')
+          setJob(nextProfile.job || '')
+          if (!offerJobFilter && nextProfile.job) {
+            setOfferJobFilter(nextProfile.job)
+          }
+        }
+      } catch (error) {
+        showNotification('error', error.response?.data?.message || 'Failed to load profile')
+      } finally {
+        setLoadingProfile(false)
+      }
+    }
+
+    loadProfile()
+  }, [userId, onProfileUpdate, offerJobFilter, showNotification])
+
+  const loadInvitations = useCallback(async () => {
+    if (!userId) return
+    setLoadingInvitations(true)
+    try {
+      const response = await api.get(`/assignments/invitations/${userId}`)
+      setInvitations(response.data?.invitations || [])
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to load invitations'
+      showNotification('error', message)
+    } finally {
+      setLoadingInvitations(false)
+    }
+  }, [userId, showNotification])
+
+  const loadOffers = useCallback(async () => {
+    setLoadingOffers(true)
+    try {
+      const response = await api.get('/offers', {
+        params: {
+          status: 'open',
+          ...(offerJobFilter ? { job: offerJobFilter } : {}),
+        },
+      })
+      setOffers(response.data?.offers || [])
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to load offers'
+      showNotification('error', message)
+    } finally {
+      setLoadingOffers(false)
+    }
+  }, [offerJobFilter, showNotification])
+
+  const loadMarketplace = useCallback(async () => {
     setLoadingMarketplace(true)
     try {
       const response = await api.get('/manufacturers/products')
@@ -60,105 +131,77 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
   }, [showNotification])
 
   useEffect(() => {
-    if (!notification.show) return undefined
-    const timer = setTimeout(() => setNotification({ show: false, type: '', text: '' }), 3000)
-    return () => clearTimeout(timer)
-  }, [notification])
-
-  useEffect(() => {
-    const loadProfile = async () => {
-      if (!user?.id) return
-      setLoadingProfile(true)
-      try {
-        const response = await api.get(`/users/${user.id}/profile`)
-        const apiUser = response.data?.user
-        if (apiUser) {
-          const resolvedProfile = {
-            ...apiUser,
-            profileImage: typeof apiUser.profileImage === 'string' ? apiUser.profileImage : '',
-          }
-          setProfile(resolvedProfile)
-          setName(resolvedProfile.name || '')
-          setProfileImage(resolvedProfile.profileImage || '')
-          setJob(resolvedProfile.job || '')
-          setNotificationCount(resolvedProfile.notificationCount || 0)
-        }
-      } catch (error) {
-        const message = error.response?.data?.message || 'Failed to load profile'
-        showNotification('error', message)
-      } finally {
-        setLoadingProfile(false)
-      }
-    }
-
-    loadProfile()
-  }, [user?.id, showNotification])
-
-  useEffect(() => {
-    const loadInvitations = async () => {
-      if (!user?.id) return
-      setLoadingInvitations(true)
-      try {
-        const response = await api.get(`/assignments/invitations/${user.id}`)
-        setInvitations(response.data?.invitations || [])
-      } catch (error) {
-        const message = error.response?.data?.message || 'Failed to load invitations'
-        showNotification('error', message)
-      } finally {
-        setLoadingInvitations(false)
-      }
-    }
-
     loadInvitations()
-  }, [user?.id, showNotification])
+  }, [loadInvitations])
 
   useEffect(() => {
-    fetchMarketplace()
-  }, [fetchMarketplace])
-
-  const refreshNotifications = useCallback(async () => {
-    if (!user?.id) return
-    try {
-      const res = await api.get(`/notifications/${user.id}?unreadOnly=true`)
-      const unread = res.data?.unreadCount ?? 0
-      setNotificationCount(unread)
-      setProfile((prev) => ({ ...prev, notificationCount: unread }))
-    } catch (err) {
-      // non-blocking: ignore
-    }
-  }, [user?.id])
-
-  const loadNotificationsList = useCallback(async () => {
-    if (!user?.id) return
-    setLoadingNotifications(true)
-    try {
-      const res = await api.get(`/notifications/${user.id}`)
-      setNotificationsList(res.data?.notifications || [])
-    } catch (err) {
-      // silent fail
-    } finally {
-      setLoadingNotifications(false)
-    }
-  }, [user?.id])
+    loadOffers()
+  }, [loadOffers])
 
   useEffect(() => {
-    refreshNotifications()
-    const interval = setInterval(refreshNotifications, 20000)
-    return () => clearInterval(interval)
-  }, [refreshNotifications])
+    loadMarketplace()
+  }, [loadMarketplace])
 
-  useEffect(() => {
-    if (notificationsOpen) {
-      // Mark badge as cleared
-      setNotificationCount(0)
-      setProfile((prev) => ({ ...prev, notificationCount: 0 }))
-      loadNotificationsList()
-    }
-  }, [notificationsOpen, loadNotificationsList])
+  const pendingInvitations = invitations.filter((invite) => invite.status === 'pending').length
+  const acceptedInvitations = invitations.filter((invite) => invite.status === 'accepted').length
+  const declinedInvitations = invitations.filter((invite) => invite.status === 'declined').length
 
-  const handleNavigate = (view) => {
-    setActiveView(view)
-  }
+  const filteredInvitations = useMemo(() => {
+    const term = invitationSearch.trim().toLowerCase()
+    if (!term) return invitations
+    return invitations.filter((inv) =>
+      [inv.projectName, inv.chantierName, inv.jobTitle].some((value) => String(value || '').toLowerCase().includes(term)),
+    )
+  }, [invitationSearch, invitations])
+
+  const filteredOffers = useMemo(() => {
+    const term = offerSearch.trim().toLowerCase()
+    return offers.filter((offer) => {
+      if (!term) return true
+      return [offer.job, offer.projectId?.projectName, offer.projectId?.title, offer.projectId?.description]
+        .some((value) => String(value || '').toLowerCase().includes(term))
+    })
+  }, [offerSearch, offers])
+
+  const filteredMarketplaceProducts = useMemo(() => {
+    const searchTerm = filters.search.trim().toLowerCase()
+    return marketplaceProducts.filter((product) => {
+      const matchesManufacturer =
+        !filters.manufacturer ||
+        product.manufacturer?.name?.toLowerCase() === filters.manufacturer.toLowerCase()
+      const matchesSearch =
+        !searchTerm ||
+        product.name?.toLowerCase().includes(searchTerm) ||
+        product.description?.toLowerCase().includes(searchTerm)
+      return matchesManufacturer && matchesSearch
+    })
+  }, [filters, marketplaceProducts])
+
+  const manufacturerOptions = useMemo(() => {
+    const names = new Set()
+    marketplaceProducts.forEach((product) => {
+      if (product.manufacturer?.name) {
+        names.add(product.manufacturer.name)
+      }
+    })
+    return Array.from(names)
+  }, [marketplaceProducts])
+
+  const availableOfferJobs = useMemo(() => {
+    const jobs = new Set()
+    offers.forEach((offer) => {
+      if (offer.job) jobs.add(offer.job)
+    })
+    if (profile?.job) jobs.add(profile.job)
+    return Array.from(jobs)
+  }, [offers, profile?.job])
+
+  const overviewStats = [
+    { label: 'Offers', value: offers.length, detail: offerJobFilter ? `Filtered by ${offerJobFilter}` : 'Open now' },
+    { label: 'Invitations', value: invitations.length, detail: `${pendingInvitations} pending` },
+    { label: 'Marketplace docs', value: marketplaceProducts.length, detail: `${filteredMarketplaceProducts.length} showing` },
+    { label: 'Trade', value: profile?.job || 'Unset', detail: 'Your artisan role' },
+  ]
 
   const handleSaveName = async (event) => {
     event.preventDefault()
@@ -169,16 +212,19 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
 
     setSavingName(true)
     try {
-      const response = await api.put(`/users/${user.id}/profile`, { name: name.trim() })
-      const nextProfile = response.data?.user || { ...profile, name: name.trim() }
+      const response = await api.put(`/users/${userId}/profile`, { name: name.trim() })
+      const nextProfile = {
+        ...profile,
+        ...(response.data?.user || {}),
+      }
       setProfile(nextProfile)
+      setName(nextProfile.name || '')
       if (onProfileUpdate) {
         onProfileUpdate(nextProfile)
       }
       showNotification('success', response.data?.message || 'Profile updated')
     } catch (error) {
-      const message = error.response?.data?.message || 'Failed to update profile'
-      showNotification('error', message)
+      showNotification('error', error.response?.data?.message || 'Failed to update profile')
     } finally {
       setSavingName(false)
     }
@@ -203,8 +249,7 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
 
     const reader = new FileReader()
     reader.onload = () => {
-      const result = typeof reader.result === 'string' ? reader.result : ''
-      setProfileImage(result)
+      setProfileImage(typeof reader.result === 'string' ? reader.result : '')
     }
     reader.onerror = () => {
       showNotification('error', 'Failed to read selected image')
@@ -215,60 +260,82 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
   const handleSaveImage = async () => {
     setSavingImage(true)
     try {
-      const safeName = (name || profile?.name || '').trim()
-      const response = await api.put(`/users/${user.id}/profile`, {
-        name: safeName,
+      const response = await api.put(`/users/${userId}/profile`, {
+        name: (name || profile?.name || '').trim(),
         profileImage,
       })
-      const apiUser = response.data?.user || {}
       const nextProfile = {
         ...profile,
-        ...apiUser,
-        profileImage: typeof apiUser.profileImage === 'string' ? apiUser.profileImage : profileImage,
+        ...(response.data?.user || {}),
+        profileImage,
       }
       setProfile(nextProfile)
-      setProfileImage(nextProfile.profileImage || '')
       if (onProfileUpdate) {
         onProfileUpdate(nextProfile)
       }
       showNotification('success', response.data?.message || 'Profile image updated')
     } catch (error) {
-      const message = error.response?.data?.message || 'Failed to update image'
-      showNotification('error', message)
+      showNotification('error', error.response?.data?.message || 'Failed to update image')
     } finally {
       setSavingImage(false)
     }
   }
 
   const handleSaveJob = async (event) => {
-    if (event) {
-      event.preventDefault()
-    }
+    event.preventDefault()
     if (!job) {
-      showNotification('error', 'Please select your role/trade')
+      showNotification('error', 'Please select your trade')
       return
     }
+
     setSavingJob(true)
     try {
-      await api.put(`/users/${user.id}/profile`, {
+      const response = await api.put(`/users/${userId}/profile`, {
         name: (name || profile?.name || '').trim(),
         job,
       })
-
-      const refreshed = await api.get(`/users/${user.id}/profile`)
-      const apiUser = refreshed.data?.user || {}
-      const nextProfile = { ...profile, ...apiUser, job: apiUser.job || job }
+      const nextProfile = {
+        ...profile,
+        ...(response.data?.user || {}),
+        job,
+      }
       setProfile(nextProfile)
-      setJob(nextProfile.job || '')
+      setOfferJobFilter(job)
       if (onProfileUpdate) {
         onProfileUpdate(nextProfile)
       }
       showNotification('success', 'Trade saved')
     } catch (error) {
-      const message = error.response?.data?.message || 'Failed to update role'
-      showNotification('error', message)
+      showNotification('error', error.response?.data?.message || 'Failed to update trade')
     } finally {
       setSavingJob(false)
+    }
+  }
+
+  const handleChangePassword = async (event) => {
+    event.preventDefault()
+    if (!currentPassword || !newPassword) {
+      showNotification('error', 'Current and new password are required')
+      return
+    }
+    if (newPassword.length < 8) {
+      showNotification('error', 'New password must be at least 8 characters')
+      return
+    }
+
+    setSavingPassword(true)
+    try {
+      const response = await api.put(`/users/${userId}/password`, {
+        currentPassword,
+        newPassword,
+      })
+      showNotification('success', response.data?.message || 'Password updated')
+      setCurrentPassword('')
+      setNewPassword('')
+    } catch (error) {
+      showNotification('error', error.response?.data?.message || 'Failed to update password')
+    } finally {
+      setSavingPassword(false)
     }
   }
 
@@ -277,7 +344,7 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
     setRespondingChantier(chantierId)
     try {
       await api.post('/assignments/respond', {
-        artisanId: user.id,
+        artisanId: userId,
         chantierId,
         response: responseText,
       })
@@ -288,12 +355,34 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
             : inv,
         ),
       )
-      showNotification('success', `Assignment ${responseText}`)
+      showNotification('success', `Invitation ${responseText}`)
     } catch (error) {
-      const message = error.response?.data?.message || 'Failed to send response'
-      showNotification('error', message)
+      showNotification('error', error.response?.data?.message || 'Failed to send response')
     } finally {
       setRespondingChantier(null)
+    }
+  }
+
+  const handleApply = async (offerId) => {
+    const salary = Number(salaryByOffer[offerId])
+    if (Number.isNaN(salary) || salary < 0) {
+      showNotification('error', 'Enter a valid daily salary before applying')
+      return
+    }
+
+    setApplyingOfferId(offerId)
+    try {
+      await api.post(`/offers/${offerId}/apply`, {
+        artisanId: userId,
+        proposedDailySalary: salary,
+      })
+      setOffers((current) => current.filter((offer) => offer._id !== offerId))
+      setSalaryByOffer((current) => ({ ...current, [offerId]: '' }))
+      showNotification('success', 'Application sent successfully')
+    } catch (error) {
+      showNotification('error', error.response?.data?.message || 'Failed to apply to offer')
+    } finally {
+      setApplyingOfferId(null)
     }
   }
 
@@ -316,109 +405,6 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
     }
   }
 
-  const openProductPreview = (product) => {
-    setPreviewProduct(product)
-  }
-
-  const closeProductPreview = () => {
-    setPreviewProduct(null)
-  }
-
-  const handleChangePassword = async (event) => {
-    event.preventDefault()
-    if (!currentPassword || !newPassword) {
-      showNotification('error', 'Current and new password are required')
-      return
-    }
-    if (newPassword.length < 8) {
-      showNotification('error', 'New password must be at least 8 characters')
-      return
-    }
-
-    setSavingPassword(true)
-    try {
-      const response = await api.put(`/users/${user.id}/password`, {
-        currentPassword,
-        newPassword,
-      })
-      showNotification('success', response.data?.message || 'Password updated')
-      setCurrentPassword('')
-      setNewPassword('')
-    } catch (error) {
-      const message = error.response?.data?.message || 'Failed to update password'
-      showNotification('error', message)
-    } finally {
-      setSavingPassword(false)
-    }
-  }
-
-  const pendingInvitations = invitations.filter((invite) => invite.status === 'pending').length
-  const acceptedInvitations = invitations.filter((invite) => invite.status === 'accepted').length
-  const declinedInvitations = invitations.filter((invite) => invite.status === 'declined').length
-
-  const filteredMarketplaceProducts = useMemo(() => {
-    const searchTerm = filters.search.trim().toLowerCase()
-    return marketplaceProducts.filter((product) => {
-      const matchesManufacturer =
-        !filters.manufacturer ||
-        product.manufacturer?.name?.toLowerCase() === filters.manufacturer.toLowerCase()
-      const matchesSearch =
-        !searchTerm ||
-        product.name.toLowerCase().includes(searchTerm) ||
-        product.description?.toLowerCase().includes(searchTerm)
-      return matchesManufacturer && matchesSearch
-    })
-  }, [filters, marketplaceProducts])
-
-  const filteredInvitations = useMemo(() => {
-    const term = invitationSearch.trim().toLowerCase()
-    if (!term) return invitations
-    return invitations.filter((inv) => {
-      return (
-        inv.projectName?.toLowerCase().includes(term) ||
-        inv.chantierName?.toLowerCase().includes(term) ||
-        inv.jobTitle?.toLowerCase().includes(term)
-      )
-    })
-  }, [invitationSearch, invitations])
-
-  const manufacturerOptions = useMemo(() => {
-    const names = new Set()
-    marketplaceProducts.forEach((product) => {
-      if (product.manufacturer?.name) {
-        names.add(product.manufacturer.name)
-      }
-    })
-    return Array.from(names)
-  }, [marketplaceProducts])
-
-  const overviewStats = [
-    {
-      label: 'Invitations',
-      value: invitations.length || 0,
-      detail: `${pendingInvitations} pending`,
-    },
-    {
-      label: 'Accepted',
-      value: acceptedInvitations,
-      detail: `${declinedInvitations} declined`,
-    },
-    {
-      label: 'Marketplace docs',
-      value: marketplaceProducts.length,
-      detail: `${filteredMarketplaceProducts.length} showing`,
-    },
-    {
-      label: 'Unread',
-      value: notificationCount,
-      detail: 'Notifications',
-    },
-  ]
-
-  const handleFilterChange = (field, value) => {
-    setFilters((prev) => ({ ...prev, [field]: value }))
-  }
-
   return (
     <div className="artisan-profile">
       <div
@@ -430,13 +416,11 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
       </div>
 
       <DashboardLayout
-        user={{ ...profile, notificationCount }}
+        user={profile}
         menuItems={MENU_ITEMS}
         activeView={activeView}
-        onNavigate={handleNavigate}
+        onNavigate={setActiveView}
         onLogout={onLogout}
-        onToggleNotifications={() => setNotificationsOpen((open) => !open)}
-        notificationsOpen={notificationsOpen}
       >
         {activeView === 'overview' && (
           <div className="artisan-dashboard">
@@ -444,13 +428,13 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
               <input
                 className="dash-search"
                 type="search"
-                placeholder="Search invitations, jobs or products..."
-                value={invitationSearch}
-                onChange={(e) => setInvitationSearch(e.target.value)}
+                placeholder="Search offers, invitations, or products..."
+                value={offerSearch}
+                onChange={(event) => setOfferSearch(event.target.value)}
               />
               <div className="dash-actions">
-                <button type="button" className="secondary-btn" onClick={() => setActiveView('invitations')}>
-                  Invitations
+                <button type="button" className="secondary-btn" onClick={() => setActiveView('offers')}>
+                  Offers
                 </button>
                 <button type="button" className="secondary-btn" onClick={() => setActiveView('marketplace')}>
                   Marketplace
@@ -472,7 +456,36 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
             <div className="cards-grid">
               <section className="card-panel">
                 <div className="panel-header">
-                  <h3>Recent Invitations</h3>
+                  <h3>Open offers</h3>
+                  <button type="button" className="text-btn" onClick={() => setActiveView('offers')}>
+                    View all
+                  </button>
+                </div>
+                <div className="invitation-list">
+                  {filteredOffers.slice(0, 4).map((offer) => (
+                    <article key={offer._id} className="invitation-card">
+                      <div className="inv-meta">
+                        <div>
+                          <p className="inv-title">{offer.projectId?.projectName || offer.projectId?.title || 'Project'}</p>
+                          <p className="inv-subtitle">{offer.job}</p>
+                          <p className="inv-desc">
+                            {(offer.projectId?.budget || 0).toLocaleString()} TND budget · {offer.availableSlots} slots left
+                          </p>
+                          <div className="inv-tags">
+                            <span className="badge">{offer.job}</span>
+                            <span className={`pill status-${offer.status}`}>{offer.status}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                  {!offers.length ? <p className="subtitle">No open offers right now.</p> : null}
+                </div>
+              </section>
+
+              <section className="card-panel">
+                <div className="panel-header">
+                  <h3>Recent invitations</h3>
                   <button type="button" className="text-btn" onClick={() => setActiveView('invitations')}>
                     View all
                   </button>
@@ -484,29 +497,11 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                         <div>
                           <p className="inv-title">{invite.projectName || 'Project'}</p>
                           <p className="inv-subtitle">{invite.chantierName}</p>
-                          <p className="inv-desc">{invite.chantierDescription}</p>
+                          <p className="inv-desc">{invite.jobTitle}</p>
                           <div className="inv-tags">
                             <span className="badge">{invite.jobTitle}</span>
                             <span className={`pill status-${invite.status}`}>{invite.status}</span>
                           </div>
-                        </div>
-                        <div className="inv-actions">
-                          <button
-                            type="button"
-                            className="secondary-btn mini-btn"
-                            disabled={invite.status !== 'pending' || respondingChantier === invite.chantierId}
-                            onClick={() => handleAssignmentResponse(invite.chantierId, 'declined')}
-                          >
-                            Decline
-                          </button>
-                          <button
-                            type="button"
-                            className="mini-btn"
-                            disabled={invite.status !== 'pending' || respondingChantier === invite.chantierId}
-                            onClick={() => handleAssignmentResponse(invite.chantierId, 'accepted')}
-                          >
-                            {respondingChantier === invite.chantierId ? 'Sending...' : 'Accept'}
-                          </button>
                         </div>
                       </div>
                     </article>
@@ -517,7 +512,7 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
 
               <section className="card-panel">
                 <div className="panel-header">
-                  <h3>Marketplace Spotlight</h3>
+                  <h3>Marketplace spotlight</h3>
                   <button type="button" className="text-btn" onClick={() => setActiveView('marketplace')}>
                     Browse
                   </button>
@@ -528,7 +523,7 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                       <div className="product-meta">
                         <h4>{product.name}</h4>
                         <p className="subtitle small">{product.manufacturer?.name || 'Manufacturer'}</p>
-                        <p className="product-desc">{product.description || '—'}</p>
+                        <p className="product-desc">{product.description || '-'}</p>
                       </div>
                       <button
                         type="button"
@@ -536,7 +531,7 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                         disabled={downloadingProductId === product.id}
                         onClick={() => handleDownloadMarketplaceDocument(product.id, product.documentName)}
                       >
-                        {downloadingProductId === product.id ? 'Downloading...' : 'View Details'}
+                        {downloadingProductId === product.id ? 'Downloading...' : 'Download PDF'}
                       </button>
                     </article>
                   ))}
@@ -547,18 +542,86 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
           </div>
         )}
 
+        {activeView === 'offers' && (
+          <section className="dashboard-card">
+            <div className="section-header">
+              <h3>Open offers</h3>
+              <p className="subtitle">Apply to expert job offers with your proposed daily salary.</p>
+            </div>
+            <div className="dash-filter-row">
+              <input
+                type="search"
+                placeholder="Search offers..."
+                value={offerSearch}
+                onChange={(event) => setOfferSearch(event.target.value)}
+              />
+              <select value={offerJobFilter} onChange={(event) => setOfferJobFilter(event.target.value)}>
+                <option value="">All trades</option>
+                {availableOfferJobs.map((offerJob) => (
+                  <option key={offerJob} value={offerJob}>
+                    {offerJob}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {loadingOffers ? (
+              <p className="subtitle">Loading offers...</p>
+            ) : filteredOffers.length ? (
+              <div className="offer-grid">
+                {filteredOffers.map((offer) => (
+                  <article key={offer._id} className="offer-card">
+                    <div className="offer-card-head">
+                      <div>
+                        <h4>{offer.job}</h4>
+                        <p className="subtitle small">{offer.projectId?.projectName || offer.projectId?.title || 'Project'}</p>
+                      </div>
+                      <span className="status-pill status-open">{offer.availableSlots} open</span>
+                    </div>
+                    <p className="subtitle">
+                      Budget: {Number(offer.projectId?.estimatedBudget || offer.projectId?.budget || 0).toLocaleString()} TND
+                      {offer.projectId?.endDate || offer.projectId?.deadline
+                        ? ` · Deadline ${new Date(offer.projectId?.endDate || offer.projectId?.deadline).toLocaleDateString()}`
+                        : ''}
+                    </p>
+                    <label>
+                      Proposed daily salary
+                      <input
+                        type="number"
+                        min="0"
+                        value={salaryByOffer[offer._id] || ''}
+                        onChange={(event) =>
+                          setSalaryByOffer((current) => ({
+                            ...current,
+                            [offer._id]: event.target.value,
+                          }))
+                        }
+                        placeholder="80"
+                      />
+                    </label>
+                    <button type="button" disabled={applyingOfferId === offer._id} onClick={() => handleApply(offer._id)}>
+                      {applyingOfferId === offer._id ? 'Applying...' : 'Apply now'}
+                    </button>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="subtitle">No offers match your filters right now.</p>
+            )}
+          </section>
+        )}
+
         {activeView === 'invitations' && (
           <section className="dashboard-card">
             <div className="section-header">
               <h3>Chantier invitations</h3>
-              <p className="subtitle">Respond to expert requests for new work.</p>
+              <p className="subtitle">Respond to expert requests for chantier assignments.</p>
             </div>
             <div className="dash-filter-row">
               <input
                 type="search"
                 placeholder="Search invitations..."
                 value={invitationSearch}
-                onChange={(e) => setInvitationSearch(e.target.value)}
+                onChange={(event) => setInvitationSearch(event.target.value)}
               />
             </div>
             {loadingInvitations ? (
@@ -600,7 +663,11 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                 ))}
               </div>
             ) : (
-              <p className="subtitle">You have no pending invitations right now.</p>
+              <p className="subtitle">
+                {acceptedInvitations || declinedInvitations
+                  ? 'No invitations match this search.'
+                  : 'You have no invitations right now.'}
+              </p>
             )}
           </section>
         )}
@@ -613,28 +680,19 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                 className="market-search"
                 placeholder="Search products..."
                 value={filters.search}
-                onChange={(event) => handleFilterChange('search', event.target.value)}
+                onChange={(event) => setFilters((prev) => ({ ...prev, search: event.target.value }))}
               />
               <div className="market-filters">
                 <select
                   value={filters.manufacturer}
-                  onChange={(event) => handleFilterChange('manufacturer', event.target.value)}
+                  onChange={(event) => setFilters((prev) => ({ ...prev, manufacturer: event.target.value }))}
                 >
-                  <option value="">All Categories</option>
-                  {manufacturerOptions.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
+                  <option value="">All manufacturers</option>
+                  {manufacturerOptions.map((manufacturerName) => (
+                    <option key={manufacturerName} value={manufacturerName}>
+                      {manufacturerName}
                     </option>
                   ))}
-                </select>
-                <select disabled>
-                  <option>Location</option>
-                </select>
-                <select disabled>
-                  <option>Price Range</option>
-                </select>
-                <select disabled>
-                  <option>Sort: Newest</option>
                 </select>
               </div>
             </div>
@@ -647,12 +705,8 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                   filteredMarketplaceProducts.map((product) => (
                     <article key={product.id} className="market-card">
                       <div className="market-card-image">
-                        {product.image || product.imageUrl || product.thumbnail ? (
-                          <img
-                            src={product.image || product.imageUrl || product.thumbnail}
-                            alt={product.name}
-                            loading="lazy"
-                          />
+                        {product.image ? (
+                          <img src={product.image} alt={product.name} loading="lazy" />
                         ) : (
                           <div className="market-img-fallback">{product.name?.charAt(0) || 'P'}</div>
                         )}
@@ -662,7 +716,6 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                         <p className="market-subtitle">{product.manufacturer?.name || 'Manufacturer'}</p>
                         <p className="market-desc">{product.description || 'No description provided.'}</p>
                         <div className="market-meta">
-                          <span className="meta-chip">{product.manufacturer?.city || 'Location'}</span>
                           <span className="meta-chip">{product.documentName || 'PDF'}</span>
                           {product.price ? (
                             <span className="meta-chip price-chip">
@@ -672,12 +725,8 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                         </div>
                       </div>
                       <div className="market-card-actions">
-                        <button
-                          type="button"
-                          className="mini-btn"
-                          onClick={() => openProductPreview(product)}
-                        >
-                          View Details
+                        <button type="button" className="mini-btn" onClick={() => setPreviewProduct(product)}>
+                          View details
                         </button>
                       </div>
                     </article>
@@ -694,47 +743,14 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
           <section className="dashboard-card">
             <div className="section-header">
               <h3>Profile settings</h3>
-              <p className="subtitle">Edit your information securely.</p>
+              <p className="subtitle">Manage your artisan profile and account security.</p>
             </div>
-            {requireTrade ? (
-              <div className="notice warning">
-                <strong>First-time setup:</strong> choose your trade to continue. Profile photo is optional.
-              </div>
-            ) : null}
+            {loadingProfile ? <p className="subtitle">Refreshing profile...</p> : null}
+
             <div className="settings-content">
-              <p>
-                <strong>Name:</strong> {profile?.name || '—'}
-              </p>
-              <p>
-                <strong>Email:</strong> {profile?.email || '—'}
-              </p>
-              <p>
-                <strong>Role:</strong> Artisan
-              </p>
-              <p>
-                <strong>Trade:</strong> {profile?.job || 'Not set'}
-              </p>
-              <div className="quick-actions">
-                <button type="button" className="secondary-btn" onClick={() => setSettingsOpen(true)}>
-                  <SettingsIcon className="icon tiny" />
-                  Manage profile
-                </button>
-                <button type="button" className="secondary-btn" onClick={() => setActiveView('overview')}>
-                  Back to overview
-                </button>
-              </div>
-            </div>
-          </section>
-        )}
-      </DashboardLayout>
-      {settingsOpen ? (
-        <div className="settings-overlay" role="dialog" aria-modal="true" aria-label="Profile settings">
-          <section className="settings-modal">
-            <div className="settings-header">
-              <h3>Profile Settings</h3>
-              <button type="button" className="text-btn close-btn" onClick={() => setSettingsOpen(false)}>
-                Close
-              </button>
+              <p><strong>Email:</strong> {profile?.email || '-'}</p>
+              <p><strong>Trade:</strong> {profile?.job || 'Not set'}</p>
+              <p><strong>Artisan ID:</strong> {userId || 'Missing'}</p>
             </div>
 
             <form onSubmit={handleSaveName} noValidate>
@@ -754,7 +770,7 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
               <label>
                 <span className="label-with-icon">
                   <UserIcon className="icon tiny" />
-                  Profile Image
+                  Profile image
                 </span>
                 <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handleImagePick} />
               </label>
@@ -763,15 +779,9 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
 
               <div className="image-actions">
                 <button type="button" onClick={handleSaveImage} disabled={savingImage}>
-                  <UserIcon className="icon tiny" />
                   {savingImage ? 'Uploading...' : 'Save image'}
                 </button>
-                <button
-                  type="button"
-                  className="secondary-btn"
-                  onClick={() => setProfileImage('')}
-                  disabled={savingImage}
-                >
+                <button type="button" className="secondary-btn" onClick={() => setProfileImage('')} disabled={savingImage}>
                   Remove selected
                 </button>
               </div>
@@ -780,15 +790,10 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
             <form onSubmit={handleSaveJob} noValidate>
               <label>
                 <span className="label-with-icon">
-                  <UserIcon className="icon tiny" />
-                  Your trade / role
+                  <SettingsIcon className="icon tiny" />
+                  Your trade
                 </span>
-                <select
-                  name="trade"
-                  id="settings-trade"
-                  value={job}
-                  onChange={(event) => setJob(event.target.value)}
-                >
+                <select value={job} onChange={(event) => setJob(event.target.value)}>
                   <option value="">Select a trade</option>
                   {JOB_OPTIONS.map((option) => (
                     <option key={option} value={option}>
@@ -806,7 +811,7 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
               <label>
                 <span className="label-with-icon">
                   <LockIcon className="icon tiny" />
-                  Current Password
+                  Current password
                 </span>
                 <input
                   type="password"
@@ -818,7 +823,7 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
               <label>
                 <span className="label-with-icon">
                   <LockIcon className="icon tiny" />
-                  New Password
+                  New password
                 </span>
                 <input
                   type="password"
@@ -828,13 +833,12 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                 />
               </label>
               <button type="submit" disabled={savingPassword}>
-                <LockIcon className="icon tiny" />
                 {savingPassword ? 'Updating...' : 'Change password'}
               </button>
             </form>
           </section>
-        </div>
-      ) : null}
+        )}
+      </DashboardLayout>
 
       {previewProduct ? (
         <div className="settings-overlay" role="dialog" aria-modal="true" aria-label="Product details">
@@ -857,11 +861,11 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                 <p className="subtitle">{previewProduct.description || 'No description provided.'}</p>
                 <p>
                   <strong>Manufacturer: </strong>
-                  {previewProduct.manufacturer?.name || '—'}
+                  {previewProduct.manufacturer?.name || '-'}
                 </p>
                 <p>
                   <strong>Price: </strong>
-                  {previewProduct.price ? `${previewProduct.price} ${previewProduct.priceUnit || 'TND'}` : '—'}
+                  {previewProduct.price ? `${previewProduct.price} ${previewProduct.priceUnit || 'TND'}` : '-'}
                 </p>
                 <p className="subtitle small">Document: {previewProduct.documentName}</p>
                 <div className="product-preview-actions">
@@ -882,39 +886,8 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
           </section>
         </div>
       ) : null}
-
-      {notificationsOpen ? (
-        <div className="notifications-sider" role="dialog" aria-modal="true" aria-label="Notifications panel">
-          <div className="notifications-sider-header">
-            <h3>Notifications</h3>
-            <button type="button" className="text-btn close-btn" onClick={() => setNotificationsOpen(false)}>
-              Close
-            </button>
-          </div>
-          <div className="notifications-sider-body">
-            {loadingNotifications ? (
-              <p className="subtitle">Loading...</p>
-            ) : notificationsList.length ? (
-              <ul className="notifications-list">
-                {notificationsList.map((n) => (
-                  <li key={n._id || `${n.type}-${n.title}`}>
-                    <div className="notif-title">{n.title || n.type || 'Notification'}</div>
-                    <div className="notif-message">{n.message || ''}</div>
-                    <div className="notif-meta">
-                      <span>{new Date(n.createdAt || n.date || Date.now()).toLocaleString()}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="subtitle">No notifications.</p>
-            )}
-          </div>
-        </div>
-      ) : null}
     </div>
   )
 }
 
 export default ArtisanProfile
-

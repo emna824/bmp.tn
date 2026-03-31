@@ -12,13 +12,23 @@ const expertRoutes = require('./routes/expertRoutes');
 const artisanRoutes = require('./routes/artisanRoutes');
 const manufacturerRoutes = require('./routes/manufacturerRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const projectRoutes = require('./routes/projectRoutes');
+const offerRoutes = require('./routes/offerRoutes');
+const applicationRoutes = require('./routes/applicationRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Allow multiple origins (dev previews, localhost, deployed frontends)
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:4173').split(',').map((o) => o.trim());
 app.use(
     cors({
-        origin: 'http://localhost:5173',
+        origin: (origin, callback) => {
+          if (!origin || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+          }
+          return callback(new Error(`Not allowed by CORS: ${origin}`));
+        },
     })
 );
 const JSON_LIMIT = '15mb';
@@ -43,6 +53,9 @@ app.use('/api/experts', expertRoutes);
 app.use('/api/assignments', artisanRoutes);
 app.use('/api/manufacturers', manufacturerRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/offers', offerRoutes);
+app.use('/api/applications', applicationRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);

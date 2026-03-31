@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { BellIcon, BmpLogo, CloseIcon, LogoutIcon, MarketplaceIcon, MenuIcon, SettingsIcon } from './Icons'
+import { BmpLogo, LogoutIcon, MenuIcon, SettingsIcon } from './Icons'
 
 function DashboardLayout({
   user,
@@ -7,8 +7,6 @@ function DashboardLayout({
   activeView,
   onNavigate,
   onLogout,
-  onToggleNotifications,
-  notificationsOpen = false,
   children,
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
@@ -37,12 +35,6 @@ function DashboardLayout({
     handleNavigate('settings')
   }
 
-  const handleMarketplace = () => {
-    handleNavigate('marketplace')
-  }
-
-  const notificationCount = user?.notificationCount ?? user?.notifications ?? 0
-
   const shellClass = `dashboard-shell ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`
 
   return (
@@ -67,7 +59,12 @@ function DashboardLayout({
             </button>
           ))}
         </nav>
-        
+        <div className="sidebar-footer">
+          <button type="button" className="sidebar-logout" onClick={handleLogout}>
+            <LogoutIcon className="icon tiny" />
+            Log out
+          </button>
+        </div>
       </aside>
       <div className="dashboard-main">
         <header className="dashboard-header">
@@ -85,27 +82,6 @@ function DashboardLayout({
             </div>
           </div>
           <div className="header-actions">
-            <button
-              type="button"
-              className="header-icon-btn"
-              onClick={handleMarketplace}
-              aria-label="Go to marketplace"
-            >
-              <MarketplaceIcon className="icon" />
-              
-            </button>
-            <button
-              type="button"
-              className={`header-icon-btn has-badge ${notificationsOpen ? 'active' : ''}`}
-              aria-label={notificationCount ? `${notificationCount} notifications` : 'Notifications'}
-              onClick={() => onToggleNotifications && onToggleNotifications()}
-            >
-              <BellIcon className="icon" />
-              
-              <span className={`header-badge ${notificationCount ? 'show' : ''}`}>
-                {notificationCount > 9 ? '9+' : notificationCount}
-              </span>
-            </button>
             <div className={`header-user ${isUserMenuOpen ? 'open' : ''}`}>
               <button
                 type="button"

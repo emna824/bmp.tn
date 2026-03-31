@@ -2,7 +2,7 @@ import { useState } from 'react'
 import SignInForm from './components/SignInForm'
 import SignUpForm from './components/SignUpForm'
 import ArtisanProfile from './components/ArtisanProfile'
-import ExpertDashboard from './components/ExpertDashboard'
+import ExpertProfile from './components/ExpertProfile'
 import ManufacturerProfile from './components/ManufacturerProfile'
 import { BmpLogo, LockIcon, UserIcon } from './components/Icons'
 import './App.css'
@@ -45,7 +45,7 @@ function App() {
     return <ArtisanProfile user={user} onLogout={handleLogout} onProfileUpdate={handleProfileUpdate} />
   }
   if (user?.role === 'expert') {
-    return <ExpertDashboard user={user} onLogout={handleLogout} />
+    return <ExpertProfile user={user} onLogout={handleLogout} />
   }
   if (user?.role === 'manufacturer') {
     return <ManufacturerProfile user={user} onLogout={handleLogout} />

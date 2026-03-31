@@ -1,580 +1,415 @@
 import { useEffect, useMemo, useState } from 'react'
 import api from '../api'
 import DashboardLayout from './DashboardLayout'
-
-const JOB_OPTIONS = ['Painter', 'Mason', 'Electrician', 'Plumber', 'Carpenter']
+import CreateProjectForm from './CreateProjectForm'
 
 const MENU_ITEMS = [
-  { key: 'overview', label: 'Overview', subtitle: 'Snapshot' },
-  { key: 'actions', label: 'Actions', subtitle: 'Projects & journals' },
-  { key: 'tracking', label: 'Tracking', subtitle: 'Project overview' },
-  { key: 'artisans', label: 'Artisans', subtitle: 'Invite professionals' },
+  { key: 'overview', label: 'Overview', subtitle: 'Recruitment snapshot' },
+  { key: 'create', label: 'Create Project', subtitle: 'Project + chantier' },
+  { key: 'projects', label: 'Projects', subtitle: 'Offers and applications' },
+  { key: 'settings', label: 'Settings', subtitle: 'Account summary' },
 ]
 
+function normalizeProject(project) {
+  return {
+    ...project,
+    id: project?._id || project?.id,
+    title: project?.projectName || project?.title || project?.name || 'Untitled project',
+    budget: Number(project?.estimatedBudget ?? project?.budget ?? project?.totalBudget ?? 0),
+    category: project?.category || '',
+    startDate: project?.startDate || '',
+    endDate: project?.endDate || project?.deadline || '',
+    job: project?.job || project?.teamRequirements?.[0]?.job || '',
+    dailySalary: Number(project?.dailySalary ?? 0),
+    location: project?.location || { address: '', latitude: null, longitude: null },
+    teamRequirements: Array.isArray(project?.teamRequirements) ? project.teamRequirements : [],
+  }
+}
+
 function ExpertProfile({ user, onLogout }) {
+  const userId = user?.id || user?._id || ''
   const [activeView, setActiveView] = useState('overview')
   const [projects, setProjects] = useState([])
-  const [artisans, setArtisans] = useState([])
-  const [toast, setToast] = useState({ show: false, type: '', text: '' })
-  const [notificationCount, setNotificationCount] = useState(user?.notificationCount || 0)
-  const [projectForm, setProjectForm] = useState({ name: '', description: '', totalBudget: '' })
-  const [chantierForm, setChantierForm] = useState({
-    projectId: '',
-    name: '',
-    description: '',
-    jobAssignments: {},
-  })
-  const [journalForm, setJournalForm] = useState({
-    projectId: '',
-    chantierId: '',
-    activityDate: new Date().toISOString().slice(0, 10),
-    activitiesText: '',
-    artisanRecipientIds: [],
-  })
+  const [offersByProject, setOffersByProject] = useState({})
+  const [applicationsByProject, setApplicationsByProject] = useState({})
+  const [loadingProjects, setLoadingProjects] = useState(false)
+  const [reviewingId, setReviewingId] = useState('')
+  const [selectedProjectId, setSelectedProjectId] = useState('')
+  const [notification, setNotification] = useState({ type: '', text: '' })
 
-  const assignments = useMemo(
-    () =>
-      Object.entries(chantierForm.jobAssignments || {})
-        .filter(([, entry]) => entry?.selected)
-        .map(([artisanId, entry]) => ({
-          artisanId,
-          jobTitle: entry.jobTitle || JOB_OPTIONS[0],
-        })),
-    [chantierForm.jobAssignments],
-  )
-
-  const overviewStats = useMemo(() => {
-    const chantiers = projects.flatMap((p) => p.chantiers || [])
-    const totalBudget = projects.reduce((sum, p) => sum + Number(p.totalBudget || 0), 0)
-    return [
-      { label: 'Projects', value: projects.length, detail: `${chantiers.length} chantiers` },
-      { label: 'Artisans', value: artisans.length, detail: 'Invitable network' },
-      { label: 'Budget', value: `$${totalBudget.toLocaleString()}`, detail: 'Total planned' },
-      { label: 'Notifications', value: notificationCount, detail: 'Unread' },
-    ]
-  }, [projects, artisans.length, notificationCount])
-
-  const topProjects = useMemo(
-    () =>
-      projects
-        .slice(0, 4)
-        .map((p) => ({
-          id: p._id,
-          name: p.name,
-          budget: Number(p.totalBudget || 0).toLocaleString(),
-          chantiers: (p.chantiers || []).length,
-          progress: p.progressPercentage ?? 0,
-        })),
-    [projects],
-  )
-
-  const topChantiers = useMemo(() => {
-    const chantiers = projects.flatMap((p) =>
-      (p.chantiers || []).map((c) => ({
-        ...c,
-        projectName: p.name,
-      })),
-    )
-    return chantiers.slice(0, 5)
-  }, [projects])
+  const showNotification = (type, text) => {
+    setNotification({ type, text })
+  }
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [overviewRes, artisansRes, notifRes] = await Promise.all([
-          api.get(`/experts/overview/${user.id}`),
-          api.get('/experts/artisans'),
-          api.get(`/notifications/${user.id}?unreadOnly=true`),
-        ])
-        setProjects(overviewRes.data?.projects || [])
-        setArtisans(artisansRes.data?.artisans || [])
-        setNotificationCount(notifRes.data?.unreadCount || 0)
-      } catch (error) {
-        setToast({ show: true, type: 'error', text: 'Failed to load dashboard' })
-      }
-    }
-    load()
-  }, [user.id])
-
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const res = await api.get(`/notifications/${user.id}?unreadOnly=true`)
-        setNotificationCount(res.data?.unreadCount || 0)
-      } catch (err) {
-        // ignore
-      }
-    }, 20000)
-    return () => clearInterval(interval)
-  }, [user.id])
-
-  useEffect(() => {
-    if (!toast.show) return undefined
-    const timer = setTimeout(() => setToast({ show: false, type: '', text: '' }), 3000)
+    if (!notification.text) return undefined
+    const timer = setTimeout(() => setNotification({ type: '', text: '' }), 3200)
     return () => clearTimeout(timer)
-  }, [toast])
+  }, [notification])
 
-  const notify = (type, text) => setToast({ show: true, type, text })
+  const loadProjects = async () => {
+    if (!userId) return
 
-  const toggleAssignment = (artisanId) => {
-    setChantierForm((prev) => {
-      const next = { ...(prev.jobAssignments || {}) }
-      const entry = next[artisanId] || { selected: false, jobTitle: JOB_OPTIONS[0] }
-      next[artisanId] = { ...entry, selected: !entry.selected }
-      return { ...prev, jobAssignments: next }
-    })
-  }
-
-  const handleCreateProject = async (event) => {
-    event.preventDefault()
-    if (!projectForm.name || !projectForm.totalBudget) {
-      return notify('error', 'Project name and budget required')
+    setLoadingProjects(true)
+    try {
+      const response = await api.get(`/projects/expert/${userId}`)
+      const nextProjects = (response.data?.projects || []).map(normalizeProject)
+      setProjects(nextProjects)
+      setSelectedProjectId((current) => {
+        if (current && nextProjects.some((project) => project.id === current)) {
+          return current
+        }
+        return nextProjects[0]?.id || ''
+      })
+    } catch (error) {
+      showNotification('error', error.response?.data?.message || 'Failed to load projects')
+    } finally {
+      setLoadingProjects(false)
     }
-    await api.post('/experts/projects', {
-      expertId: user.id,
-      name: projectForm.name.trim(),
-      description: projectForm.description.trim(),
-      totalBudget: Number(projectForm.totalBudget),
-    })
-    setProjectForm({ name: '', description: '', totalBudget: '' })
-    notify('success', 'Project created')
   }
 
-  const handleCreateChantier = async (event) => {
-    event.preventDefault()
-    if (!chantierForm.projectId || !chantierForm.name) {
-      return notify('error', 'Project and chantier name are required')
-    }
-    await api.post(`/experts/projects/${chantierForm.projectId}/chantiers`, {
-      expertId: user.id,
-      name: chantierForm.name,
-      description: chantierForm.description,
-      assignments,
-    })
-    setChantierForm({ ...chantierForm, name: '', description: '', jobAssignments: {} })
-    notify('success', 'Chantier created and invites sent')
-  }
+  useEffect(() => {
+    loadProjects()
+  }, [userId])
 
-  const handleSendJournal = async (event) => {
-    event.preventDefault()
-    if (!journalForm.projectId || !journalForm.chantierId || !journalForm.activitiesText) {
-      return notify('error', 'Project, chantier and activities are required')
-    }
-    await api.post('/experts/journals', {
-      expertId: user.id,
-      projectId: journalForm.projectId,
-      chantierId: journalForm.chantierId,
-      activityDate: journalForm.activityDate,
-      activities: journalForm.activitiesText
-        .split('\n')
-        .map((line) => line.trim())
-        .filter(Boolean),
-      artisanRecipientIds: journalForm.artisanRecipientIds,
-    })
-    setJournalForm((prev) => ({ ...prev, activitiesText: '' }))
-    notify('success', 'Journal sent')
-  }
-
-  const renderArtisanTable = () => (
-    <div className="table-wrap">
-      <table className="artisan-table">
-        <thead>
-          <tr>
-            <th>Select</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Job</th>
-          </tr>
-        </thead>
-        <tbody>
-          {artisans.map((artisan) => {
-            const assignment = chantierForm.jobAssignments?.[artisan._id] || { selected: false, jobTitle: JOB_OPTIONS[0] }
-            return (
-              <tr key={artisan._id}>
-                <td>
-                  <input
-                    type="checkbox"
-                    checked={assignment.selected}
-                    onChange={() => toggleAssignment(artisan._id)}
-                  />
-                </td>
-                <td>{artisan.name}</td>
-                <td>{artisan.email}</td>
-                <td>
-                  <select
-                    value={assignment.jobTitle}
-                    onChange={(event) =>
-                      setChantierForm((prev) => ({
-                        ...prev,
-                        jobAssignments: {
-                          ...(prev.jobAssignments || {}),
-                          [artisan._id]: { ...assignment, jobTitle: event.target.value },
-                        },
-                      }))
-                    }
-                  >
-                    {JOB_OPTIONS.map((job) => (
-                      <option key={job} value={job}>
-                        {job}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-    </div>
+  const selectedProject = useMemo(
+    () => projects.find((project) => project.id === selectedProjectId) || null,
+    [projects, selectedProjectId],
   )
 
-  const projectChantiers = useMemo(
-    () =>
-      projects
-        .flatMap((projectItem) => projectItem.chantiers || [])
-        .filter((chantier) => chantier.projectId === journalForm.projectId),
-    [projects, journalForm.projectId],
+  useEffect(() => {
+    const loadProjectDetails = async () => {
+      if (!selectedProjectId || !userId) return
+
+      try {
+        const [offersResponse, applicationsResponse] = await Promise.all([
+          api.get(`/projects/${selectedProjectId}/offers`),
+          api.get(`/projects/${selectedProjectId}/applications`, { params: { expertId: userId } }),
+        ])
+
+        setOffersByProject((current) => ({
+          ...current,
+          [selectedProjectId]: offersResponse.data?.offers || [],
+        }))
+        setApplicationsByProject((current) => ({
+          ...current,
+          [selectedProjectId]: applicationsResponse.data?.applications || [],
+        }))
+      } catch (error) {
+        showNotification('error', error.response?.data?.message || 'Failed to load project recruitment data')
+      }
+    }
+
+    loadProjectDetails()
+  }, [selectedProjectId, userId])
+
+  const openOffers = useMemo(
+    () => Object.values(offersByProject).flat().filter((offer) => offer.status === 'open').length,
+    [offersByProject],
   )
+
+  const pendingApplications = useMemo(
+    () => Object.values(applicationsByProject).flat().filter((application) => application.status === 'pending').length,
+    [applicationsByProject],
+  )
+
+  const acceptedApplications = useMemo(
+    () => Object.values(applicationsByProject).flat().filter((application) => application.status === 'accepted').length,
+    [applicationsByProject],
+  )
+
+  const handleProjectCreated = (payload) => {
+    const createdProject = normalizeProject(payload?.project || {})
+    setProjects((current) => [createdProject, ...current])
+    setOffersByProject((current) => ({
+      ...current,
+      [createdProject.id]: payload?.offers || [],
+    }))
+    setApplicationsByProject((current) => ({
+      ...current,
+      [createdProject.id]: [],
+    }))
+    setSelectedProjectId(createdProject.id)
+    setActiveView('projects')
+    showNotification('success', 'Project, chantier, and offer created successfully')
+  }
+
+  const handleReviewApplication = async (applicationId, action) => {
+    setReviewingId(applicationId)
+    try {
+      await api.patch(`/applications/${applicationId}/review`, {
+        expertId: userId,
+        action,
+      })
+
+      await loadProjects()
+
+      if (selectedProjectId) {
+        const [offersResponse, applicationsResponse] = await Promise.all([
+          api.get(`/projects/${selectedProjectId}/offers`),
+          api.get(`/projects/${selectedProjectId}/applications`, { params: { expertId: userId } }),
+        ])
+
+        setOffersByProject((current) => ({
+          ...current,
+          [selectedProjectId]: offersResponse.data?.offers || [],
+        }))
+        setApplicationsByProject((current) => ({
+          ...current,
+          [selectedProjectId]: applicationsResponse.data?.applications || [],
+        }))
+      }
+
+      showNotification('success', `Application ${action}ed successfully`)
+    } catch (error) {
+      showNotification('error', error.response?.data?.message || `Failed to ${action} application`)
+    } finally {
+      setReviewingId('')
+    }
+  }
+
+  const selectedOffers = offersByProject[selectedProjectId] || []
+  const selectedApplications = applicationsByProject[selectedProjectId] || []
 
   return (
     <div className="expert-profile">
-      <div className={`notification ${toast.show ? 'show' : ''} ${toast.type}`}>{toast.text}</div>
+      <div className={`notification ${notification.text ? 'show' : ''} ${notification.type || ''}`} role="status">
+        {notification.text}
+      </div>
+
       <DashboardLayout
-        user={{ ...user, notificationCount }}
+        user={user}
         menuItems={MENU_ITEMS}
         activeView={activeView}
         onNavigate={setActiveView}
         onLogout={onLogout}
       >
         {activeView === 'overview' && (
-          <>
-            <section className="expert-hero">
+          <section className="expert-dash-card">
+            <div className="expert-dash-hero">
               <div>
-                <p className="eyebrow">Expert workspace</p>
-                <h2>Orchestrate projects, chantiers, and artisans from one hub.</h2>
-                <p className="subtitle">
-                  Create projects, assign artisans, track progress, and share journals without leaving this view.
-                </p>
+                <p className="eyebrow">Expert recruitment</p>
+                <h2>Launch projects, publish offers, and review artisan applications in one place.</h2>
+                <p className="subtitle">Each new project creates its chantier automatically and opens the required job offers.</p>
                 <div className="hero-actions">
-                  <button type="button" onClick={() => setActiveView('actions')}>
-                    Launch a project
+                  <button type="button" onClick={() => setActiveView('create')}>
+                    New project
                   </button>
-                  <button type="button" className="secondary-btn" onClick={() => setActiveView('tracking')}>
-                    See tracking
+                  <button type="button" className="secondary-btn" onClick={() => setActiveView('projects')}>
+                    Review pipeline
                   </button>
                 </div>
               </div>
               <div className="hero-metrics">
-                {overviewStats.map((stat) => (
-                  <div key={stat.label} className="summary-pill">
-                    <strong>{stat.value}</strong>
-                    <span>{stat.label}</span>
-                    <small>{stat.detail}</small>
-                  </div>
-                ))}
+                <div className="summary-pill">
+                  <strong>{projects.length}</strong>
+                  <span>Projects</span>
+                  <small>Managed by you</small>
+                </div>
+                <div className="summary-pill">
+                  <strong>{openOffers}</strong>
+                  <span>Open offers</span>
+                  <small>Ready for artisans</small>
+                </div>
+                <div className="summary-pill">
+                  <strong>{pendingApplications}</strong>
+                  <span>Pending</span>
+                  <small>{acceptedApplications} accepted</small>
+                </div>
               </div>
-            </section>
-
-            <div className="expert-panels">
-              <section className="expert-panel">
-                <div className="section-header">
-                  <h3>Pipeline</h3>
-                  <p className="subtitle">Your latest projects at a glance.</p>
-                </div>
-                <div className="expert-list">
-                  {topProjects.length ? (
-                    topProjects.map((proj) => (
-                      <article key={proj.id} className="expert-list-item">
-                        <div>
-                          <strong>{proj.name}</strong>
-                          <p className="subtitle small">{proj.chantiers} chantiers</p>
-                        </div>
-                        <div className="expert-list-meta">
-                          <span className="chip">Budget ${proj.budget}</span>
-                          <span className="chip ghost">{proj.progress}%</span>
-                        </div>
-                      </article>
-                    ))
-                  ) : (
-                    <p className="subtitle">No projects yet. Create one to start.</p>
-                  )}
-                </div>
-              </section>
-
-              <section className="expert-panel">
-                <div className="section-header">
-                  <h3>Roster</h3>
-                  <p className="subtitle">Artisans you can invite.</p>
-                </div>
-                <div className="expert-list">
-                  {artisans.slice(0, 6).map((artisan) => (
-                    <article key={artisan._id} className="expert-list-item">
-                      <div>
-                        <strong>{artisan.name}</strong>
-                        <p className="subtitle small">{artisan.email}</p>
-                      </div>
-                      <span className="chip ghost">{artisan.job || 'General'}</span>
-                    </article>
-                  ))}
-                  {!artisans.length && <p className="subtitle">No artisans found yet.</p>}
-                </div>
-              </section>
             </div>
 
             <div className="expert-panels two">
-              <section className="expert-panel">
+              <div className="expert-panel">
                 <div className="section-header">
-                  <h3>Active chantiers</h3>
-                  <p className="subtitle">Newest five chantiers across projects.</p>
+                  <h3>Recent projects</h3>
+                  <p className="subtitle">Your latest recruitment boards.</p>
                 </div>
-                <div className="table-wrap mini">
-                  <table className="artisan-table condensed">
-                    <thead>
-                      <tr>
-                        <th>Chantier</th>
-                        <th>Project</th>
-                        <th>Progress</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {topChantiers.length ? (
-                        topChantiers.map((c) => (
-                          <tr key={c._id}>
-                            <td>{c.name}</td>
-                            <td>{c.projectName}</td>
-                            <td>
-                              <div className="progress-bar-track">
-                                <div className="progress-bar-fill" style={{ width: `${c.progressPercentage ?? 0}%` }} />
+                <div className="expert-list">
+                  {projects.slice(0, 4).map((project) => (
+                    <article key={project.id} className="expert-list-item">
+                      <div>
+                        <strong>{project.title}</strong>
+                        <p className="subtitle small">
+                          {project.teamRequirements.length} roles · {project.budget.toLocaleString()} TND
+                        </p>
+                      </div>
+                      <button type="button" className="mini-btn secondary-btn" onClick={() => {
+                        setSelectedProjectId(project.id)
+                        setActiveView('projects')
+                      }}>
+                        Open
+                      </button>
+                    </article>
+                  ))}
+                  {!projects.length && <p className="subtitle">No projects yet. Create your first recruitment board.</p>}
+                </div>
+              </div>
+
+              <div className="expert-panel">
+                <div className="section-header">
+                  <h3>Pending applications</h3>
+                  <p className="subtitle">Artisans waiting for your decision.</p>
+                </div>
+                <div className="expert-list">
+                  {Object.values(applicationsByProject)
+                    .flat()
+                    .filter((application) => application.status === 'pending')
+                    .slice(0, 4)
+                    .map((application) => (
+                      <article key={application._id} className="expert-list-item">
+                        <div>
+                          <strong>{application.artisanId?.name || 'Artisan'}</strong>
+                          <p className="subtitle small">
+                            {application.job} · {application.proposedDailySalary} TND/day
+                          </p>
+                        </div>
+                        <span className="chip">{application.status}</span>
+                      </article>
+                    ))}
+                  {!pendingApplications && <p className="subtitle">No pending applications right now.</p>}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {activeView === 'create' && (
+          <section className="dashboard-card">
+            <div className="section-header">
+              <h3>Create project</h3>
+              <p className="subtitle">Set the project details, map location, trade, and salary in one clean form.</p>
+            </div>
+            <CreateProjectForm expertId={userId} onCreated={handleProjectCreated} />
+          </section>
+        )}
+
+        {activeView === 'projects' && (
+          <section className="dashboard-card">
+            <div className="section-header">
+              <h3>Project recruitment pipeline</h3>
+              <p className="subtitle">Track offers, available slots, and artisan applications by project.</p>
+            </div>
+
+            {loadingProjects ? (
+              <p className="subtitle">Loading projects...</p>
+            ) : projects.length ? (
+              <>
+                <div className="project-toolbar">
+                  <select value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>
+                    {projects.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {selectedProject ? (
+                  <div className="project-board">
+                    <div className="project-summary-card">
+                      <h4>{selectedProject.title}</h4>
+                      <p className="subtitle">
+                        {selectedProject.category || 'project'} · {selectedProject.location?.address || 'No address provided.'}
+                      </p>
+                      <div className="chip-row">
+                        <span className="chip ghost">{selectedProject.budget.toLocaleString()} TND</span>
+                        <span className="chip ghost">
+                          Start {selectedProject.startDate ? new Date(selectedProject.startDate).toLocaleDateString() : 'TBD'}
+                        </span>
+                        <span className="chip ghost">
+                          End {selectedProject.endDate ? new Date(selectedProject.endDate).toLocaleDateString() : 'TBD'}
+                        </span>
+                        <span className="chip ghost">{selectedProject.job || 'no trade'} · {selectedProject.dailySalary || 0} TND/day</span>
+                      </div>
+                    </div>
+
+                    <div className="expert-panels two">
+                      <div className="expert-panel">
+                        <div className="section-header">
+                          <h3>Offers</h3>
+                          <p className="subtitle">Slots available for artisans.</p>
+                        </div>
+                        <div className="projects-grid">
+                          {selectedOffers.map((offer) => (
+                            <article key={offer._id} className="project-tile">
+                              <h4>{offer.job}</h4>
+                              <p className="subtitle small">
+                                {offer.availableSlots}/{offer.requiredSlots} slots available
+                              </p>
+                              <div className="chip-row">
+                                <span className={`chip ${offer.status === 'open' ? '' : 'ghost'}`}>{offer.status}</span>
                               </div>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan="3" className="subtitle">
-                            No chantiers yet.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
+                            </article>
+                          ))}
+                          {!selectedOffers.length && <p className="subtitle">No offers found for this project.</p>}
+                        </div>
+                      </div>
 
-              <section className="expert-panel">
-                <div className="section-header">
-                  <h3>Shortcuts</h3>
-                  <p className="subtitle">Jump to the tools you need.</p>
-                </div>
-                <div className="quick-actions vertical">
-                  <button type="button" onClick={() => setActiveView('actions')}>
-                    Create project & chantier
-                  </button>
-                  <button type="button" className="secondary-btn" onClick={() => setActiveView('tracking')}>
-                    View tracking
-                  </button>
-                  <button type="button" className="secondary-btn" onClick={() => setActiveView('artisans')}>
-                    Browse artisans
-                  </button>
-                </div>
-              </section>
-            </div>
-          </>
-        )}
-
-        {activeView === 'actions' && (
-          <section className="dashboard-card">
-            <div className="section-header">
-              <h3>Create project & chantier</h3>
-              <p className="subtitle">Kick off work and invite artisans.</p>
-            </div>
-            <form onSubmit={handleCreateProject}>
-              <label>
-                Name
-                <input
-                  value={projectForm.name}
-                  onChange={(e) => setProjectForm((p) => ({ ...p, name: e.target.value }))}
-                />
-              </label>
-              <label>
-                Description
-                <input
-                  value={projectForm.description}
-                  onChange={(e) => setProjectForm((p) => ({ ...p, description: e.target.value }))}
-                />
-              </label>
-              <label>
-                Budget
-                <input
-                  type="number"
-                  min="0"
-                  value={projectForm.totalBudget}
-                  onChange={(e) => setProjectForm((p) => ({ ...p, totalBudget: e.target.value }))}
-                />
-              </label>
-              <button type="submit">Create Project</button>
-            </form>
-
-            <form onSubmit={handleCreateChantier}>
-              <label>
-                Project
-                <select
-                  value={chantierForm.projectId}
-                  onChange={(e) => setChantierForm((p) => ({ ...p, projectId: e.target.value }))}
-                >
-                  <option value="">Select</option>
-                  {projects.map((projectItem) => (
-                    <option key={projectItem._id} value={projectItem._id}>
-                      {projectItem.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Chantier Name
-                <input
-                  value={chantierForm.name}
-                  onChange={(e) => setChantierForm((p) => ({ ...p, name: e.target.value }))}
-                />
-              </label>
-              <label>
-                Description
-                <input
-                  value={chantierForm.description}
-                  onChange={(e) => setChantierForm((p) => ({ ...p, description: e.target.value }))}
-                />
-              </label>
-              {renderArtisanTable()}
-              <button type="submit">Create Chantier + Invite</button>
-            </form>
-
-            <div className="section-header" style={{ marginTop: 24 }}>
-              <h3>Send journal</h3>
-              <p className="subtitle">Keep artisans informed about daily activities.</p>
-            </div>
-            <form onSubmit={handleSendJournal}>
-              <label>
-                Project
-                <select
-                  value={journalForm.projectId}
-                  onChange={(e) => setJournalForm((p) => ({ ...p, projectId: e.target.value }))}
-                >
-                  <option value="">Select</option>
-                  {projects.map((projectItem) => (
-                    <option key={projectItem._id} value={projectItem._id}>
-                      {projectItem.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Chantier
-                <select
-                  value={journalForm.chantierId}
-                  onChange={(e) => setJournalForm((p) => ({ ...p, chantierId: e.target.value }))}
-                >
-                  <option value="">Select</option>
-                  {projectChantiers.map((chantier) => (
-                    <option key={chantier._id} value={chantier._id}>
-                      {chantier.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Date
-                <input
-                  type="date"
-                  value={journalForm.activityDate}
-                  onChange={(e) => setJournalForm((p) => ({ ...p, activityDate: e.target.value }))}
-                />
-              </label>
-              <label>
-                Activities
-                <textarea
-                  value={journalForm.activitiesText}
-                  onChange={(e) => setJournalForm((p) => ({ ...p, activitiesText: e.target.value }))}
-                />
-              </label>
-              <label>
-                Recipients
-                <select
-                  multiple
-                  value={journalForm.artisanRecipientIds}
-                  onChange={(e) =>
-                    setJournalForm((p) => ({
-                      ...p,
-                      artisanRecipientIds: Array.from(e.target.selectedOptions, (option) => option.value),
-                    }))
-                  }
-                >
-                  {artisans.map((artisan) => (
-                    <option key={artisan._id} value={artisan._id}>
-                      {artisan.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button type="submit">Send Journal</button>
-            </form>
-          </section>
-        )}
-
-        {activeView === 'tracking' && (
-          <section className="dashboard-card">
-            <div className="section-header">
-              <h3>Tracking</h3>
-              <p className="subtitle">Monitor your projects at a glance.</p>
-            </div>
-            <div className="projects-grid">
-              {projects.map((projectItem) => (
-                <article key={projectItem._id} className="project-tile">
-                  <h4>{projectItem.name}</h4>
-                  <p>
-                    <strong>Budget:</strong> ${projectItem.totalBudget?.toLocaleString() || 0}
-                  </p>
-                  <p>
-                    <strong>Chantiers:</strong> {(projectItem.chantiers || []).length}
-                  </p>
-                  <div className="project-metrics">
-                    <p>
-                      <strong>Progress:</strong> {projectItem.progressPercentage ?? 0}%
-                    </p>
-                    <p>
-                      <strong>Spent:</strong> ${projectItem.spentBudget ?? 0}
-                    </p>
+                      <div className="expert-panel">
+                        <div className="section-header">
+                          <h3>Applications</h3>
+                          <p className="subtitle">Accept or reject artisan candidates.</p>
+                        </div>
+                        <div className="application-stack">
+                          {selectedApplications.map((application) => (
+                            <article key={application._id} className="application-card">
+                              <div>
+                                <strong>{application.artisanId?.name || 'Artisan'}</strong>
+                                <p className="subtitle small">
+                                  {(application.artisanId?.job || application.job || '').toUpperCase()} · {application.proposedDailySalary} TND/day
+                                </p>
+                                <p className="subtitle small">{application.artisanId?.email || ''}</p>
+                              </div>
+                              <div className="application-side">
+                                <span className={`status-pill status-${application.status}`}>{application.status}</span>
+                                {application.status === 'pending' ? (
+                                  <div className="inline-actions">
+                                    <button
+                                      type="button"
+                                      className="secondary-btn mini-btn"
+                                      disabled={reviewingId === application._id}
+                                      onClick={() => handleReviewApplication(application._id, 'reject')}
+                                    >
+                                      Reject
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="mini-btn"
+                                      disabled={reviewingId === application._id}
+                                      onClick={() => handleReviewApplication(application._id, 'accept')}
+                                    >
+                                      {reviewingId === application._id ? 'Saving...' : 'Accept'}
+                                    </button>
+                                  </div>
+                                ) : null}
+                              </div>
+                            </article>
+                          ))}
+                          {!selectedApplications.length && <p className="subtitle">No applications yet for this project.</p>}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </article>
-              ))}
-            </div>
+                ) : null}
+              </>
+            ) : (
+              <p className="subtitle">No projects yet. Create one to start publishing offers.</p>
+            )}
           </section>
         )}
 
-        {activeView === 'artisans' && (
+        {activeView === 'settings' && (
           <section className="dashboard-card">
             <div className="section-header">
-              <h3>Artisans</h3>
-              <p className="subtitle">Browse registered artisans.</p>
+              <h3>Expert account</h3>
+              <p className="subtitle">Current signed-in profile used for project ownership.</p>
             </div>
-            <div className="table-wrap">
-              <table className="artisan-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Job</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {artisans.map((artisan) => (
-                    <tr key={artisan._id}>
-                      <td>{artisan.name}</td>
-                      <td>{artisan.email}</td>
-                      <td>{artisan.job || '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="settings-content">
+              <p><strong>Name:</strong> {user?.name || 'Guest'}</p>
+              <p><strong>Email:</strong> {user?.email || 'Not available'}</p>
+              <p><strong>Role:</strong> Expert</p>
+              <p><strong>Expert ID:</strong> {userId || 'Missing'}</p>
             </div>
           </section>
         )}

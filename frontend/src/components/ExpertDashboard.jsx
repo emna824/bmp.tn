@@ -3,15 +3,8 @@ import DashboardLayout from './DashboardLayout'
 
 const MENU_ITEMS = [
   { key: 'overview', label: 'Overview', subtitle: 'At a glance' },
-  { key: 'projects', label: 'Projects', subtitle: 'Active builds' },
   { key: 'team', label: 'Team', subtitle: 'Your artisans' },
   { key: 'timeline', label: 'Timeline', subtitle: 'Upcoming' },
-]
-
-const SAMPLE_PROJECTS = [
-  { id: 'p1', name: 'Medina Residences', budget: 420000, progress: 68, chantiers: 3, risk: 'On track' },
-  { id: 'p2', name: 'Lac Business Park', budget: 780000, progress: 42, chantiers: 2, risk: 'Watch scope' },
-  { id: 'p3', name: 'Sahel Clinic', budget: 315000, progress: 81, chantiers: 4, risk: 'On track' },
 ]
 
 const SAMPLE_TEAM = [
@@ -22,26 +15,21 @@ const SAMPLE_TEAM = [
 ]
 
 const SAMPLE_EVENTS = [
-  { id: 'e1', title: 'Lac Park — slab inspection', date: '2026-03-24', owner: 'You' },
-  { id: 'e2', title: 'Sahel Clinic — HVAC delivery', date: '2026-03-26', owner: 'Logistics' },
-  { id: 'e3', title: 'Medina Residences — paint phase', date: '2026-03-29', owner: 'Sonia B.' },
+  { id: 'e1', title: 'Lac Park - slab inspection', date: '2026-03-24', owner: 'You' },
+  { id: 'e2', title: 'Sahel Clinic - HVAC delivery', date: '2026-03-26', owner: 'Logistics' },
+  { id: 'e3', title: 'Medina Residences - paint phase', date: '2026-03-29', owner: 'Sonia B.' },
 ]
 
 function ExpertDashboard({ user, onLogout }) {
   const [activeView, setActiveView] = useState('overview')
 
-  const totals = useMemo(() => {
-    const budget = SAMPLE_PROJECTS.reduce((sum, p) => sum + p.budget, 0)
-    const avgProgress = Math.round(
-      SAMPLE_PROJECTS.reduce((sum, p) => sum + p.progress, 0) / SAMPLE_PROJECTS.length,
-    )
-    return {
-      projects: SAMPLE_PROJECTS.length,
+  const totals = useMemo(
+    () => ({
       artisans: SAMPLE_TEAM.length,
-      budget,
-      progress: avgProgress,
-    }
-  }, [])
+      upcoming: SAMPLE_EVENTS.length,
+    }),
+    [],
+  )
 
   return (
     <div className="expert-dashboard-shell">
@@ -57,58 +45,31 @@ function ExpertDashboard({ user, onLogout }) {
             <div className="expert-dash-hero">
               <div>
                 <p className="eyebrow">Expert Command</p>
-                <h2>Everything you need to steer builds in one place.</h2>
-                <p className="subtitle">This view is self-contained—no backend calls required.</p>
+                <h2>Coordinate your team and stay ahead of the schedule.</h2>
+                <p className="subtitle">Project management is disabled for experts; focus on people and timing.</p>
                 <div className="hero-actions">
-                  <button type="button" onClick={() => setActiveView('projects')}>
-                    Open projects
-                  </button>
-                  <button type="button" className="secondary-btn" onClick={() => setActiveView('team')}>
+                  <button type="button" onClick={() => setActiveView('team')}>
                     View team
+                  </button>
+                  <button type="button" className="secondary-btn" onClick={() => setActiveView('timeline')}>
+                    View timeline
                   </button>
                 </div>
               </div>
               <div className="hero-metrics">
-                <div className="summary-pill">
-                  <strong>{totals.projects}</strong>
-                  <span>Projects</span>
-                  <small>{totals.progress}% avg progress</small>
-                </div>
                 <div className="summary-pill">
                   <strong>{totals.artisans}</strong>
                   <span>Artisans</span>
                   <small>Active roster</small>
                 </div>
                 <div className="summary-pill">
-                  <strong>${totals.budget.toLocaleString()}</strong>
-                  <span>Total budget</span>
-                  <small>Planned</small>
+                  <strong>{totals.upcoming}</strong>
+                  <span>Upcoming</span>
+                  <small>Milestones</small>
                 </div>
               </div>
             </div>
             <div className="expert-panels">
-              <div className="expert-panel">
-                <div className="section-header">
-                  <h3>Focus projects</h3>
-                  <p className="subtitle">Static sample data to keep this view reliable.</p>
-                </div>
-                <div className="expert-list">
-                  {SAMPLE_PROJECTS.map((proj) => (
-                    <article key={proj.id} className="expert-list-item">
-                      <div>
-                        <strong>{proj.name}</strong>
-                        <p className="subtitle small">
-                          {proj.chantiers} chantiers · ${proj.budget.toLocaleString()}
-                        </p>
-                      </div>
-                      <div className="expert-list-meta">
-                        <span className="chip">{proj.progress}%</span>
-                        <span className="chip ghost">{proj.risk}</span>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </div>
               <div className="expert-panel">
                 <div className="section-header">
                   <h3>Upcoming</h3>
@@ -121,37 +82,13 @@ function ExpertDashboard({ user, onLogout }) {
                       <div>
                         <strong>{evt.title}</strong>
                         <p className="subtitle small">
-                          {evt.date} · {evt.owner}
+                          {evt.date} - {evt.owner}
                         </p>
                       </div>
                     </li>
                   ))}
                 </ul>
               </div>
-            </div>
-          </section>
-        )}
-
-        {activeView === 'projects' && (
-          <section className="expert-dash-card">
-            <div className="section-header">
-              <h3>Projects</h3>
-              <p className="subtitle">Static showcase cards (offline-safe).</p>
-            </div>
-            <div className="projects-grid">
-              {SAMPLE_PROJECTS.map((proj) => (
-                <article key={proj.id} className="project-tile">
-                  <h4>{proj.name}</h4>
-                  <p className="subtitle small">${proj.budget.toLocaleString()} · {proj.chantiers} chantiers</p>
-                  <div className="progress-bar-track">
-                    <div className="progress-bar-fill" style={{ width: `${proj.progress}%` }} />
-                  </div>
-                  <div className="project-metrics">
-                    <p><strong>Progress:</strong> {proj.progress}%</p>
-                    <p><strong>Risk:</strong> {proj.risk}</p>
-                  </div>
-                </article>
-              ))}
             </div>
           </section>
         )}
@@ -176,7 +113,9 @@ function ExpertDashboard({ user, onLogout }) {
                     <tr key={a.id}>
                       <td>{a.name}</td>
                       <td>{a.trade}</td>
-                      <td><span className="chip ghost">{a.status}</span></td>
+                      <td>
+                        <span className="chip ghost">{a.status}</span>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -198,7 +137,7 @@ function ExpertDashboard({ user, onLogout }) {
                   <div>
                     <strong>{evt.title}</strong>
                     <p className="subtitle small">
-                      {evt.date} · {evt.owner}
+                      {evt.date} - {evt.owner}
                     </p>
                   </div>
                 </li>

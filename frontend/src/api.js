@@ -1,7 +1,10 @@
 import axios from 'axios'
 
+// Use environment override when available (e.g., production), otherwise fall back to Vite dev proxy.
+const baseURL = import.meta.env.VITE_API_BASE || '/api'
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL,
 })
 
 export default api

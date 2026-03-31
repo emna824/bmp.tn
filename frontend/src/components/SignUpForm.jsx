@@ -102,7 +102,9 @@ function SignUpForm({ onRegisterSuccess }) {
         onRegisterSuccess()
       }
     } catch (error) {
-      const message = error.response?.data?.message || 'Registration failed'
+      const message =
+        error.response?.data?.message ||
+        (error.code === 'ERR_NETWORK' ? 'Cannot reach server. Check API base URL.' : 'Registration failed')
       setResult({ type: 'error', text: message })
       setNotification({ show: true, type: 'error', text: message })
     } finally {
