@@ -1469,6 +1469,37 @@ button:disabled {
   flex-wrap: wrap;
 }
 
+.market-qty-field {
+  display: grid;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.market-qty-field span {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #4a6a8d;
+}
+
+.market-qty-field input {
+  width: 100%;
+  max-width: 120px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #d7e3f0;
+  background: #f8fbff;
+}
+
+.market-qty-field.preview {
+  margin-top: 8px;
+}
+
+.preview-total {
+  margin: 0;
+  font-weight: 700;
+  color: #1c4170;
+}
+
 .meta-chip {
   padding: 4px 8px;
   border-radius: 10px;

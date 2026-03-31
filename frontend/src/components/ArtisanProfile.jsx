@@ -14,6 +14,11 @@ const MENU_ITEMS = [
 
 const JOB_OPTIONS = ['Painter', 'Mason', 'Electrician', 'Plumber', 'Carpenter', 'Metalworker', 'Laborer']
 
+function normalizeQuantity(value) {
+  const parsed = Number.parseInt(String(value), 10)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 1
+}
+
 function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
   const userId = user?.id || user?._id || ''
   const [activeView, setActiveView] = useState('overview')
@@ -44,6 +49,20 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
   const [invitationSearch, setInvitationSearch] = useState('')
   const [offerSearch, setOfferSearch] = useState('')
   const [previewProduct, setPreviewProduct] = useState(null)
+  const [marketplaceQuantities, setMarketplaceQuantities] = useState({})
+
+  const getMarketplaceQuantity = useCallback(
+    (productId) => normalizeQuantity(marketplaceQuantities[productId]),
+    [marketplaceQuantities],
+  )
+
+  const handleMarketplaceQuantityChange = useCallback((productId, value) => {
+    if (!productId) return
+    setMarketplaceQuantities((current) => ({
+      ...current,
+      [productId]: normalizeQuantity(value),
+    }))
+  }, [])
 
   const showNotification = useCallback((type, text) => {
     setNotification({ show: true, type, text })
@@ -723,6 +742,22 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                             </span>
                           ) : null}
                         </div>
+                        <label className="market-qty-field">
+                          <span>Quantity</span>
+                          <input
+                            type="number"
+                            min="1"
+                            step="1"
+                            value={getMarketplaceQuantity(product.id)}
+                            onChange={(event) => handleMarketplaceQuantityChange(product.id, event.target.value)}
+                          />
+                        </label>
+                        {product.price ? (
+                          <p className="subtitle small">
+                            Total: {(Number(product.price || 0) * getMarketplaceQuantity(product.id)).toFixed(2)}{' '}
+                            {product.priceUnit || 'TND'}
+                          </p>
+                        ) : null}
                       </div>
                       <div className="market-card-actions">
                         <button type="button" className="mini-btn" onClick={() => setPreviewProduct(product)}>
@@ -867,6 +902,22 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                   <strong>Price: </strong>
                   {previewProduct.price ? `${previewProduct.price} ${previewProduct.priceUnit || 'TND'}` : '-'}
                 </p>
+                <label className="market-qty-field preview">
+                  <span>Quantity</span>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={getMarketplaceQuantity(previewProduct.id)}
+                    onChange={(event) => handleMarketplaceQuantityChange(previewProduct.id, event.target.value)}
+                  />
+                </label>
+                {previewProduct.price ? (
+                  <p className="subtitle small preview-total">
+                    Total: {(Number(previewProduct.price || 0) * getMarketplaceQuantity(previewProduct.id)).toFixed(2)}{' '}
+                    {previewProduct.priceUnit || 'TND'}
+                  </p>
+                ) : null}
                 <p className="subtitle small">Document: {previewProduct.documentName}</p>
                 <div className="product-preview-actions">
                   <button
