@@ -5,6 +5,7 @@ const Offer = require('../models/offer');
 const Application = require('../models/application');
 const User = require('../models/user');
 const { TRADES } = require('../constants/trades');
+const { assertUserNotBanned } = require('../utils/banUtils');
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -13,7 +14,7 @@ async function ensureExpert(expertId) {
     return { status: 400, message: 'A valid expertId is required' };
   }
 
-  const expert = await User.findById(expertId).select('role');
+  const expert = await User.findById(expertId).select('role isBanned banType banExpiresAt');
   if (!expert || expert.role !== 'expert') {
     return { status: 404, message: 'Expert not found' };
   }
@@ -55,6 +56,11 @@ exports.createProject = async (req, res) => {
     const expertCheck = await ensureExpert(expertId);
     if (expertCheck.message) {
       return res.status(expertCheck.status).json({ message: expertCheck.message });
+    }
+
+    const banCheck = await assertUserNotBanned(expertCheck.expert, 'create projects');
+    if (!banCheck.ok) {
+      return res.status(banCheck.status).json({ message: banCheck.message });
     }
 
     const numericBudget = Number(estimatedBudget);

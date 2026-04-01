@@ -33,3 +33,23 @@ export function downloadDataUrlFile(dataUrl, name = 'document.pdf') {
   anchor.remove()
   URL.revokeObjectURL(url)
 }
+
+export function downloadFileReference(fileReference, name = 'document.pdf') {
+  if (!fileReference) {
+    throw new Error('Invalid document data')
+  }
+
+  if (String(fileReference).startsWith('data:')) {
+    downloadDataUrlFile(fileReference, name)
+    return
+  }
+
+  const anchor = document.createElement('a')
+  anchor.href = fileReference
+  anchor.download = name
+  anchor.target = '_blank'
+  anchor.rel = 'noopener noreferrer'
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+}

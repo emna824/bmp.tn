@@ -4,6 +4,7 @@ const User = require('../models/user');
 const Project = require('../models/project');
 const Chantier = require('../models/chantier');
 const Journal = require('../models/journal');
+const { assertUserNotBanned } = require('../utils/banUtils');
 
 const router = express.Router();
 const DEFAULT_JOB_TITLE = 'Worker';
@@ -17,7 +18,7 @@ async function assertExpert(expertId) {
         return { error: 'Invalid expertId', status: 400 };
     }
 
-    const expert = await User.findById(expertId).select('role');
+    const expert = await User.findById(expertId).select('role isBanned banType banExpiresAt');
     if (!expert || expert.role !== 'expert') {
         return { error: 'Expert not found', status: 404 };
     }
@@ -100,6 +101,11 @@ router.post('/projects', async (req, res) => {
         const expertResult = await assertExpert(expertId);
         if (expertResult.error) {
             return res.status(expertResult.status).json({ message: expertResult.error });
+        }
+
+        const banCheck = await assertUserNotBanned(expertResult.expert, 'create projects');
+        if (!banCheck.ok) {
+            return res.status(banCheck.status).json({ message: banCheck.message });
         }
 
         const numericBudget = Number(totalBudget);

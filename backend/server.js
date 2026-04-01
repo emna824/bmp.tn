@@ -11,10 +11,13 @@ const userRoutes = require('./routes/userRoutes');
 const expertRoutes = require('./routes/expertRoutes');
 const artisanRoutes = require('./routes/artisanRoutes');
 const manufacturerRoutes = require('./routes/manufacturerRoutes');
+const productRoutes = require('./routes/productRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const projectRoutes = require('./routes/projectRoutes');
 const offerRoutes = require('./routes/offerRoutes');
 const applicationRoutes = require('./routes/applicationRoutes');
+const reportRoutes = require('./routes/reportRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -48,14 +51,19 @@ app.get('/api/health', (req, res) => {
     res.json({ message: 'API OK \u2705' });
 });
 
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 app.use('/api/users', userRoutes);
 app.use('/api/experts', expertRoutes);
 app.use('/api/assignments', artisanRoutes);
 app.use('/api/manufacturers', manufacturerRoutes);
+app.use('/api/products', productRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/offers', offerRoutes);
 app.use('/api/applications', applicationRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/payments', paymentRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);

@@ -5,6 +5,7 @@ const { OAuth2Client } = require('google-auth-library');
 const router = express.Router();
 const User = require('../models/user');
 const Notification = require('../models/notification');
+const { assertUserNotBanned } = require('../utils/banUtils');
 const passwordResetStore = new Map();
 const VERIFICATION_CODE_TTL_MS = 10 * 60 * 1000;
 
@@ -161,6 +162,11 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ message: 'Invalid email or password' });
         }
 
+        const banCheck = await assertUserNotBanned(user, 'log in');
+        if (!banCheck.ok) {
+            return res.status(banCheck.status).json({ message: banCheck.message });
+        }
+
         const notifications = await unreadCount(user._id);
 
         return res.status(200).json({
@@ -230,6 +236,11 @@ router.post('/google-login', async (req, res) => {
             return res.status(400).json({
                 message: 'This email is registered with password login. Please sign in with email/password.',
             });
+        }
+
+        const banCheck = await assertUserNotBanned(user, 'log in');
+        if (!banCheck.ok) {
+            return res.status(banCheck.status).json({ message: banCheck.message });
         }
 
         const notifications = await unreadCount(user._id);

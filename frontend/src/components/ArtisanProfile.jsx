@@ -2,21 +2,25 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import api from '../api'
 import { LockIcon, SettingsIcon, UserIcon } from './Icons'
 import DashboardLayout from './DashboardLayout'
-import { downloadDataUrlFile } from '../utils/fileHelpers'
+import ProductCard from './ProductCard'
+import ReportModal from './ReportModal'
+import { downloadFileReference } from '../utils/fileHelpers'
+import { formatProductPrice, normalizeProduct } from '../utils/adminDashboard'
+import { getStripeClient } from '../utils/stripe'
 
 const MENU_ITEMS = [
   { key: 'overview', label: 'Overview', subtitle: 'Snapshot' },
   { key: 'offers', label: 'Offers', subtitle: 'Apply to projects' },
-  { key: 'invitations', label: 'Invitations', subtitle: 'Respond to experts' },
   { key: 'marketplace', label: 'Marketplace', subtitle: 'Manufacturer docs' },
   { key: 'settings', label: 'Settings', subtitle: 'Profile & security' },
 ]
 
 const JOB_OPTIONS = ['Painter', 'Mason', 'Electrician', 'Plumber', 'Carpenter', 'Metalworker', 'Laborer']
 
-function normalizeQuantity(value) {
+function normalizeQuantity(value, max = 99) {
+  const limit = Number.isInteger(max) && max > 0 ? Math.min(max, 99) : 99
   const parsed = Number.parseInt(String(value), 10)
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : 1
+  return Number.isInteger(parsed) && parsed > 0 ? Math.min(parsed, limit) : 1
 }
 
 function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
@@ -34,9 +38,6 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
   const [savingPassword, setSavingPassword] = useState(false)
   const [savingJob, setSavingJob] = useState(false)
   const [notification, setNotification] = useState({ show: false, type: '', text: '' })
-  const [invitations, setInvitations] = useState([])
-  const [loadingInvitations, setLoadingInvitations] = useState(false)
-  const [respondingChantier, setRespondingChantier] = useState(null)
   const [offers, setOffers] = useState([])
   const [loadingOffers, setLoadingOffers] = useState(false)
   const [applyingOfferId, setApplyingOfferId] = useState(null)
@@ -45,22 +46,23 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
   const [marketplaceProducts, setMarketplaceProducts] = useState([])
   const [loadingMarketplace, setLoadingMarketplace] = useState(false)
   const [downloadingProductId, setDownloadingProductId] = useState(null)
+  const [payingProductId, setPayingProductId] = useState(null)
   const [filters, setFilters] = useState({ search: '', manufacturer: '' })
-  const [invitationSearch, setInvitationSearch] = useState('')
   const [offerSearch, setOfferSearch] = useState('')
   const [previewProduct, setPreviewProduct] = useState(null)
   const [marketplaceQuantities, setMarketplaceQuantities] = useState({})
+  const [reportTarget, setReportTarget] = useState(null)
 
   const getMarketplaceQuantity = useCallback(
-    (productId) => normalizeQuantity(marketplaceQuantities[productId]),
+    (productId, stock) => normalizeQuantity(marketplaceQuantities[productId], stock),
     [marketplaceQuantities],
   )
 
-  const handleMarketplaceQuantityChange = useCallback((productId, value) => {
+  const handleMarketplaceQuantityChange = useCallback((productId, value, stock) => {
     if (!productId) return
     setMarketplaceQuantities((current) => ({
       ...current,
-      [productId]: normalizeQuantity(value),
+      [productId]: normalizeQuantity(value, stock),
     }))
   }, [])
 
@@ -73,6 +75,32 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
     const timer = setTimeout(() => setNotification({ show: false, type: '', text: '' }), 3000)
     return () => clearTimeout(timer)
   }, [notification])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const url = new URL(window.location.href)
+    const paymentStatus = url.searchParams.get('payment')
+    const view = url.searchParams.get('view')
+
+    if (!paymentStatus) return
+
+    if (view === 'marketplace') {
+      setActiveView('marketplace')
+    }
+
+    if (paymentStatus === 'success') {
+      showNotification('success', 'Payment completed successfully')
+    } else if (paymentStatus === 'cancelled') {
+      showNotification('error', 'Payment was cancelled')
+    }
+
+    url.searchParams.delete('payment')
+    url.searchParams.delete('view')
+    url.searchParams.delete('productId')
+    url.searchParams.delete('session_id')
+    window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`)
+  }, [showNotification])
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -104,20 +132,6 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
     loadProfile()
   }, [userId, onProfileUpdate, offerJobFilter, showNotification])
 
-  const loadInvitations = useCallback(async () => {
-    if (!userId) return
-    setLoadingInvitations(true)
-    try {
-      const response = await api.get(`/assignments/invitations/${userId}`)
-      setInvitations(response.data?.invitations || [])
-    } catch (error) {
-      const message = error.response?.data?.message || 'Failed to load invitations'
-      showNotification('error', message)
-    } finally {
-      setLoadingInvitations(false)
-    }
-  }, [userId, showNotification])
-
   const loadOffers = useCallback(async () => {
     setLoadingOffers(true)
     try {
@@ -139,8 +153,19 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
   const loadMarketplace = useCallback(async () => {
     setLoadingMarketplace(true)
     try {
-      const response = await api.get('/manufacturers/products')
-      setMarketplaceProducts(response.data?.products || [])
+      let response
+
+      try {
+        response = await api.get('/products')
+      } catch (error) {
+        if (error.response?.status !== 404) {
+          throw error
+        }
+
+        response = await api.get('/manufacturers/products')
+      }
+
+      setMarketplaceProducts((response.data?.products || []).map((product) => normalizeProduct(product)))
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to load marketplace'
       showNotification('error', message)
@@ -150,28 +175,12 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
   }, [showNotification])
 
   useEffect(() => {
-    loadInvitations()
-  }, [loadInvitations])
-
-  useEffect(() => {
     loadOffers()
   }, [loadOffers])
 
   useEffect(() => {
     loadMarketplace()
   }, [loadMarketplace])
-
-  const pendingInvitations = invitations.filter((invite) => invite.status === 'pending').length
-  const acceptedInvitations = invitations.filter((invite) => invite.status === 'accepted').length
-  const declinedInvitations = invitations.filter((invite) => invite.status === 'declined').length
-
-  const filteredInvitations = useMemo(() => {
-    const term = invitationSearch.trim().toLowerCase()
-    if (!term) return invitations
-    return invitations.filter((inv) =>
-      [inv.projectName, inv.chantierName, inv.jobTitle].some((value) => String(value || '').toLowerCase().includes(term)),
-    )
-  }, [invitationSearch, invitations])
 
   const filteredOffers = useMemo(() => {
     const term = offerSearch.trim().toLowerCase()
@@ -217,8 +226,11 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
 
   const overviewStats = [
     { label: 'Offers', value: offers.length, detail: offerJobFilter ? `Filtered by ${offerJobFilter}` : 'Open now' },
-    { label: 'Invitations', value: invitations.length, detail: `${pendingInvitations} pending` },
-    { label: 'Marketplace docs', value: marketplaceProducts.length, detail: `${filteredMarketplaceProducts.length} showing` },
+    {
+      label: 'Marketplace docs',
+      value: marketplaceProducts.length,
+      detail: `${filteredMarketplaceProducts.length} showing`,
+    },
     { label: 'Trade', value: profile?.job || 'Unset', detail: 'Your artisan role' },
   ]
 
@@ -358,30 +370,6 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
     }
   }
 
-  const handleAssignmentResponse = async (chantierId, responseText) => {
-    if (!chantierId) return
-    setRespondingChantier(chantierId)
-    try {
-      await api.post('/assignments/respond', {
-        artisanId: userId,
-        chantierId,
-        response: responseText,
-      })
-      setInvitations((prev) =>
-        prev.map((inv) =>
-          String(inv.chantierId) === String(chantierId)
-            ? { ...inv, status: responseText, respondedAt: new Date().toISOString() }
-            : inv,
-        ),
-      )
-      showNotification('success', `Invitation ${responseText}`)
-    } catch (error) {
-      showNotification('error', error.response?.data?.message || 'Failed to send response')
-    } finally {
-      setRespondingChantier(null)
-    }
-  }
-
   const handleApply = async (offerId) => {
     const salary = Number(salaryByOffer[offerId])
     if (Number.isNaN(salary) || salary < 0) {
@@ -409,12 +397,23 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
     if (!productId) return
     setDownloadingProductId(productId)
     try {
-      const response = await api.get(`/manufacturers/products/${productId}/document`)
+      let response
+
+      try {
+        response = await api.get(`/products/${productId}/document`)
+      } catch (error) {
+        if (error.response?.status !== 404) {
+          throw error
+        }
+
+        response = await api.get(`/manufacturers/products/${productId}/document`)
+      }
+
       const { document, documentName } = response.data || {}
       if (!document) {
         throw new Error('Document unavailable')
       }
-      downloadDataUrlFile(document, documentName || fallbackName || 'product.pdf')
+      downloadFileReference(document, documentName || fallbackName || 'product.pdf')
       showNotification('success', 'Document downloaded')
     } catch (error) {
       const message = error.response?.data?.message || error.message || 'Failed to download document'
@@ -423,6 +422,68 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
       setDownloadingProductId(null)
     }
   }
+
+  const handleCheckout = async (product) => {
+    if (!product?.id) return
+    if (!product.price || Number(product.price) <= 0) {
+      showNotification('error', 'This product is not available for payment yet')
+      return
+    }
+
+    if (Number(product.stock ?? 0) <= 0) {
+      showNotification('error', 'This product is currently out of stock')
+      return
+    }
+
+    const quantity = getMarketplaceQuantity(product.id, product.stock)
+
+    setPayingProductId(product.id)
+    try {
+      const response = await api.post(
+        '/payments/checkout-session',
+        {
+          productId: product.id,
+          quantity,
+        },
+        {
+          headers: {
+            'x-user-id': userId,
+          },
+        },
+      )
+
+      if (!response.data?.url) {
+        throw new Error('Checkout URL is missing')
+      }
+
+      if (typeof window !== 'undefined') {
+        const stripe = await getStripeClient()
+
+        if (stripe && response.data?.sessionId) {
+          const result = await stripe.redirectToCheckout({ sessionId: response.data.sessionId })
+          if (result?.error?.message) {
+            throw new Error(result.error.message)
+          }
+          return
+        }
+
+        window.location.assign(response.data.url)
+      }
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || 'Failed to start payment'
+      showNotification('error', message)
+      setPayingProductId(null)
+    }
+  }
+
+  const openReportModal = useCallback((targetType, targetId, targetLabel) => {
+    if (!targetId) return
+    setReportTarget({ targetType, targetId, targetLabel })
+  }, [])
+
+  const closeReportModal = useCallback(() => {
+    setReportTarget(null)
+  }, [])
 
   return (
     <div className="artisan-profile">
@@ -447,7 +508,7 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
               <input
                 className="dash-search"
                 type="search"
-                placeholder="Search offers, invitations, or products..."
+                placeholder="Search offers or products..."
                 value={offerSearch}
                 onChange={(event) => setOfferSearch(event.target.value)}
               />
@@ -488,7 +549,9 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                           <p className="inv-title">{offer.projectId?.projectName || offer.projectId?.title || 'Project'}</p>
                           <p className="inv-subtitle">{offer.job}</p>
                           <p className="inv-desc">
-                            {(offer.projectId?.budget || 0).toLocaleString()} TND budget · {offer.availableSlots} slots left
+                            {Number(offer.projectId?.budget || offer.projectId?.estimatedBudget || 0).toLocaleString()} TND budget -
+                            {' '}
+                            {offer.availableSlots} slots left
                           </p>
                           <div className="inv-tags">
                             <span className="badge">{offer.job}</span>
@@ -504,33 +567,6 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
 
               <section className="card-panel">
                 <div className="panel-header">
-                  <h3>Recent invitations</h3>
-                  <button type="button" className="text-btn" onClick={() => setActiveView('invitations')}>
-                    View all
-                  </button>
-                </div>
-                <div className="invitation-list">
-                  {invitations.slice(0, 4).map((invite) => (
-                    <article key={`${invite.chantierId}-${invite.jobTitle}`} className="invitation-card">
-                      <div className="inv-meta">
-                        <div>
-                          <p className="inv-title">{invite.projectName || 'Project'}</p>
-                          <p className="inv-subtitle">{invite.chantierName}</p>
-                          <p className="inv-desc">{invite.jobTitle}</p>
-                          <div className="inv-tags">
-                            <span className="badge">{invite.jobTitle}</span>
-                            <span className={`pill status-${invite.status}`}>{invite.status}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </article>
-                  ))}
-                  {!invitations.length ? <p className="subtitle">No invitations yet.</p> : null}
-                </div>
-              </section>
-
-              <section className="card-panel">
-                <div className="panel-header">
                   <h3>Marketplace spotlight</h3>
                   <button type="button" className="text-btn" onClick={() => setActiveView('marketplace')}>
                     Browse
@@ -538,21 +574,16 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                 </div>
                 <div className="product-cards">
                   {filteredMarketplaceProducts.slice(0, 4).map((product) => (
-                    <article key={product.id} className="product-card">
-                      <div className="product-meta">
-                        <h4>{product.name}</h4>
-                        <p className="subtitle small">{product.manufacturer?.name || 'Manufacturer'}</p>
-                        <p className="product-desc">{product.description || '-'}</p>
-                      </div>
-                      <button
-                        type="button"
-                        className="mini-btn"
-                        disabled={downloadingProductId === product.id}
-                        onClick={() => handleDownloadMarketplaceDocument(product.id, product.documentName)}
-                      >
-                        {downloadingProductId === product.id ? 'Downloading...' : 'Download PDF'}
-                      </button>
-                    </article>
+                    <ProductCard
+                      key={product.id}
+                      variant="spotlight"
+                      product={product}
+                      downloading={downloadingProductId === product.id}
+                      onDownload={() => handleDownloadMarketplaceDocument(product.id, product.documentName)}
+                      onOpenReport={() =>
+                        openReportModal('product', product.id, product.name || product.documentName || 'this product')
+                      }
+                    />
                   ))}
                   {!filteredMarketplaceProducts.length ? <p className="subtitle">No marketplace items.</p> : null}
                 </div>
@@ -599,7 +630,7 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                     <p className="subtitle">
                       Budget: {Number(offer.projectId?.estimatedBudget || offer.projectId?.budget || 0).toLocaleString()} TND
                       {offer.projectId?.endDate || offer.projectId?.deadline
-                        ? ` · Deadline ${new Date(offer.projectId?.endDate || offer.projectId?.deadline).toLocaleDateString()}`
+                        ? ` - Deadline ${new Date(offer.projectId?.endDate || offer.projectId?.deadline).toLocaleDateString()}`
                         : ''}
                     </p>
                     <label>
@@ -625,68 +656,6 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
               </div>
             ) : (
               <p className="subtitle">No offers match your filters right now.</p>
-            )}
-          </section>
-        )}
-
-        {activeView === 'invitations' && (
-          <section className="dashboard-card">
-            <div className="section-header">
-              <h3>Chantier invitations</h3>
-              <p className="subtitle">Respond to expert requests for chantier assignments.</p>
-            </div>
-            <div className="dash-filter-row">
-              <input
-                type="search"
-                placeholder="Search invitations..."
-                value={invitationSearch}
-                onChange={(event) => setInvitationSearch(event.target.value)}
-              />
-            </div>
-            {loadingInvitations ? (
-              <p className="subtitle">Loading invitations...</p>
-            ) : filteredInvitations.length ? (
-              <div className="invitation-list grid">
-                {filteredInvitations.map((invite) => (
-                  <article key={`${invite.chantierId}-${invite.jobTitle}`} className="invitation-card">
-                    <div className="inv-meta">
-                      <div>
-                        <p className="inv-title">{invite.projectName || 'Project'}</p>
-                        <p className="inv-subtitle">{invite.chantierName}</p>
-                        <p className="inv-desc">{invite.chantierDescription}</p>
-                        <div className="inv-tags">
-                          <span className="badge">{invite.jobTitle}</span>
-                          <span className={`pill status-${invite.status}`}>{invite.status}</span>
-                        </div>
-                      </div>
-                      <div className="inv-actions">
-                        <button
-                          type="button"
-                          className="secondary-btn mini-btn"
-                          disabled={invite.status !== 'pending' || respondingChantier === invite.chantierId}
-                          onClick={() => handleAssignmentResponse(invite.chantierId, 'declined')}
-                        >
-                          Decline
-                        </button>
-                        <button
-                          type="button"
-                          className="mini-btn"
-                          disabled={invite.status !== 'pending' || respondingChantier === invite.chantierId}
-                          onClick={() => handleAssignmentResponse(invite.chantierId, 'accepted')}
-                        >
-                          {respondingChantier === invite.chantierId ? 'Sending...' : 'Accept'}
-                        </button>
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <p className="subtitle">
-                {acceptedInvitations || declinedInvitations
-                  ? 'No invitations match this search.'
-                  : 'You have no invitations right now.'}
-              </p>
             )}
           </section>
         )}
@@ -722,49 +691,21 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
               <div className="market-grid">
                 {filteredMarketplaceProducts.length ? (
                   filteredMarketplaceProducts.map((product) => (
-                    <article key={product.id} className="market-card">
-                      <div className="market-card-image">
-                        {product.image ? (
-                          <img src={product.image} alt={product.name} loading="lazy" />
-                        ) : (
-                          <div className="market-img-fallback">{product.name?.charAt(0) || 'P'}</div>
-                        )}
-                      </div>
-                      <div className="market-card-body">
-                        <p className="market-title">{product.name}</p>
-                        <p className="market-subtitle">{product.manufacturer?.name || 'Manufacturer'}</p>
-                        <p className="market-desc">{product.description || 'No description provided.'}</p>
-                        <div className="market-meta">
-                          <span className="meta-chip">{product.documentName || 'PDF'}</span>
-                          {product.price ? (
-                            <span className="meta-chip price-chip">
-                              {product.price} {product.priceUnit || 'TND'}
-                            </span>
-                          ) : null}
-                        </div>
-                        <label className="market-qty-field">
-                          <span>Quantity</span>
-                          <input
-                            type="number"
-                            min="1"
-                            step="1"
-                            value={getMarketplaceQuantity(product.id)}
-                            onChange={(event) => handleMarketplaceQuantityChange(product.id, event.target.value)}
-                          />
-                        </label>
-                        {product.price ? (
-                          <p className="subtitle small">
-                            Total: {(Number(product.price || 0) * getMarketplaceQuantity(product.id)).toFixed(2)}{' '}
-                            {product.priceUnit || 'TND'}
-                          </p>
-                        ) : null}
-                      </div>
-                      <div className="market-card-actions">
-                        <button type="button" className="mini-btn" onClick={() => setPreviewProduct(product)}>
-                          View details
-                        </button>
-                      </div>
-                    </article>
+                    <ProductCard
+                      key={product.id}
+                      variant="marketplace"
+                      product={product}
+                      paying={payingProductId === product.id}
+                      quantity={getMarketplaceQuantity(product.id, product.stock)}
+                      onQuantityChange={(value) =>
+                        handleMarketplaceQuantityChange(product.id, value, product.stock)
+                      }
+                      onPayNow={() => handleCheckout(product)}
+                      onViewDetails={() => setPreviewProduct(product)}
+                      onOpenReport={() =>
+                        openReportModal('product', product.id, product.name || product.documentName || 'this product')
+                      }
+                    />
                   ))
                 ) : (
                   <p className="subtitle">No marketplace listings match your filters.</p>
@@ -786,6 +727,20 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
               <p><strong>Email:</strong> {profile?.email || '-'}</p>
               <p><strong>Trade:</strong> {profile?.job || 'Not set'}</p>
               <p><strong>Artisan ID:</strong> {userId || 'Missing'}</p>
+            </div>
+            <div className="report-profile-cta">
+              <div>
+                <strong>Need moderation review?</strong>
+                <p className="subtitle small">Submit a report for this profile if something looks wrong.</p>
+              </div>
+              <button
+                type="button"
+                className="secondary-btn report-trigger-btn"
+                disabled={!userId}
+                onClick={() => openReportModal('user', userId, profile?.name || profile?.email || 'this profile')}
+              >
+                Report profile
+              </button>
             </div>
 
             <form onSubmit={handleSaveName} noValidate>
@@ -900,33 +855,70 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                 </p>
                 <p>
                   <strong>Price: </strong>
-                  {previewProduct.price ? `${previewProduct.price} ${previewProduct.priceUnit || 'TND'}` : '-'}
+                  {previewProduct.price ? formatProductPrice(previewProduct.price) : '-'}
+                </p>
+                <p>
+                  <strong>Stock: </strong>
+                  {Number.isInteger(previewProduct.stock) ? previewProduct.stock : 0}
                 </p>
                 <label className="market-qty-field preview">
                   <span>Quantity</span>
                   <input
                     type="number"
                     min="1"
+                    max={Number(previewProduct.stock ?? 0) > 0 ? previewProduct.stock : undefined}
                     step="1"
-                    value={getMarketplaceQuantity(previewProduct.id)}
-                    onChange={(event) => handleMarketplaceQuantityChange(previewProduct.id, event.target.value)}
+                    value={getMarketplaceQuantity(previewProduct.id, previewProduct.stock)}
+                    disabled={Number(previewProduct.stock ?? 0) <= 0}
+                    onChange={(event) =>
+                      handleMarketplaceQuantityChange(previewProduct.id, event.target.value, previewProduct.stock)
+                    }
                   />
                 </label>
-                {previewProduct.price ? (
+                {previewProduct.price && Number(previewProduct.stock ?? 0) > 0 ? (
                   <p className="subtitle small preview-total">
-                    Total: {(Number(previewProduct.price || 0) * getMarketplaceQuantity(previewProduct.id)).toFixed(2)}{' '}
-                    {previewProduct.priceUnit || 'TND'}
+                    Total: {formatProductPrice(
+                      Number(previewProduct.price || 0) *
+                        getMarketplaceQuantity(previewProduct.id, previewProduct.stock),
+                    )}
                   </p>
-                ) : null}
+                ) : (
+                  <p className="subtitle small preview-total">This product is currently out of stock.</p>
+                )}
                 <p className="subtitle small">Document: {previewProduct.documentName}</p>
                 <div className="product-preview-actions">
                   <button
                     type="button"
                     className="mini-btn"
+                    disabled={
+                      payingProductId === previewProduct.id ||
+                      !previewProduct.price ||
+                      Number(previewProduct.stock ?? 0) <= 0
+                    }
+                    onClick={() => handleCheckout(previewProduct)}
+                  >
+                    {payingProductId === previewProduct.id ? 'Redirecting...' : 'Pay now'}
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-btn mini-btn"
                     disabled={downloadingProductId === previewProduct.id}
                     onClick={() => handleDownloadMarketplaceDocument(previewProduct.id, previewProduct.documentName)}
                   >
                     {downloadingProductId === previewProduct.id ? 'Downloading...' : 'Download PDF'}
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-btn mini-btn report-trigger-btn"
+                    onClick={() =>
+                      openReportModal(
+                        'product',
+                        previewProduct.id,
+                        previewProduct.name || previewProduct.documentName || 'this product',
+                      )
+                    }
+                  >
+                    Report
                   </button>
                   <button type="button" className="secondary-btn mini-btn" onClick={() => setPreviewProduct(null)}>
                     Close
@@ -937,6 +929,16 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
           </section>
         </div>
       ) : null}
+
+      <ReportModal
+        isOpen={Boolean(reportTarget)}
+        currentUserId={userId}
+        targetType={reportTarget?.targetType || 'product'}
+        targetId={reportTarget?.targetId || ''}
+        targetLabel={reportTarget?.targetLabel || ''}
+        onClose={closeReportModal}
+        onSuccess={(message) => showNotification('success', message)}
+      />
     </div>
   )
 }

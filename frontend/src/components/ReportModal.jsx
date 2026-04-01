@@ -1,0 +1,133 @@
+import { useEffect, useState } from 'react'
+import api from '../api'
+
+const REPORT_REASONS = [
+  { value: '', label: 'Select a reason' },
+  { value: 'spam', label: 'Spam' },
+  { value: 'inappropriate content', label: 'Inappropriate content' },
+  { value: 'fake account', label: 'Fake account' },
+  { value: 'other', label: 'Other' },
+]
+
+function ReportModal({
+  isOpen,
+  currentUserId,
+  targetType,
+  targetId,
+  targetLabel,
+  onClose,
+  onSuccess,
+}) {
+  const [reason, setReason] = useState('')
+  const [description, setDescription] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!isOpen) {
+      setReason('')
+      setDescription('')
+      setError('')
+      setLoading(false)
+    }
+  }, [isOpen])
+
+  if (!isOpen) return null
+
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+
+    if (!reason) {
+      setError('Please choose a reason before submitting.')
+      return
+    }
+
+    if (!currentUserId || !targetId) {
+      setError('Missing report target or user information.')
+      return
+    }
+
+    setLoading(true)
+    setError('')
+
+    try {
+      const response = await api.post(
+        '/reports',
+        {
+          reporterId: currentUserId,
+          targetType,
+          targetId,
+          reason,
+          description: description.trim(),
+        },
+        {
+          headers: {
+            'x-user-id': currentUserId,
+          },
+        },
+      )
+
+      onSuccess?.(response.data?.message || 'Report submitted successfully')
+      onClose?.()
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Failed to submit report')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="settings-overlay" role="dialog" aria-modal="true" aria-label="Report content">
+      <section className="settings-modal report-modal">
+        <div className="settings-header">
+          <div>
+            <h3>Report {targetType}</h3>
+            <p className="subtitle small">
+              {targetLabel ? `You are reporting ${targetLabel}.` : 'Tell us why this should be reviewed.'}
+            </p>
+          </div>
+          <button type="button" className="text-btn close-btn" onClick={onClose} disabled={loading}>
+            Cancel
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="report-modal-form">
+          <label>
+            Reason
+            <select value={reason} onChange={(event) => setReason(event.target.value)} disabled={loading}>
+              {REPORT_REASONS.map((option) => (
+                <option key={option.value || 'empty'} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Description
+            <textarea
+              rows="4"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder="Optional details to help moderation review this case."
+              disabled={loading}
+            />
+          </label>
+
+          {error ? <p className="report-form-error">{error}</p> : null}
+
+          <div className="report-modal-actions">
+            <button type="button" className="secondary-btn" onClick={onClose} disabled={loading}>
+              Cancel
+            </button>
+            <button type="submit" disabled={loading || !reason}>
+              {loading ? 'Submitting...' : 'Submit'}
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  )
+}
+
+export default ReportModal

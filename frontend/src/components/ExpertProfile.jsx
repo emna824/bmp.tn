@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import api from '../api'
 import DashboardLayout from './DashboardLayout'
 import CreateProjectForm from './CreateProjectForm'
+import ReportModal from './ReportModal'
 
 const MENU_ITEMS = [
   { key: 'overview', label: 'Overview', subtitle: 'Recruitment snapshot' },
@@ -36,6 +37,7 @@ function ExpertProfile({ user, onLogout }) {
   const [reviewingId, setReviewingId] = useState('')
   const [selectedProjectId, setSelectedProjectId] = useState('')
   const [notification, setNotification] = useState({ type: '', text: '' })
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false)
 
   const showNotification = (type, text) => {
     setNotification({ type, text })
@@ -411,9 +413,33 @@ function ExpertProfile({ user, onLogout }) {
               <p><strong>Role:</strong> Expert</p>
               <p><strong>Expert ID:</strong> {userId || 'Missing'}</p>
             </div>
+            <div className="report-profile-cta">
+              <div>
+                <strong>Report this profile</strong>
+                <p className="subtitle small">Send this profile to moderation if it violates platform rules.</p>
+              </div>
+              <button
+                type="button"
+                className="secondary-btn report-trigger-btn"
+                disabled={!userId}
+                onClick={() => setIsReportModalOpen(true)}
+              >
+                Report profile
+              </button>
+            </div>
           </section>
         )}
       </DashboardLayout>
+
+      <ReportModal
+        isOpen={isReportModalOpen}
+        currentUserId={userId}
+        targetType="user"
+        targetId={userId}
+        targetLabel={user?.name || user?.email || 'this profile'}
+        onClose={() => setIsReportModalOpen(false)}
+        onSuccess={(message) => showNotification('success', message)}
+      />
     </div>
   )
 }
