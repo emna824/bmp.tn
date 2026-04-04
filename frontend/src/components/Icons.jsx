@@ -97,6 +97,38 @@ export function BellIcon(props) {
   )
 }
 
+export function ProjectIcon(props) {
+  return (
+    <BaseIcon {...props}>
+      <rect x="4" y="5" width="16" height="14" rx="2" />
+      <path d="M8 3v4" />
+      <path d="M16 3v4" />
+      <path d="M4 10h16" />
+      <path d="M8 14h3" />
+      <path d="M13 14h3" />
+    </BaseIcon>
+  )
+}
+
+export function CheckCircleIcon(props) {
+  return (
+    <BaseIcon {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m8.5 12 2.2 2.2L15.8 9" />
+    </BaseIcon>
+  )
+}
+
+export function XCircleIcon(props) {
+  return (
+    <BaseIcon {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m9 9 6 6" />
+      <path d="m15 9-6 6" />
+    </BaseIcon>
+  )
+}
+
 export function MarketplaceIcon(props) {
   return (
     <BaseIcon {...props}>

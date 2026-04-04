@@ -7,4 +7,14 @@ const api = axios.create({
   baseURL,
 })
 
+export function withUserHeaders(userId, config = {}) {
+  return {
+    ...config,
+    headers: {
+      ...(config.headers || {}),
+      ...(userId ? { 'x-user-id': userId } : {}),
+    },
+  }
+}
+
 export default api

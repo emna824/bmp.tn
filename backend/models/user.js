@@ -42,6 +42,12 @@ const userSchema = new mongoose.Schema(
             type: String,
             default: '',
         },
+        trade: {
+            type: String,
+            trim: true,
+            lowercase: true,
+            default: '',
+        },
         job: {
             type: String,
             trim: true,

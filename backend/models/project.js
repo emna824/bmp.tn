@@ -31,6 +31,10 @@ const projectSchema = new mongoose.Schema(
     dailySalary: { type: Number, required: true, min: 0 },
     description: { type: String, default: '', trim: true },
     expertId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    assignedArtisans: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+      default: [],
+    },
     status: { type: String, default: 'open', enum: ['open', 'in_progress', 'closed'] },
     teamRequirements: { type: [teamRequirementSchema], default: [] },
   },

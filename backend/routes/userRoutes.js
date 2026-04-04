@@ -5,7 +5,10 @@ const { OAuth2Client } = require('google-auth-library');
 const router = express.Router();
 const User = require('../models/user');
 const Notification = require('../models/notification');
+const { TRADES } = require('../constants/trades');
+const loadRequestUser = require('../middleware/loadRequestUser');
 const { assertUserNotBanned } = require('../utils/banUtils');
+const { addOrUpdateArtisanTrade, serializeUser } = require('../controllers/userController');
 const passwordResetStore = new Map();
 const VERIFICATION_CODE_TTL_MS = 10 * 60 * 1000;
 
@@ -37,11 +40,27 @@ function generateCode() {
 
 async function unreadCount(userId) {
     try {
-        return await Notification.countDocuments({ userId, read: false });
+        return await Notification.countDocuments({ userId, isRead: false });
     } catch (err) {
         console.error('Failed to count notifications', err);
         return 0;
     }
+}
+
+function normalizeTradeValue(value) {
+    return String(value || '')
+        .trim()
+        .toLowerCase();
+}
+
+function formatTradeLabel(value) {
+    return String(value || '')
+        .trim()
+        .toLowerCase()
+        .split(/[\s_-]+/)
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
 }
 
 async function sendPasswordResetCodeEmail(email, code) {
@@ -118,18 +137,7 @@ router.post('/register', async (req, res) => {
 
         return res.status(201).json({
             message: 'User registered successfully',
-            user: {
-                id: newUser._id,
-                name: newUser.name,
-                email: newUser.email,
-                role: newUser.role,
-                patent: newUser.patent || null,
-                address: newUser.address || null,
-                companyPhone: newUser.companyPhone || null,
-                profileImage: newUser.profileImage || '',
-                job: newUser.job || '',
-                notificationCount: 0,
-            },
+            user: serializeUser(newUser, 0),
         });
     } catch (err) {
         return res.status(500).json({ message: err.message });
@@ -171,18 +179,7 @@ router.post('/login', async (req, res) => {
 
         return res.status(200).json({
             message: 'Login successful',
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                patent: user.patent || null,
-                address: user.address || null,
-                companyPhone: user.companyPhone || null,
-                profileImage: user.profileImage || '',
-                job: user.job || '',
-                notificationCount: notifications,
-            },
+            user: serializeUser(user, notifications),
         });
     } catch (err) {
         return res.status(500).json({ message: err.message });
@@ -247,18 +244,7 @@ router.post('/google-login', async (req, res) => {
 
         return res.status(200).json({
             message: 'Google login successful',
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                patent: user.patent || null,
-                address: user.address || null,
-                companyPhone: user.companyPhone || null,
-                profileImage: user.profileImage || '',
-                job: user.job || '',
-                notificationCount: notifications,
-            },
+            user: serializeUser(user, notifications),
         });
     } catch (err) {
         console.error('Google login failed', err);
@@ -269,7 +255,7 @@ router.post('/google-login', async (req, res) => {
 router.get('/:id/profile', async (req, res) => {
     try {
         const { id } = req.params;
-        const user = await User.findById(id).select('name email role patent address companyPhone profileImage job');
+        const user = await User.findById(id).select('name email role patent address companyPhone profileImage job trade');
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
@@ -278,31 +264,27 @@ router.get('/:id/profile', async (req, res) => {
         const notifications = await unreadCount(user._id);
 
         return res.status(200).json({
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                patent: user.patent || null,
-                address: user.address || null,
-                companyPhone: user.companyPhone || null,
-                profileImage: user.profileImage || '',
-                job: user.job || '',
-                notificationCount: notifications,
-            },
+            user: serializeUser(user, notifications),
         });
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }
 });
 
+router.put('/add-trade', loadRequestUser, addOrUpdateArtisanTrade);
+
 router.put('/:id/profile', async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, profileImage, job } = req.body;
+        const { name, profileImage, job, trade } = req.body;
 
-        if ((!name || !String(name).trim()) && typeof profileImage === 'undefined' && typeof job === 'undefined') {
-            return res.status(400).json({ message: 'name, job or profileImage is required' });
+        if (
+            (!name || !String(name).trim()) &&
+            typeof profileImage === 'undefined' &&
+            typeof job === 'undefined' &&
+            typeof trade === 'undefined'
+        ) {
+            return res.status(400).json({ message: 'name, job, trade or profileImage is required' });
         }
 
         const user = await User.findById(id);
@@ -332,25 +314,26 @@ router.put('/:id/profile', async (req, res) => {
             user.profileImage = normalizedProfileImage;
         }
 
-        if (typeof job !== 'undefined') {
-            user.job = String(job || '').trim();
+        const requestedTradeValue = typeof trade !== 'undefined' ? trade : job;
+        if (typeof requestedTradeValue !== 'undefined') {
+            if (user.role === 'artisan') {
+                const normalizedTrade = normalizeTradeValue(requestedTradeValue);
+                if (normalizedTrade && !TRADES.includes(normalizedTrade)) {
+                    return res.status(400).json({ message: 'Invalid trade selection' });
+                }
+
+                user.trade = normalizedTrade;
+                user.job = normalizedTrade ? formatTradeLabel(normalizedTrade) : '';
+            } else if (typeof job !== 'undefined') {
+                user.job = String(job || '').trim();
+            }
         }
 
         await user.save();
 
         return res.status(200).json({
             message: 'Profile updated successfully',
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                patent: user.patent || null,
-                address: user.address || null,
-                companyPhone: user.companyPhone || null,
-                profileImage: user.profileImage || '',
-                job: user.job || '',
-            },
+            user: serializeUser(user),
         });
     } catch (err) {
         return res.status(500).json({ message: err.message });

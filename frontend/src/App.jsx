@@ -4,23 +4,56 @@ import ExpertProfile from './components/ExpertProfile'
 import ManufacturerProfile from './components/ManufacturerProfile'
 import LandingPage from './components/landing/LandingPage'
 import AdminDashboard from './pages/AdminDashboard'
+import SelectTradePage from './pages/SelectTradePage'
 import './App.css'
+
+function normalizeUser(user) {
+  if (!user) return null
+
+  const trade = String(user.trade || user.job || '').trim().toLowerCase()
+  const job =
+    String(user.job || '').trim() ||
+    (trade ? trade.charAt(0).toUpperCase() + trade.slice(1) : '')
+
+  return {
+    ...user,
+    trade,
+    job,
+  }
+}
+
+function persistUser(nextUser) {
+  const serialized = JSON.stringify(nextUser)
+
+  if (localStorage.getItem('authUser')) {
+    localStorage.setItem('authUser', serialized)
+    return
+  }
+
+  if (sessionStorage.getItem('authUser')) {
+    sessionStorage.setItem('authUser', serialized)
+    return
+  }
+
+  sessionStorage.setItem('authUser', serialized)
+}
 
 function App() {
   const [user, setUser] = useState(() => {
     const raw = localStorage.getItem('authUser') || sessionStorage.getItem('authUser')
-    return raw ? JSON.parse(raw) : null
+    return raw ? normalizeUser(JSON.parse(raw)) : null
   })
   const [mode, setMode] = useState('signin')
   const [navOpen, setNavOpen] = useState(false)
 
   const handleLoginSuccess = (loggedInUser, staySignedIn = false) => {
-    setUser(loggedInUser)
+    const normalizedUser = normalizeUser(loggedInUser)
+    setUser(normalizedUser)
     if (staySignedIn) {
-      localStorage.setItem('authUser', JSON.stringify(loggedInUser))
+      localStorage.setItem('authUser', JSON.stringify(normalizedUser))
       sessionStorage.removeItem('authUser')
     } else {
-      sessionStorage.setItem('authUser', JSON.stringify(loggedInUser))
+      sessionStorage.setItem('authUser', JSON.stringify(normalizedUser))
       localStorage.removeItem('authUser')
     }
   }
@@ -34,10 +67,14 @@ function App() {
   }
 
   const handleProfileUpdate = (nextUser) => {
-    setUser(nextUser)
-    localStorage.setItem('authUser', JSON.stringify(nextUser))
+    const normalizedUser = normalizeUser(nextUser)
+    setUser(normalizedUser)
+    persistUser(normalizedUser)
   }
 
+  if (user?.role === 'artisan' && !user?.trade) {
+    return <SelectTradePage user={user} onTradeSaved={handleProfileUpdate} onLogout={handleLogout} />
+  }
   if (user?.role === 'artisan') {
     return <ArtisanProfile user={user} onLogout={handleLogout} onProfileUpdate={handleProfileUpdate} />
   }

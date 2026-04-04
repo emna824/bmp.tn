@@ -3,6 +3,7 @@ const Application = require('../models/application');
 const Offer = require('../models/offer');
 const Project = require('../models/project');
 const User = require('../models/user');
+const { notifyArtisanAboutApplicationReview } = require('./notificationController');
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -175,6 +176,15 @@ exports.reviewApplication = async (req, res) => {
     if (normalizedAction === 'reject') {
       application.status = 'rejected';
       await application.save();
+      try {
+        await notifyArtisanAboutApplicationReview({
+          application,
+          projectName: project.title || project.projectName || 'project',
+          status: 'rejected',
+        });
+      } catch (notificationError) {
+        console.error('Failed to notify artisan about rejected application', notificationError);
+      }
       return res.status(200).json({ message: 'Application rejected', application });
     }
 
@@ -187,11 +197,24 @@ exports.reviewApplication = async (req, res) => {
     }
 
     requirement.assigned += 1;
+    const assignedArtisans = Array.isArray(project.assignedArtisans) ? project.assignedArtisans : [];
+    if (!assignedArtisans.some((artisanId) => String(artisanId) === String(application.artisanId))) {
+      project.assignedArtisans = [...assignedArtisans, application.artisanId];
+    }
     offer.availableSlots = Math.max(0, offer.availableSlots - 1);
     offer.status = offer.availableSlots === 0 ? 'closed' : 'open';
     application.status = 'accepted';
 
     await Promise.all([project.save(), offer.save(), application.save()]);
+    try {
+      await notifyArtisanAboutApplicationReview({
+        application,
+        projectName: project.title || project.projectName || 'project',
+        status: 'accepted',
+      });
+    } catch (notificationError) {
+      console.error('Failed to notify artisan about accepted application', notificationError);
+    }
 
     return res.status(200).json({
       message: 'Application accepted',

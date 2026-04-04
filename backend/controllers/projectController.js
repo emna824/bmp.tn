@@ -6,6 +6,7 @@ const Application = require('../models/application');
 const User = require('../models/user');
 const { TRADES } = require('../constants/trades');
 const { assertUserNotBanned } = require('../utils/banUtils');
+const { notifyArtisansForNewProject } = require('./notificationController');
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -158,6 +159,12 @@ exports.createProject = async (req, res) => {
         }))
       );
 
+      try {
+        await notifyArtisansForNewProject(project);
+      } catch (notificationError) {
+        console.error('Failed to notify artisans about new project', notificationError);
+      }
+
       return res.status(201).json({
         message: 'Project created successfully',
         project,
@@ -186,6 +193,27 @@ exports.listProjects = async (req, res) => {
     return res.status(200).json({ projects });
   } catch (err) {
     return res.status(500).json({ message: err.message || 'Failed to fetch projects' });
+  }
+};
+
+exports.listArtisanProjects = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authenticated artisan is required' });
+    }
+
+    if (req.user.role !== 'artisan') {
+      return res.status(403).json({ message: 'Only artisans can access assigned projects' });
+    }
+
+    const projects = await Project.find({ assignedArtisans: req.user._id })
+      .select('_id projectName startDate endDate job status')
+      .sort({ startDate: 1, createdAt: -1 })
+      .lean();
+
+    return res.status(200).json({ projects });
+  } catch (err) {
+    return res.status(500).json({ message: err.message || 'Failed to fetch artisan projects' });
   }
 };
 

@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import api from '../api'
+import api, { withUserHeaders } from '../api'
 import { LockIcon, SettingsIcon, UserIcon } from './Icons'
 import DashboardLayout from './DashboardLayout'
 import ProductCard from './ProductCard'
 import ReportModal from './ReportModal'
+import ArtisanCalendarPage from '../pages/ArtisanCalendarPage'
+import ArtisanProjectsPage from '../pages/ArtisanProjectsPage'
 import { downloadFileReference } from '../utils/fileHelpers'
 import { formatProductPrice, normalizeProduct } from '../utils/adminDashboard'
 import { getStripeClient } from '../utils/stripe'
@@ -11,11 +13,29 @@ import { getStripeClient } from '../utils/stripe'
 const MENU_ITEMS = [
   { key: 'overview', label: 'Overview', subtitle: 'Snapshot' },
   { key: 'offers', label: 'Offers', subtitle: 'Apply to projects' },
+  { key: 'projects', label: 'Projects', subtitle: 'Assigned work' },
   { key: 'marketplace', label: 'Marketplace', subtitle: 'Manufacturer docs' },
   { key: 'settings', label: 'Settings', subtitle: 'Profile & security' },
 ]
 
 const JOB_OPTIONS = ['Painter', 'Mason', 'Electrician', 'Plumber', 'Carpenter', 'Metalworker', 'Laborer']
+
+function normalizeAssignedProject(project = {}) {
+  return {
+    id: project._id || project.id || '',
+    projectName: project.projectName || project.title || 'Untitled project',
+    startDate: project.startDate || '',
+    endDate: project.endDate || '',
+    job: project.job || '',
+    status: project.status || 'open',
+  }
+}
+
+function formatProjectStatus(status) {
+  return String(status || 'unknown')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
 
 function normalizeQuantity(value, max = 99) {
   const limit = Number.isInteger(max) && max > 0 ? Math.min(max, 99) : 99
@@ -43,6 +63,9 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
   const [applyingOfferId, setApplyingOfferId] = useState(null)
   const [salaryByOffer, setSalaryByOffer] = useState({})
   const [offerJobFilter, setOfferJobFilter] = useState(user?.job || '')
+  const [assignedProjects, setAssignedProjects] = useState([])
+  const [loadingAssignedProjects, setLoadingAssignedProjects] = useState(false)
+  const [projectsDisplayMode, setProjectsDisplayMode] = useState('list')
   const [marketplaceProducts, setMarketplaceProducts] = useState([])
   const [loadingMarketplace, setLoadingMarketplace] = useState(false)
   const [downloadingProductId, setDownloadingProductId] = useState(null)
@@ -150,6 +173,21 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
     }
   }, [offerJobFilter, showNotification])
 
+  const loadAssignedProjects = useCallback(async () => {
+    if (!userId) return
+
+    setLoadingAssignedProjects(true)
+    try {
+      const response = await api.get('/projects/artisan', withUserHeaders(userId))
+      setAssignedProjects((response.data?.projects || []).map((project) => normalizeAssignedProject(project)))
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to load assigned projects'
+      showNotification('error', message)
+    } finally {
+      setLoadingAssignedProjects(false)
+    }
+  }, [showNotification, userId])
+
   const loadMarketplace = useCallback(async () => {
     setLoadingMarketplace(true)
     try {
@@ -177,6 +215,10 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
   useEffect(() => {
     loadOffers()
   }, [loadOffers])
+
+  useEffect(() => {
+    loadAssignedProjects()
+  }, [loadAssignedProjects])
 
   useEffect(() => {
     loadMarketplace()
@@ -226,6 +268,11 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
 
   const overviewStats = [
     { label: 'Offers', value: offers.length, detail: offerJobFilter ? `Filtered by ${offerJobFilter}` : 'Open now' },
+    {
+      label: 'Assigned projects',
+      value: assignedProjects.length,
+      detail: assignedProjects.length ? 'List and calendar ready' : 'No active assignments yet',
+    },
     {
       label: 'Marketplace docs',
       value: marketplaceProducts.length,
@@ -516,6 +563,16 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                 <button type="button" className="secondary-btn" onClick={() => setActiveView('offers')}>
                   Offers
                 </button>
+                <button
+                  type="button"
+                  className="secondary-btn"
+                  onClick={() => {
+                    setProjectsDisplayMode('list')
+                    setActiveView('projects')
+                  }}
+                >
+                  Projects
+                </button>
                 <button type="button" className="secondary-btn" onClick={() => setActiveView('marketplace')}>
                   Marketplace
                 </button>
@@ -562,6 +619,43 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                     </article>
                   ))}
                   {!offers.length ? <p className="subtitle">No open offers right now.</p> : null}
+                </div>
+              </section>
+
+              <section className="card-panel">
+                <div className="panel-header">
+                  <h3>Assigned projects</h3>
+                  <button
+                    type="button"
+                    className="text-btn"
+                    onClick={() => {
+                      setProjectsDisplayMode('calendar')
+                      setActiveView('projects')
+                    }}
+                  >
+                    Open calendar
+                  </button>
+                </div>
+                <div className="invitation-list">
+                  {assignedProjects.slice(0, 4).map((project) => (
+                    <article key={project.id} className="invitation-card project-assignment-preview">
+                      <div className="inv-meta">
+                        <div>
+                          <p className="inv-title">{project.projectName}</p>
+                          <p className="inv-subtitle">{project.job || 'General assignment'}</p>
+                          <p className="inv-desc">
+                            {project.startDate ? new Date(project.startDate).toLocaleDateString() : 'TBD'}
+                            {' '}to{' '}
+                            {project.endDate ? new Date(project.endDate).toLocaleDateString() : 'TBD'}
+                          </p>
+                          <div className="inv-tags">
+                            <span className={`pill status-${project.status}`}>{formatProjectStatus(project.status)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                  {!assignedProjects.length ? <p className="subtitle">No assigned projects yet.</p> : null}
                 </div>
               </section>
 
@@ -656,6 +750,53 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
               </div>
             ) : (
               <p className="subtitle">No offers match your filters right now.</p>
+            )}
+          </section>
+        )}
+
+        {activeView === 'projects' && (
+          <section className="artisan-projects-view">
+            <div className="dashboard-card artisan-projects-toolbar">
+              <div className="section-header">
+                <div>
+                  <h3>My assigned projects</h3>
+                  <p className="subtitle">Switch between a clean list and a calendar schedule.</p>
+                </div>
+                <button type="button" className="secondary-btn" onClick={loadAssignedProjects} disabled={loadingAssignedProjects}>
+                  {loadingAssignedProjects ? 'Refreshing...' : 'Refresh'}
+                </button>
+              </div>
+
+              <div className="view-toggle-group" role="tablist" aria-label="Assigned projects view">
+                <button
+                  type="button"
+                  className={`view-toggle-btn ${projectsDisplayMode === 'list' ? 'active' : ''}`}
+                  onClick={() => setProjectsDisplayMode('list')}
+                >
+                  List view
+                </button>
+                <button
+                  type="button"
+                  className={`view-toggle-btn ${projectsDisplayMode === 'calendar' ? 'active' : ''}`}
+                  onClick={() => setProjectsDisplayMode('calendar')}
+                >
+                  Calendar view
+                </button>
+              </div>
+            </div>
+
+            {projectsDisplayMode === 'calendar' ? (
+              <ArtisanCalendarPage
+                projects={assignedProjects}
+                loading={loadingAssignedProjects}
+                onRetry={loadAssignedProjects}
+              />
+            ) : (
+              <ArtisanProjectsPage
+                projects={assignedProjects}
+                loading={loadingAssignedProjects}
+                onRetry={loadAssignedProjects}
+              />
             )}
           </section>
         )}
