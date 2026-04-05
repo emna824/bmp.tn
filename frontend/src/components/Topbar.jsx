@@ -1,4 +1,5 @@
 import { LogoutIcon, MenuIcon, ShieldIcon } from './Icons'
+import ThemeToggle from './ThemeToggle'
 import { getInitials } from '../utils/adminDashboard'
 
 function Topbar({ user, onLogout, onMenuToggle }) {
@@ -20,6 +21,7 @@ function Topbar({ user, onLogout, onMenuToggle }) {
       </div>
 
       <div className="admin-topbar-right">
+        <ThemeToggle />
         <div className="admin-user-chip">
           <div className="admin-user-avatar">
             {user?.profileImage ? (

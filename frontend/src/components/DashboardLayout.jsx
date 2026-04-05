@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { BmpLogo, LogoutIcon, MenuIcon, SettingsIcon } from './Icons'
 import NotificationBell from './NotificationBell'
+import ThemeToggle from './ThemeToggle'
 
 function DashboardLayout({
   user,
@@ -83,6 +84,7 @@ function DashboardLayout({
             </div>
           </div>
           <div className="header-actions">
+            <ThemeToggle />
             <NotificationBell user={user} />
             <div className={`header-user ${isUserMenuOpen ? 'open' : ''}`}>
               <button

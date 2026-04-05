@@ -16,11 +16,32 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const projectRoutes = require('./routes/projectRoutes');
 const offerRoutes = require('./routes/offerRoutes');
 const applicationRoutes = require('./routes/applicationRoutes');
+const milestoneRoutes = require('./routes/milestoneRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const workLogRoutes = require('./routes/workLogRoutes');
+const { processProjectAutoTransitions } = require('./utils/projectExecution');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const PROJECT_AUTOMATION_INTERVAL_MS = 60 * 1000;
+let projectAutomationHandle = null;
+let projectAutomationRunning = false;
+
+async function runProjectAutomationSweep() {
+    if (projectAutomationRunning) {
+        return;
+    }
+
+    projectAutomationRunning = true;
+    try {
+        await processProjectAutoTransitions();
+    } catch (error) {
+        console.error('Project automation sweep failed:', error);
+    } finally {
+        projectAutomationRunning = false;
+    }
+}
 
 // Allow multiple origins (dev previews, localhost, deployed frontends)
 const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:4173').split(',').map((o) => o.trim());
@@ -40,7 +61,14 @@ app.use(express.urlencoded({ extended: true, limit: JSON_LIMIT }));
 
 mongoose
     .connect(process.env.MONGO_URI)
-    .then(() => console.log('MongoDB connected successfully'))
+    .then(() => {
+        console.log('MongoDB connected successfully');
+        runProjectAutomationSweep();
+
+        if (!projectAutomationHandle) {
+            projectAutomationHandle = setInterval(runProjectAutomationSweep, PROJECT_AUTOMATION_INTERVAL_MS);
+        }
+    })
     .catch((err) => console.error('MongoDB connection error:', err));
 
 app.get('/', (req, res) => {
@@ -62,8 +90,10 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/offers', offerRoutes);
 app.use('/api/applications', applicationRoutes);
+app.use('/api/milestones', milestoneRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/worklog', workLogRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);

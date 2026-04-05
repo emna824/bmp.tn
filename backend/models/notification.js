@@ -5,7 +5,7 @@ const notificationSchema = new mongoose.Schema(
         userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
         type: {
             type: String,
-            enum: ['new_project', 'application_accepted', 'application_rejected'],
+            enum: ['new_project', 'application_accepted', 'application_rejected', 'project_started', 'project_closed'],
             required: true,
         },
         message: { type: String, required: true, trim: true },

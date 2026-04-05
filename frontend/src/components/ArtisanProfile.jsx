@@ -3,9 +3,8 @@ import api, { withUserHeaders } from '../api'
 import { LockIcon, SettingsIcon, UserIcon } from './Icons'
 import DashboardLayout from './DashboardLayout'
 import ProductCard from './ProductCard'
+import ArtisanDashboard from '../pages/ArtisanDashboard'
 import ReportModal from './ReportModal'
-import ArtisanCalendarPage from '../pages/ArtisanCalendarPage'
-import ArtisanProjectsPage from '../pages/ArtisanProjectsPage'
 import { downloadFileReference } from '../utils/fileHelpers'
 import { formatProductPrice, normalizeProduct } from '../utils/adminDashboard'
 import { getStripeClient } from '../utils/stripe'
@@ -27,7 +26,7 @@ function normalizeAssignedProject(project = {}) {
     startDate: project.startDate || '',
     endDate: project.endDate || '',
     job: project.job || '',
-    status: project.status || 'open',
+    status: project.status || 'recruiting',
   }
 }
 
@@ -65,7 +64,6 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
   const [offerJobFilter, setOfferJobFilter] = useState(user?.job || '')
   const [assignedProjects, setAssignedProjects] = useState([])
   const [loadingAssignedProjects, setLoadingAssignedProjects] = useState(false)
-  const [projectsDisplayMode, setProjectsDisplayMode] = useState('list')
   const [marketplaceProducts, setMarketplaceProducts] = useState([])
   const [loadingMarketplace, setLoadingMarketplace] = useState(false)
   const [downloadingProductId, setDownloadingProductId] = useState(null)
@@ -566,10 +564,7 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                 <button
                   type="button"
                   className="secondary-btn"
-                  onClick={() => {
-                    setProjectsDisplayMode('list')
-                    setActiveView('projects')
-                  }}
+                  onClick={() => setActiveView('projects')}
                 >
                   Projects
                 </button>
@@ -628,12 +623,9 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                   <button
                     type="button"
                     className="text-btn"
-                    onClick={() => {
-                      setProjectsDisplayMode('calendar')
-                      setActiveView('projects')
-                    }}
+                    onClick={() => setActiveView('projects')}
                   >
-                    Open calendar
+                    View projects
                   </button>
                 </div>
                 <div className="invitation-list">
@@ -755,50 +747,13 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
         )}
 
         {activeView === 'projects' && (
-          <section className="artisan-projects-view">
-            <div className="dashboard-card artisan-projects-toolbar">
-              <div className="section-header">
-                <div>
-                  <h3>My assigned projects</h3>
-                  <p className="subtitle">Switch between a clean list and a calendar schedule.</p>
-                </div>
-                <button type="button" className="secondary-btn" onClick={loadAssignedProjects} disabled={loadingAssignedProjects}>
-                  {loadingAssignedProjects ? 'Refreshing...' : 'Refresh'}
-                </button>
-              </div>
-
-              <div className="view-toggle-group" role="tablist" aria-label="Assigned projects view">
-                <button
-                  type="button"
-                  className={`view-toggle-btn ${projectsDisplayMode === 'list' ? 'active' : ''}`}
-                  onClick={() => setProjectsDisplayMode('list')}
-                >
-                  List view
-                </button>
-                <button
-                  type="button"
-                  className={`view-toggle-btn ${projectsDisplayMode === 'calendar' ? 'active' : ''}`}
-                  onClick={() => setProjectsDisplayMode('calendar')}
-                >
-                  Calendar view
-                </button>
-              </div>
-            </div>
-
-            {projectsDisplayMode === 'calendar' ? (
-              <ArtisanCalendarPage
-                projects={assignedProjects}
-                loading={loadingAssignedProjects}
-                onRetry={loadAssignedProjects}
-              />
-            ) : (
-              <ArtisanProjectsPage
-                projects={assignedProjects}
-                loading={loadingAssignedProjects}
-                onRetry={loadAssignedProjects}
-              />
-            )}
-          </section>
+          <ArtisanDashboard
+            userId={userId}
+            projects={assignedProjects}
+            loadingProjects={loadingAssignedProjects}
+            onRefreshProjects={loadAssignedProjects}
+            showNotification={showNotification}
+          />
         )}
 
         {activeView === 'marketplace' && (

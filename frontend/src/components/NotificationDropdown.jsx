@@ -42,6 +42,18 @@ function getNotificationMeta(type) {
         accentClass: 'rejected',
         Icon: XCircleIcon,
       }
+    case 'project_started':
+      return {
+        label: 'Project started',
+        accentClass: 'project',
+        Icon: ProjectIcon,
+      }
+    case 'project_closed':
+      return {
+        label: 'Project closed',
+        accentClass: 'rejected',
+        Icon: XCircleIcon,
+      }
     default:
       return {
         label: 'Update',

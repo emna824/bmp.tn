@@ -1,3 +1,8 @@
+@custom-variant dark (&:where(.dark, .dark *));
+@layer theme, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
 :root {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.45;
@@ -6,6 +11,8 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #ffffff;
+  color: #111827;
 }
 
 * {
@@ -22,5 +29,20 @@ body,
 body {
   margin: 0;
   min-width: 320px;
-  background: #f7f8fb;
+  background: #ffffff;
+  color: #111827;
+  transition:
+    background-color 220ms ease,
+    color 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+html.dark {
+  background: #0f172a;
+}
+
+html.dark body {
+  background: #0f172a;
+  color: #f8fafc;
 }

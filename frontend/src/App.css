@@ -2629,7 +2629,9 @@ button:disabled {
 .settings-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(12, 20, 36, 0.45);
+  background: rgba(15, 23, 42, 0.28);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   display: grid;
   place-items: center;
   z-index: 50;
@@ -4542,9 +4544,23 @@ button:disabled {
   color: #92400e;
 }
 
+.project-status-chip.status-recruiting,
+.legend-chip.status-recruiting,
+.pill.status-recruiting {
+  background: #fef3c7;
+  color: #92400e;
+}
+
 .project-status-chip.status-in_progress,
 .legend-chip.status-in_progress,
 .pill.status-in_progress {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.project-status-chip.status-finished,
+.legend-chip.status-finished,
+.pill.status-finished {
   background: #dcfce7;
   color: #166534;
 }
@@ -4648,4 +4664,315 @@ button:disabled {
   .artisan-calendar-shell .rbc-calendar {
     min-height: 520px;
   }
+}
+
+html.dark .landing-shell,
+html.dark .dashboard-shell,
+html.dark .admin-shell,
+html.dark .artisan-profile,
+html.dark .expert-profile,
+html.dark .manufacturer-dashboard {
+  background:
+    radial-gradient(circle at top, rgba(59, 130, 246, 0.12), transparent 35%),
+    #0f172a;
+  color: #e2e8f0;
+}
+
+html.dark .landing-navbar,
+html.dark .dashboard-header,
+html.dark .dashboard-sidebar,
+html.dark .notification-dropdown,
+html.dark .home-auth-panel,
+html.dark .register-card,
+html.dark .dashboard-card,
+html.dark .card-panel,
+html.dark .stat-card,
+html.dark .expert-dash-card,
+html.dark .expert-panel,
+html.dark .product-card,
+html.dark .market-card,
+html.dark .admin-sidebar,
+html.dark .admin-topbar,
+html.dark .admin-panel,
+html.dark .admin-stat-card,
+html.dark .admin-hero-panel,
+html.dark .admin-card,
+html.dark .admin-user-chip {
+  background: rgba(30, 41, 59, 0.92);
+  border-color: rgba(148, 163, 184, 0.18);
+  box-shadow: 0 22px 48px rgba(2, 6, 23, 0.28);
+  color: #e2e8f0;
+}
+
+html.dark .landing-navbar strong,
+html.dark .landing-navbar a,
+html.dark .landing-section h1,
+html.dark .landing-section h2,
+html.dark .landing-section h3,
+html.dark .landing-footer h3,
+html.dark .dashboard-header strong,
+html.dark .dashboard-sidebar strong,
+html.dark .dashboard-card h2,
+html.dark .dashboard-card h3,
+html.dark .card-panel h3,
+html.dark .stat-card .stat-value,
+html.dark .expert-dash-card h2,
+html.dark .expert-panel h3,
+html.dark .notification-dropdown strong,
+html.dark .register-card h1,
+html.dark .admin-topbar strong,
+html.dark .admin-page-title,
+html.dark .admin-panel h3,
+html.dark .admin-stat-card strong,
+html.dark .admin-card h3 {
+  color: #f8fafc;
+}
+
+html.dark .landing-nav-brand p,
+html.dark .landing-nav-links a,
+html.dark .landing-section p,
+html.dark .landing-section-eyebrow,
+html.dark .landing-footer p,
+html.dark .landing-footer a,
+html.dark .landing-footer span,
+html.dark .dashboard-header small,
+html.dark .sidebar-brand p,
+html.dark .sidebar-item,
+html.dark .sidebar-item-label,
+html.dark .subtitle,
+html.dark .stat-card .stat-label,
+html.dark .stat-card .stat-detail,
+html.dark .expert-panel p,
+html.dark .notification-dropdown p,
+html.dark .notification-dropdown-message,
+html.dark .notification-dropdown-time,
+html.dark .notification-dropdown-action,
+html.dark .register-card .subtitle,
+html.dark .admin-eyebrow,
+html.dark .admin-panel p,
+html.dark .admin-stat-card p,
+html.dark .admin-card p,
+html.dark .admin-card-label,
+html.dark .admin-meta-grid span,
+html.dark .admin-inline-note {
+  color: #cbd5e1;
+}
+
+html.dark .secondary-btn,
+html.dark .header-icon-btn,
+html.dark .header-user-btn,
+html.dark .sidebar-item,
+html.dark .sidebar-logout,
+html.dark .admin-menu-btn,
+html.dark .admin-logout-btn,
+html.dark .admin-action-btn,
+html.dark .admin-sidebar-link,
+html.dark .toggle-btn,
+html.dark .text-btn {
+  background: rgba(15, 23, 42, 0.86);
+  border-color: rgba(148, 163, 184, 0.18);
+  color: #f8fafc;
+}
+
+html.dark .secondary-btn:hover,
+html.dark .header-icon-btn:hover,
+html.dark .header-user-btn:hover,
+html.dark .sidebar-item:hover,
+html.dark .sidebar-logout:hover,
+html.dark .admin-menu-btn:hover,
+html.dark .admin-logout-btn:hover,
+html.dark .admin-action-btn:hover,
+html.dark .admin-sidebar-link:hover,
+html.dark .toggle-btn:hover,
+html.dark .text-btn:hover {
+  background: rgba(30, 41, 59, 0.96);
+}
+
+html.dark .sidebar-item.active,
+html.dark .admin-sidebar-link.active,
+html.dark .toggle-btn.active,
+html.dark .notification-trigger.active {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.16), rgba(250, 204, 21, 0.12));
+  border-color: rgba(251, 191, 36, 0.35);
+  color: #f8fafc;
+}
+
+html.dark .landing-feature-card,
+html.dark .landing-actor-card,
+html.dark .landing-step-card,
+html.dark .landing-hero-panel,
+html.dark .landing-metric-card {
+  background: rgba(30, 41, 59, 0.82);
+  border-color: rgba(148, 163, 184, 0.16);
+  color: #e2e8f0;
+  box-shadow: 0 20px 44px rgba(2, 6, 23, 0.26);
+}
+
+html.dark .landing-hero-tags span,
+html.dark .landing-status-pill,
+html.dark .summary-pill,
+html.dark .chip,
+html.dark .badge,
+html.dark .pill,
+html.dark .meta-chip {
+  background: rgba(15, 23, 42, 0.76);
+  border-color: rgba(148, 163, 184, 0.14);
+  color: #e2e8f0;
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background: rgba(15, 23, 42, 0.88);
+  border-color: rgba(148, 163, 184, 0.2);
+  color: #f8fafc;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #94a3b8;
+}
+
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus {
+  border-color: rgba(96, 165, 250, 0.75);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.18);
+}
+
+html.dark .header-avatar,
+html.dark .admin-user-avatar,
+html.dark .landing-feature-icon,
+html.dark .landing-actor-icon,
+html.dark .landing-metric-icon,
+html.dark .notification-dropdown-heading-icon,
+html.dark .notification-dropdown-icon,
+html.dark .admin-sidebar-note,
+html.dark .notification-dropdown-summary,
+html.dark .market-card-body,
+html.dark .admin-meta-grid > div {
+  background: rgba(15, 23, 42, 0.72);
+  border-color: rgba(148, 163, 184, 0.14);
+}
+
+html.dark .header-user-menu,
+html.dark .notification-dropdown,
+html.dark .settings-modal,
+html.dark .product-preview,
+html.dark .landing-footer {
+  background: rgba(15, 23, 42, 0.96);
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
+.landing-navbar,
+.home-auth-panel,
+.register-card,
+.dashboard-card,
+.stat-card,
+.card-panel,
+.invitation-card,
+.product-card,
+.market-card,
+.expert-panel,
+.notification-dropdown,
+.header-user-menu,
+.settings-modal,
+.admin-panel,
+.admin-stat-card,
+.manufacturer-stat-card,
+.manufacturer-product-card {
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease,
+    filter 220ms ease,
+    background-color 220ms ease,
+    border-color 220ms ease;
+}
+
+.landing-navbar {
+  top: 14px;
+  margin: 14px clamp(16px, 3vw, 28px) 0;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.76), rgba(255, 255, 255, 0.58));
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow:
+    0 18px 38px rgba(15, 23, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.home-auth-panel,
+.register-card,
+.settings-modal {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.56));
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  box-shadow:
+    0 24px 56px rgba(15, 23, 42, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.52);
+}
+
+.dashboard-card,
+.stat-card,
+.card-panel,
+.invitation-card,
+.product-card,
+.market-card,
+.expert-panel,
+.admin-panel,
+.admin-stat-card,
+.manufacturer-stat-card,
+.manufacturer-product-card,
+.notification-dropdown,
+.header-user-menu {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.66), rgba(255, 255, 255, 0.48));
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  box-shadow:
+    0 20px 44px rgba(15, 23, 42, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.46);
+}
+
+.dashboard-card:hover,
+.card-panel:hover,
+.invitation-card:hover,
+.product-card:hover,
+.market-card:hover,
+.expert-panel:hover,
+.admin-panel:hover,
+.admin-stat-card:hover,
+.manufacturer-stat-card:hover,
+.manufacturer-product-card:hover,
+.notification-dropdown:hover {
+  filter: brightness(1.03);
+}
+
+html.dark .landing-navbar {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.62), rgba(15, 23, 42, 0.52));
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 22px 46px rgba(2, 6, 23, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+html.dark .home-auth-panel,
+html.dark .register-card,
+html.dark .settings-modal,
+html.dark .dashboard-card,
+html.dark .stat-card,
+html.dark .card-panel,
+html.dark .invitation-card,
+html.dark .product-card,
+html.dark .market-card,
+html.dark .expert-panel,
+html.dark .notification-dropdown,
+html.dark .header-user-menu,
+html.dark .admin-panel,
+html.dark .admin-stat-card,
+html.dark .manufacturer-stat-card,
+html.dark .manufacturer-product-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.56), rgba(15, 23, 42, 0.48));
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 24px 52px rgba(2, 6, 23, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
