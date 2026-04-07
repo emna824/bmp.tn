@@ -3,3 +3,6 @@
 
 /frontend/.env
 /frontend/.env.example
+
+/ml_task_classifier/artifacts/
+/ml_task_classifier/__pycache__/

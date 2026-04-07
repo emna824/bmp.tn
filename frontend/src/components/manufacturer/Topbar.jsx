@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import LanguageSwitcher from '../LanguageSwitcher'
+import ThemeToggle from '../ThemeToggle'
 import { LogoutIcon } from '../Icons'
 
 function Topbar({ manufacturerName, onLogout }) {
@@ -14,6 +15,7 @@ function Topbar({ manufacturerName, onLogout }) {
 
       <div className="manufacturer-shell-topbar-actions">
         <LanguageSwitcher />
+        <ThemeToggle />
         <div className="manufacturer-shell-user">
           <span>{manufacturerName || t('manufacturer.manufacturer')}</span>
         </div>

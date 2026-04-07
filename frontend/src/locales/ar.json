@@ -284,7 +284,18 @@
   "task": {
     "dailyTask": "مهمة يومية",
     "addUpdate": "أضف تحديث اليوم...",
-    "saveTask": "حفظ المهمة"
+    "saveTask": "حفظ المهمة",
+    "suggestedTrade": "الحرفة المقترحة",
+    "materials": "المواد",
+    "bestPractices": "أفضل الممارسات",
+    "safety": "السلامة"
+  },
+  "tradeLabels": {
+    "carpenter": "نجار",
+    "painter": "دهان",
+    "electrician": "كهربائي",
+    "mason": "بناء",
+    "plumber": "سباك"
   },
   "calendarUi": {
     "planning": "التخطيط",

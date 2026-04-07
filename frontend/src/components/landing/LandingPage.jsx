@@ -1,6 +1,7 @@
 import SignInForm from '../SignInForm'
 import SignUpForm from '../SignUpForm'
 import LanguageSwitcher from '../LanguageSwitcher'
+import ThemeToggle from '../ThemeToggle'
 import { BmpLogo, LockIcon, UserIcon } from '../Icons'
 import LandingActors from './LandingActors'
 import LandingFeatures from './LandingFeatures'
@@ -55,6 +56,7 @@ function LandingPage({ mode, navOpen, onToggleNav, onSelectMode, onLoginSuccess 
 
         <div className={`landing-nav-actions ${navOpen ? 'show' : ''}`}>
           <LanguageSwitcher />
+          <ThemeToggle />
           <button type="button" className="secondary-btn nav-btn" onClick={() => handleModeChange('signin')}>
             {t('login')}
           </button>

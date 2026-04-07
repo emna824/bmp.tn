@@ -21,11 +21,51 @@ body,
   min-height: 100%;
 }
 
+html {
+  background: #f8fafc;
+  color-scheme: light;
+}
+
+html.dark {
+  background: #020617;
+  color-scheme: dark;
+}
+
 body {
   margin: 0;
   min-width: 320px;
-  background: #f7f8fb;
+  background: transparent;
+  color: #0f172a;
   text-align: start;
+  transition:
+    background-color 300ms ease,
+    color 300ms ease;
+}
+
+html.dark body {
+  color: #f8fafc;
+}
+
+#root {
+  isolation: isolate;
+}
+
+body,
+a,
+input,
+textarea,
+select,
+button {
+  transition:
+    background-color 300ms ease,
+    border-color 300ms ease,
+    color 300ms ease,
+    box-shadow 300ms ease;
+}
+
+::selection {
+  background: rgba(245, 158, 11, 0.2);
+  color: inherit;
 }
 
 input,
@@ -34,4 +74,72 @@ select,
 button {
   font: inherit;
   text-align: start;
+}
+
+html.dark .rbc-calendar,
+html.dark .rbc-toolbar,
+html.dark .rbc-month-view,
+html.dark .rbc-time-view,
+html.dark .rbc-agenda-view table {
+  color: #e2e8f0;
+}
+
+html.dark .rbc-month-view,
+html.dark .rbc-time-view,
+html.dark .rbc-agenda-view table,
+html.dark .rbc-toolbar button,
+html.dark .rbc-time-header,
+html.dark .rbc-time-header-content,
+html.dark .rbc-header,
+html.dark .rbc-day-bg,
+html.dark .rbc-time-content,
+html.dark .rbc-timeslot-group,
+html.dark .rbc-agenda-view table tbody > tr > td {
+  border-color: #334155;
+}
+
+html.dark .rbc-month-view,
+html.dark .rbc-time-view,
+html.dark .rbc-agenda-view table {
+  background: rgba(15, 23, 42, 0.72);
+}
+
+html.dark .rbc-header,
+html.dark .rbc-time-header,
+html.dark .rbc-time-header-content {
+  background: rgba(15, 23, 42, 0.88);
+}
+
+html.dark .rbc-off-range-bg {
+  background: rgba(15, 23, 42, 0.58);
+}
+
+html.dark .rbc-today {
+  background: rgba(245, 158, 11, 0.12);
+}
+
+html.dark .rbc-toolbar button {
+  background: rgba(30, 41, 59, 0.82);
+  color: #e2e8f0;
+}
+
+html.dark .rbc-toolbar button:hover,
+html.dark .rbc-toolbar button:focus {
+  background: rgba(51, 65, 85, 0.92);
+}
+
+html.dark .rbc-toolbar button.rbc-active {
+  background: #f59e0b;
+  border-color: #f59e0b;
+  color: #0f172a;
+}
+
+html.dark .rbc-button-link,
+html.dark .rbc-date-cell a {
+  color: inherit;
+}
+
+html.dark .rbc-show-more {
+  background: transparent;
+  color: #fdba74;
 }

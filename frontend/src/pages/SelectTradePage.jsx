@@ -234,7 +234,7 @@ function SelectTradePage({ user, onTradeSaved, onLogout }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-slate-100 transition-colors duration-300 dark:bg-slate-950">
       <div className="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-4 py-10 sm:px-6">
         <div className="grid w-full gap-6 lg:grid-cols-[0.95fr_1.05fr]">
           <section className="rounded-[2rem] bg-slate-950 p-8 text-white shadow-2xl">
@@ -275,11 +275,11 @@ function SelectTradePage({ user, onTradeSaved, onLogout }) {
             </div>
           </section>
 
-          <section className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-xl">
+          <section className="rounded-[2rem] border border-slate-200 bg-white/95 p-8 shadow-xl transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/85 dark:shadow-slate-950/30">
             <div className="space-y-3">
-              <p className="m-0 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Trade selection</p>
-              <h2 className="m-0 text-3xl font-bold tracking-tight text-slate-950">Choose the trade that defines your work</h2>
-              <p className="m-0 max-w-2xl text-sm leading-7 text-slate-600">
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400 dark:text-slate-500">Trade selection</p>
+              <h2 className="m-0 text-3xl font-bold tracking-tight text-slate-950 dark:text-white">Choose the trade that defines your work</h2>
+              <p className="m-0 max-w-2xl text-sm leading-7 text-slate-600 dark:text-slate-300">
                 Pick one option to continue to your artisan dashboard. You can only continue once a trade is selected.
               </p>
             </div>
@@ -310,13 +310,13 @@ function SelectTradePage({ user, onTradeSaved, onLogout }) {
                     className={`group !m-0 relative flex min-h-[178px] flex-col items-start justify-between overflow-hidden rounded-[1.5rem] border px-4 py-4 text-left shadow-none transition duration-200 ${
                       active
                         ? `bg-gradient-to-br ${meta?.accent} text-white ring-4 ${meta?.ring} border-transparent`
-                        : `border-slate-200 bg-gradient-to-br ${meta?.soft} text-slate-900 hover:-translate-y-0.5 hover:border-slate-300`
+                        : `border-slate-200 bg-gradient-to-br ${meta?.soft} text-slate-900 hover:-translate-y-0.5 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100 dark:hover:border-slate-600`
                     } ${saveState !== 'idle' ? 'pointer-events-none opacity-70' : ''}`}
                     onClick={() => setSelectedTrade(trade)}
                   >
                     <div className="absolute right-0 top-0 h-20 w-20 rounded-full bg-white/10 blur-2xl" />
                     <div className="relative z-10 flex w-full items-start justify-between gap-3">
-                      <div className={`rounded-xl p-2.5 ${active ? 'bg-white/15' : 'bg-white/80 shadow-sm'}`}>
+                      <div className={`rounded-xl p-2.5 ${active ? 'bg-white/15' : 'bg-white/80 shadow-sm dark:bg-slate-800 dark:shadow-slate-950/20'}`}>
                         {active ? <Icon className="h-5 w-5 text-white" /> : <Icon className={`h-5 w-5 ${meta?.text || 'text-slate-600'}`} />}
                       </div>
                       <div className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${
@@ -335,7 +335,7 @@ function SelectTradePage({ user, onTradeSaved, onLogout }) {
                           </span>
                         ) : null}
                       </div>
-                      <p className={`m-0 text-xs leading-5 ${active ? 'text-white/80' : 'text-slate-500'}`}>
+                      <p className={`m-0 text-xs leading-5 ${active ? 'text-white/80' : 'text-slate-500 dark:text-slate-300'}`}>
                         Match with projects looking for {trade} specialists from your first login.
                       </p>
                     </div>
@@ -345,7 +345,7 @@ function SelectTradePage({ user, onTradeSaved, onLogout }) {
                         <div
                           key={detail}
                           className={`flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-[11px] font-medium ${
-                            active ? 'bg-white/10 text-white/85' : 'bg-white/75 text-slate-600'
+                            active ? 'bg-white/10 text-white/85' : 'bg-white/75 text-slate-600 dark:bg-slate-800 dark:text-slate-200'
                           }`}
                         >
                           <span className={`h-2 w-2 rounded-full ${active ? 'bg-white' : 'bg-slate-400'}`} />
@@ -362,15 +362,15 @@ function SelectTradePage({ user, onTradeSaved, onLogout }) {
               className={`mt-8 rounded-[1.75rem] border p-5 transition ${
                 selectedTradeMeta
                   ? `${selectedTradeMeta.border} bg-gradient-to-br ${selectedTradeMeta.soft}`
-                  : 'border-slate-200 bg-slate-50'
+                  : 'border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/80'
               }`}
             >
-              <p className="m-0 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Selected trade</p>
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Selected trade</p>
               <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-4">
                   <div
                     className={`inline-flex rounded-2xl p-3 ${
-                      selectedTradeMeta ? `bg-gradient-to-br ${selectedTradeMeta.accent}` : 'bg-slate-200'
+                      selectedTradeMeta ? `bg-gradient-to-br ${selectedTradeMeta.accent}` : 'bg-slate-200 dark:bg-slate-700'
                     }`}
                   >
                     {selectedTradeMeta?.Icon ? (
@@ -380,10 +380,10 @@ function SelectTradePage({ user, onTradeSaved, onLogout }) {
                     )}
                   </div>
                   <div>
-                    <p className="m-0 text-lg font-semibold text-slate-900">
+                    <p className="m-0 text-lg font-semibold text-slate-900 dark:text-white">
                       {selectedTradeLabel || 'Choose one trade to continue'}
                     </p>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
                       {selectedTradeMeta ? selectedTradeMeta.tag : 'Select a specialty to unlock project matching.'}
                     </p>
                   </div>
@@ -391,7 +391,7 @@ function SelectTradePage({ user, onTradeSaved, onLogout }) {
                 {selectedTradeMeta ? (
                   <div className="flex flex-wrap gap-2">
                     {selectedTradeMeta.details.map((detail) => (
-                      <span key={detail} className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-600">
+                      <span key={detail} className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-200">
                         {detail}
                       </span>
                     ))}
@@ -400,7 +400,7 @@ function SelectTradePage({ user, onTradeSaved, onLogout }) {
               </div>
 
               {saveState === 'saving' ? (
-                <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:bg-slate-800 dark:text-slate-300">
                   <LoaderIcon className="h-4 w-4" />
                   Saving selection
                 </div>
@@ -425,10 +425,10 @@ function SelectTradePage({ user, onTradeSaved, onLogout }) {
             ) : null}
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="m-0 text-sm text-slate-500">Only artisans can access this step, and it appears only once.</p>
+              <p className="m-0 text-sm text-slate-500 dark:text-slate-300">Only artisans can access this step, and it appears only once.</p>
               <button
                 type="button"
-                className="!m-0 inline-flex items-center justify-center rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-none transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+                className="!m-0 inline-flex items-center justify-center rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-none transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white dark:disabled:bg-slate-700 dark:disabled:text-slate-300"
                 disabled={!selectedTrade || saveState === 'saving' || saveState === 'success'}
                 onClick={handleConfirm}
               >

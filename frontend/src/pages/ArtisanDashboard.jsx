@@ -17,18 +17,18 @@ function ArtisanDashboard({
   const { t } = useTranslation()
 
   return (
-    <section className="space-y-6">
-      <div className="rounded-2xl bg-white p-6 shadow-md">
+    <section className="space-y-6 transition-colors duration-300">
+      <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-500">{t('artisan.execution')}</p>
-            <h2 className="mt-2 text-3xl font-semibold text-slate-900">{t('artisan.myProjects')}</h2>
-            <p className="mt-2 max-w-2xl text-sm text-slate-500">{t('artisan.myProjectsDescription')}</p>
+            <h2 className="mt-2 text-3xl font-semibold text-slate-900 dark:text-white">{t('artisan.myProjects')}</h2>
+            <p className="mt-2 max-w-2xl text-sm text-slate-500 dark:text-slate-300">{t('artisan.myProjectsDescription')}</p>
           </div>
           <button
             type="button"
             onClick={onOpenCalendar}
-            className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-5 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:brightness-105"
+            className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200/60 transition-all duration-300 hover:scale-[1.02] hover:brightness-105 dark:shadow-orange-950/25"
           >
             {t('artisan.openCalendar')}
           </button>
@@ -36,16 +36,16 @@ function ArtisanDashboard({
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.7fr_1fr]">
-        <div className="rounded-2xl bg-white p-6 shadow-md">
+        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-900">{t('artisan.assignedProjects')}</h3>
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('artisan.assignedProjects')}</h3>
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
               {t('artisan.totalCount', { count: projects.length })}
             </span>
           </div>
 
           {loading ? (
-            <p className="text-sm text-slate-500">{t('artisan.loadingProjects')}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-300">{t('artisan.loadingProjects')}</p>
           ) : projects.length ? (
             <div className="grid gap-4 md:grid-cols-2">
               {projects.map((project) => (
@@ -62,14 +62,14 @@ function ArtisanDashboard({
               ))}
             </div>
           ) : (
-            <p className="text-sm text-slate-500">{t('artisan.noAssignedProjects')}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-300">{t('artisan.noAssignedProjects')}</p>
           )}
         </div>
 
-        <div className="rounded-2xl bg-white p-6 shadow-md">
+        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
           <div className="mb-4">
-            <h3 className="text-lg font-semibold text-slate-900">{t('artisan.dailyTasks')}</h3>
-            <p className="mt-1 text-sm text-slate-500">{t('artisan.dailyTasksDescription')}</p>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('artisan.dailyTasks')}</h3>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{t('artisan.dailyTasksDescription')}</p>
           </div>
 
           <div className="space-y-3">
@@ -85,7 +85,7 @@ function ArtisanDashboard({
                 />
               ))
             ) : (
-              <div className="rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">
+              <div className="rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-500 transition-colors duration-300 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
                 {t('artisan.selectProjectForTasks')}
               </div>
             )}

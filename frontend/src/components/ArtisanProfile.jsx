@@ -363,11 +363,12 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
         title: milestone.title,
         description: draft?.description ?? existingWorkLog?.description ?? '',
         status: draft?.status ?? existingWorkLog?.status ?? 'not_done',
+        categoryHint: milestone?.artisanId?.job || selectedProject?.job || '',
         date: today,
         dateLabel: 'Today',
       }
     })
-  }, [artisanWorkLogs, selectedProjectMilestones, taskDrafts])
+  }, [artisanWorkLogs, selectedProject?.job, selectedProjectMilestones, taskDrafts])
 
   const availableOfferJobs = useMemo(() => {
     const jobs = new Set()

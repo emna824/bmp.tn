@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import LanguageSwitcher from './LanguageSwitcher'
-import { BmpLogo, LogoutIcon, MenuIcon, SettingsIcon } from './Icons'
+import ThemeToggle from './ThemeToggle'
+import { BmpLogo, LogoutIcon, SettingsIcon } from './Icons'
 import NotificationBell from './NotificationBell'
 
 function DashboardLayout({
@@ -13,7 +14,6 @@ function DashboardLayout({
   children,
 }) {
   const { t } = useTranslation()
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
 
   const userInitials = useMemo(() => {
@@ -25,12 +25,10 @@ function DashboardLayout({
 
   const handleNavigate = (key) => {
     onNavigate(key)
-    setIsSidebarOpen(false)
     setIsUserMenuOpen(false)
   }
 
   const handleLogout = () => {
-    setIsSidebarOpen(false)
     setIsUserMenuOpen(false)
     onLogout()
   }
@@ -39,11 +37,9 @@ function DashboardLayout({
     handleNavigate('settings')
   }
 
-  const shellClass = `dashboard-shell ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`
-
   return (
-    <div className={shellClass}>
-      <aside className={`dashboard-sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
+    <div className="dashboard-shell">
+      <aside className="dashboard-sidebar">
         <div className="sidebar-brand">
           <BmpLogo className="sidebar-brand-icon" />
           <div>
@@ -72,21 +68,10 @@ function DashboardLayout({
       </aside>
       <div className="dashboard-main">
         <header className="dashboard-header">
-          <div className="header-left">
-            <button
-              type="button"
-              className={`sidebar-burger-btn ${isSidebarOpen ? 'is-open' : ''}`}
-              onClick={() => setIsSidebarOpen((open) => !open)}
-              aria-label={isSidebarOpen ? t('nav.collapseMenu') : t('nav.openSidebar')}
-            >
-              <MenuIcon className="icon" />
-            </button>
-            <div>
-           
-            </div>
-          </div>
+          <div className="header-left" />
           <div className="header-actions">
             <LanguageSwitcher />
+            <ThemeToggle />
             <NotificationBell user={user} />
             <div className={`header-user ${isUserMenuOpen ? 'open' : ''}`}>
               <button

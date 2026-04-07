@@ -284,7 +284,18 @@
   "task": {
     "dailyTask": "Tâche quotidienne",
     "addUpdate": "Ajouter la mise à jour du jour...",
-    "saveTask": "Enregistrer la tâche"
+    "saveTask": "Enregistrer la tâche",
+    "suggestedTrade": "Métier suggéré",
+    "materials": "Matériaux",
+    "bestPractices": "Bonnes pratiques",
+    "safety": "Sécurité"
+  },
+  "tradeLabels": {
+    "carpenter": "Menuisier",
+    "painter": "Peintre",
+    "electrician": "Électricien",
+    "mason": "Maçon",
+    "plumber": "Plombier"
   },
   "calendarUi": {
     "planning": "Planification",

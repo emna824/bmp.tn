@@ -1,22 +1,15 @@
 import { useTranslation } from 'react-i18next'
 import LanguageSwitcher from './LanguageSwitcher'
-import { LogoutIcon, MenuIcon, ShieldIcon } from './Icons'
+import ThemeToggle from './ThemeToggle'
+import { LogoutIcon, ShieldIcon } from './Icons'
 import { getInitials } from '../utils/adminDashboard'
 
-function Topbar({ user, onLogout, onMenuToggle }) {
+function Topbar({ user, onLogout }) {
   const { t } = useTranslation()
 
   return (
     <header className="admin-topbar">
       <div className="admin-topbar-left">
-        <button
-          type="button"
-          className="admin-menu-btn"
-          onClick={onMenuToggle}
-          aria-label={t('nav.openSidebar')}
-        >
-          <MenuIcon className="icon" />
-        </button>
         <div>
           <p className="admin-eyebrow">{t('admin.controlCenter')}</p>
           <h1 className="admin-page-title">{t('admin.dashboardTitle')}</h1>
@@ -25,6 +18,7 @@ function Topbar({ user, onLogout, onMenuToggle }) {
 
       <div className="admin-topbar-right">
         <LanguageSwitcher />
+        <ThemeToggle />
         <div className="admin-user-chip">
           <div className="admin-user-avatar">
             {user?.profileImage ? (
