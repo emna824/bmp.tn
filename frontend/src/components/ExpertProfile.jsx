@@ -1,21 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import api from '../api'
+import { useTranslation } from 'react-i18next'
+import api, { withUserHeaders } from '../api'
 import DashboardLayout from './DashboardLayout'
 import CreateProjectForm from './CreateProjectForm'
-import ProjectDetails from '../pages/ProjectDetails'
 import ReportModal from './ReportModal'
-
-const MENU_ITEMS = [
-  { key: 'overview', label: 'Overview', subtitle: 'Recruitment snapshot' },
-  { key: 'create', label: 'Create Project', subtitle: 'Project + chantier' },
-  { key: 'projects', label: 'Projects', subtitle: 'Execution system' },
-  { key: 'settings', label: 'Settings', subtitle: 'Account summary' },
-]
+import ProjectDetails from '../pages/ProjectDetails'
 
 function normalizeProject(project) {
   return {
     ...project,
     id: project?._id || project?.id,
+    projectName: project?.projectName || project?.title || project?.name || 'Untitled project',
     title: project?.projectName || project?.title || project?.name || 'Untitled project',
     budget: Number(project?.estimatedBudget ?? project?.budget ?? project?.totalBudget ?? 0),
     category: project?.category || '',
@@ -31,13 +26,27 @@ function normalizeProject(project) {
   }
 }
 
+function normalizeMilestone(milestone) {
+  return {
+    ...milestone,
+    _id: milestone?._id || milestone?.id || '',
+    status: milestone?.status || 'pending',
+  }
+}
+
 function ExpertProfile({ user, onLogout }) {
+  const { t } = useTranslation()
   const userId = user?.id || user?._id || ''
   const [activeView, setActiveView] = useState('overview')
   const [projects, setProjects] = useState([])
   const [offersByProject, setOffersByProject] = useState({})
   const [applicationsByProject, setApplicationsByProject] = useState({})
+  const [milestonesByProject, setMilestonesByProject] = useState({})
   const [loadingProjects, setLoadingProjects] = useState(false)
+  const [loadingMilestones, setLoadingMilestones] = useState(false)
+  const [creatingMilestone, setCreatingMilestone] = useState(false)
+  const [projectActionLoading, setProjectActionLoading] = useState(false)
+  const [reviewingId, setReviewingId] = useState('')
   const [selectedProjectId, setSelectedProjectId] = useState('')
   const [notification, setNotification] = useState({ type: '', text: '' })
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
@@ -52,7 +61,7 @@ function ExpertProfile({ user, onLogout }) {
     return () => clearTimeout(timer)
   }, [notification])
 
-  const loadProjects = async () => {
+  const loadProjects = useCallback(async () => {
     if (!userId) return
 
     setLoadingProjects(true)
@@ -71,37 +80,50 @@ function ExpertProfile({ user, onLogout }) {
     } finally {
       setLoadingProjects(false)
     }
-  }
+  }, [showNotification, userId])
 
   useEffect(() => {
     loadProjects()
-  }, [userId])
+  }, [loadProjects])
+
+  const selectedProject = useMemo(
+    () => projects.find((project) => project.id === selectedProjectId) || null,
+    [projects, selectedProjectId],
+  )
+
+  const loadProjectDetails = useCallback(async (projectId = selectedProjectId) => {
+    if (!projectId || !userId) return
+
+    setLoadingMilestones(true)
+    try {
+      const [offersResponse, applicationsResponse, milestonesResponse] = await Promise.all([
+        api.get(`/projects/${projectId}/offers`),
+        api.get(`/projects/${projectId}/applications`, { params: { expertId: userId } }),
+        api.get(`/milestones/project/${projectId}`, withUserHeaders(userId)),
+      ])
+
+      setOffersByProject((current) => ({
+        ...current,
+        [projectId]: offersResponse.data?.offers || [],
+      }))
+      setApplicationsByProject((current) => ({
+        ...current,
+        [projectId]: applicationsResponse.data?.applications || [],
+      }))
+      setMilestonesByProject((current) => ({
+        ...current,
+        [projectId]: (milestonesResponse.data?.milestones || []).map((milestone) => normalizeMilestone(milestone)),
+      }))
+    } catch (error) {
+      showNotification('error', error.response?.data?.message || 'Failed to load project execution data')
+    } finally {
+      setLoadingMilestones(false)
+    }
+  }, [selectedProjectId, showNotification, userId])
 
   useEffect(() => {
-    const loadProjectDetails = async () => {
-      if (!selectedProjectId || !userId) return
-
-      try {
-        const [offersResponse, applicationsResponse] = await Promise.all([
-          api.get(`/projects/${selectedProjectId}/offers`),
-          api.get(`/projects/${selectedProjectId}/applications`, { params: { expertId: userId } }),
-        ])
-
-        setOffersByProject((current) => ({
-          ...current,
-          [selectedProjectId]: offersResponse.data?.offers || [],
-        }))
-        setApplicationsByProject((current) => ({
-          ...current,
-          [selectedProjectId]: applicationsResponse.data?.applications || [],
-        }))
-      } catch (error) {
-        showNotification('error', error.response?.data?.message || 'Failed to load project recruitment data')
-      }
-    }
-
-    loadProjectDetails()
-  }, [selectedProjectId, userId])
+    loadProjectDetails(selectedProjectId)
+  }, [loadProjectDetails, selectedProjectId])
 
   const openOffers = useMemo(
     () => Object.values(offersByProject).flat().filter((offer) => offer.status === 'open').length,
@@ -117,6 +139,18 @@ function ExpertProfile({ user, onLogout }) {
     () => Object.values(applicationsByProject).flat().filter((application) => application.status === 'accepted').length,
     [applicationsByProject],
   )
+
+  const menuItems = useMemo(
+    () => [
+      { key: 'overview', label: t('expert.menu.overview'), subtitle: t('expert.menu.overviewSubtitle') },
+      { key: 'create', label: t('expert.menu.create'), subtitle: t('expert.menu.createSubtitle') },
+      { key: 'projects', label: t('expert.menu.projects'), subtitle: t('expert.menu.projectsSubtitle') },
+      { key: 'settings', label: t('expert.menu.settings'), subtitle: t('expert.menu.settingsSubtitle') },
+    ],
+    [t],
+  )
+
+  const selectedMilestones = milestonesByProject[selectedProjectId] || []
 
   const handleProjectCreated = (payload) => {
     const createdProject = normalizeProject(payload?.project || {})
@@ -134,6 +168,77 @@ function ExpertProfile({ user, onLogout }) {
     showNotification('success', 'Project, chantier, and offer created successfully')
   }
 
+  const handleCreateMilestone = async (payload) => {
+    if (!selectedProjectId) return
+
+    setCreatingMilestone(true)
+    try {
+      await api.post(
+        '/milestones',
+        {
+          projectId: selectedProjectId,
+          artisanId: payload.artisanId,
+          title: payload.title,
+          description: payload.description,
+          startDate: payload.startDate,
+          endDate: payload.endDate,
+        },
+        withUserHeaders(userId),
+      )
+      await loadProjectDetails(selectedProjectId)
+      showNotification('success', 'Milestone created successfully')
+    } catch (error) {
+      showNotification('error', error.response?.data?.message || 'Failed to create milestone')
+    } finally {
+      setCreatingMilestone(false)
+    }
+  }
+
+  const handleProjectStatusAction = async (action) => {
+    if (!selectedProjectId) return
+
+    setProjectActionLoading(true)
+    try {
+      if (action === 'start') {
+        await api.post(`/projects/start/${selectedProjectId}`, {}, withUserHeaders(userId))
+      } else {
+        await api.put(`/projects/status/${selectedProjectId}`, { status: action }, withUserHeaders(userId))
+      }
+
+      await Promise.all([loadProjects(), loadProjectDetails(selectedProjectId)])
+      showNotification('success', action === 'start' ? 'Project started successfully' : `Project ${action} successfully`)
+    } catch (error) {
+      showNotification('error', error.response?.data?.message || `Failed to ${action} project`)
+    } finally {
+      setProjectActionLoading(false)
+    }
+  }
+
+  const handleReviewApplication = async (applicationId, action) => {
+    setReviewingId(applicationId)
+    try {
+      await api.patch(`/applications/${applicationId}/review`, {
+        expertId: userId,
+        action,
+      })
+
+      await loadProjects()
+
+      if (selectedProjectId) {
+        await loadProjectDetails(selectedProjectId)
+      }
+
+      showNotification('success', `Application ${action}ed successfully`)
+    } catch (error) {
+      showNotification('error', error.response?.data?.message || `Failed to ${action} application`)
+    } finally {
+      setReviewingId('')
+    }
+  }
+
+  const selectedOffers = offersByProject[selectedProjectId] || []
+  const selectedApplications = applicationsByProject[selectedProjectId] || []
+
   return (
     <div className="expert-profile">
       <div className={`notification ${notification.text ? 'show' : ''} ${notification.type || ''}`} role="status">
@@ -142,7 +247,7 @@ function ExpertProfile({ user, onLogout }) {
 
       <DashboardLayout
         user={user}
-        menuItems={MENU_ITEMS}
+        menuItems={menuItems}
         activeView={activeView}
         onNavigate={setActiveView}
         onLogout={onLogout}
@@ -152,27 +257,27 @@ function ExpertProfile({ user, onLogout }) {
             <div className="expert-dash-hero">
               <div>
                 <p className="eyebrow">Expert recruitment</p>
-                <h2>Launch projects, assign artisans, and move projects into execution with clear milestones.</h2>
-                <p className="subtitle">Recruitment stays visible until you start the project, then milestones drive delivery.</p>
+                <h2>Launch projects, publish offers, and review artisan applications in one place.</h2>
+                <p className="subtitle">Each new project creates its chantier automatically and opens the required job offers.</p>
                 <div className="hero-actions">
                   <button type="button" onClick={() => setActiveView('create')}>
                     New project
                   </button>
                   <button type="button" className="secondary-btn" onClick={() => setActiveView('projects')}>
-                    Open execution
+                    Review pipeline
                   </button>
                 </div>
               </div>
               <div className="hero-metrics">
                 <div className="summary-pill">
                   <strong>{projects.length}</strong>
-                  <span>Projects</span>
+                  <span>{t('projects')}</span>
                   <small>Managed by you</small>
                 </div>
                 <div className="summary-pill">
                   <strong>{openOffers}</strong>
                   <span>Open offers</span>
-                  <small>Still recruiting</small>
+                  <small>Ready for artisans</small>
                 </div>
                 <div className="summary-pill">
                   <strong>{pendingApplications}</strong>
@@ -186,7 +291,7 @@ function ExpertProfile({ user, onLogout }) {
               <div className="expert-panel">
                 <div className="section-header">
                   <h3>Recent projects</h3>
-                  <p className="subtitle">Your latest recruitment boards and execution workspaces.</p>
+                  <p className="subtitle">Your latest recruitment boards.</p>
                 </div>
                 <div className="expert-list">
                   {projects.slice(0, 4).map((project) => (
@@ -197,14 +302,10 @@ function ExpertProfile({ user, onLogout }) {
                           {project.teamRequirements.length} roles · {project.budget.toLocaleString()} TND
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        className="mini-btn secondary-btn"
-                        onClick={() => {
-                          setSelectedProjectId(project.id)
-                          setActiveView('projects')
-                        }}
-                      >
+                      <button type="button" className="mini-btn secondary-btn" onClick={() => {
+                        setSelectedProjectId(project.id)
+                        setActiveView('projects')
+                      }}>
                         Open
                       </button>
                     </article>
@@ -215,8 +316,8 @@ function ExpertProfile({ user, onLogout }) {
 
               <div className="expert-panel">
                 <div className="section-header">
-                  <h3>Recruitment snapshot</h3>
-                  <p className="subtitle">Offers and pending applications still waiting for action.</p>
+                  <h3>Pending applications</h3>
+                  <p className="subtitle">Artisans waiting for your decision.</p>
                 </div>
                 <div className="expert-list">
                   {Object.values(applicationsByProject)
@@ -244,7 +345,7 @@ function ExpertProfile({ user, onLogout }) {
         {activeView === 'create' && (
           <section className="dashboard-card">
             <div className="section-header">
-              <h3>Create project</h3>
+              <h3>{t('expert.menu.create')}</h3>
               <p className="subtitle">Set the project details, map location, trade, and salary in one clean form.</p>
             </div>
             <CreateProjectForm expertId={userId} onCreated={handleProjectCreated} />
@@ -252,15 +353,135 @@ function ExpertProfile({ user, onLogout }) {
         )}
 
         {activeView === 'projects' && (
-          <ProjectDetails
-            userId={userId}
-            projects={projects}
-            loadingProjects={loadingProjects}
-            onRefreshProjects={loadProjects}
-            showNotification={showNotification}
-            selectedProjectId={selectedProjectId}
-            onProjectSelect={setSelectedProjectId}
-          />
+          <section className="dashboard-card">
+            <div className="section-header">
+              <h3>{t('projects')}</h3>
+              <p className="subtitle">Manage recruiting, execution, milestones, and artisan applications by project.</p>
+            </div>
+
+            {loadingProjects ? (
+              <p className="subtitle">Loading projects...</p>
+            ) : projects.length ? (
+              <>
+                <div className="project-toolbar">
+                  <select value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>
+                    {projects.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {selectedProject ? (
+                  <div className="space-y-6">
+                    <ProjectDetails
+                      role="expert"
+                      project={selectedProject}
+                      milestones={selectedMilestones}
+                      workLogs={[]}
+                      loading={loadingMilestones}
+                      creatingMilestone={creatingMilestone}
+                      projectActionLoading={projectActionLoading}
+                      onBack={() => setActiveView('overview')}
+                      onCreateMilestone={handleCreateMilestone}
+                      onStartProject={() => handleProjectStatusAction('start')}
+                      onCloseProject={() => handleProjectStatusAction('closed')}
+                      onFinishProject={() => handleProjectStatusAction('finished')}
+                    />
+
+                    <div className="project-board">
+                    <div className="project-summary-card">
+                      <h4>{selectedProject.title}</h4>
+                      <p className="subtitle">
+                        {selectedProject.category || 'project'} · {selectedProject.location?.address || 'No address provided.'}
+                      </p>
+                      <div className="chip-row">
+                        <span className="chip ghost">{selectedProject.budget.toLocaleString()} TND</span>
+                        <span className="chip ghost">
+                          Start {selectedProject.startDate ? new Date(selectedProject.startDate).toLocaleDateString() : 'TBD'}
+                        </span>
+                        <span className="chip ghost">
+                          End {selectedProject.endDate ? new Date(selectedProject.endDate).toLocaleDateString() : 'TBD'}
+                        </span>
+                        <span className="chip ghost">{selectedProject.job || 'no trade'} · {selectedProject.dailySalary || 0} TND/day</span>
+                      </div>
+                    </div>
+
+                    <div className="expert-panels two">
+                      <div className="expert-panel">
+                        <div className="section-header">
+                          <h3>Offers</h3>
+                          <p className="subtitle">Slots available for artisans.</p>
+                        </div>
+                        <div className="projects-grid">
+                          {selectedOffers.map((offer) => (
+                            <article key={offer._id} className="project-tile">
+                              <h4>{offer.job}</h4>
+                              <p className="subtitle small">
+                                {offer.availableSlots}/{offer.requiredSlots} slots available
+                              </p>
+                              <div className="chip-row">
+                                <span className={`chip ${offer.status === 'open' ? '' : 'ghost'}`}>{offer.status}</span>
+                              </div>
+                            </article>
+                          ))}
+                          {!selectedOffers.length && <p className="subtitle">No offers found for this project.</p>}
+                        </div>
+                      </div>
+
+                      <div className="expert-panel">
+                        <div className="section-header">
+                          <h3>Applications</h3>
+                          <p className="subtitle">Accept or reject artisan candidates.</p>
+                        </div>
+                        <div className="application-stack">
+                          {selectedApplications.map((application) => (
+                            <article key={application._id} className="application-card">
+                              <div>
+                                <strong>{application.artisanId?.name || 'Artisan'}</strong>
+                                <p className="subtitle small">
+                                  {(application.artisanId?.job || application.job || '').toUpperCase()} · {application.proposedDailySalary} TND/day
+                                </p>
+                                <p className="subtitle small">{application.artisanId?.email || ''}</p>
+                              </div>
+                              <div className="application-side">
+                                <span className={`status-pill status-${application.status}`}>{application.status}</span>
+                                {application.status === 'pending' ? (
+                                  <div className="inline-actions">
+                                    <button
+                                      type="button"
+                                      className="secondary-btn mini-btn"
+                                      disabled={reviewingId === application._id}
+                                      onClick={() => handleReviewApplication(application._id, 'reject')}
+                                    >
+                                      Reject
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="mini-btn"
+                                      disabled={reviewingId === application._id}
+                                      onClick={() => handleReviewApplication(application._id, 'accept')}
+                                    >
+                                      {reviewingId === application._id ? 'Saving...' : 'Accept'}
+                                    </button>
+                                  </div>
+                                ) : null}
+                              </div>
+                            </article>
+                          ))}
+                          {!selectedApplications.length && <p className="subtitle">No applications yet for this project.</p>}
+                        </div>
+                      </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <p className="subtitle">No projects yet. Create one to start publishing offers.</p>
+            )}
+          </section>
         )}
 
         {activeView === 'settings' && (

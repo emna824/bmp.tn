@@ -1,12 +1,11 @@
 const mongoose = require('mongoose');
 const Offer = require('../models/offer');
-const { processProjectAutoTransitions } = require('../utils/projectExecution');
+const Project = require('../models/project');
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 exports.listOffers = async (req, res) => {
   try {
-    await processProjectAutoTransitions();
     const { job, projectId, status = 'open' } = req.query;
     const filter = {};
 
@@ -23,6 +22,15 @@ exports.listOffers = async (req, res) => {
         return res.status(400).json({ message: 'Invalid projectId' });
       }
       filter.projectId = projectId;
+
+      const project = await Project.findById(projectId).select('status');
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+
+      if (project.status !== 'recruiting') {
+        return res.status(200).json({ offers: [] });
+      }
     }
 
     if (filter.status === 'open') {
@@ -30,14 +38,10 @@ exports.listOffers = async (req, res) => {
     }
 
     const offers = await Offer.find(filter)
-      .populate({
-        path: 'projectId',
-        select: 'projectName estimatedBudget endDate expertId location category dailySalary status startDate',
-        match: filter.status === 'open' ? { status: 'recruiting' } : undefined,
-      })
+      .populate('projectId', 'projectName estimatedBudget endDate expertId location category dailySalary status')
       .sort({ createdAt: -1 });
 
-    const visibleOffers = offers.filter((offer) => offer.projectId);
+    const visibleOffers = offers.filter((offer) => offer.projectId?.status === 'recruiting');
 
     return res.status(200).json({ offers: visibleOffers });
   } catch (err) {
@@ -47,7 +51,6 @@ exports.listOffers = async (req, res) => {
 
 exports.getOfferById = async (req, res) => {
   try {
-    await processProjectAutoTransitions();
     const { offerId } = req.params;
 
     if (!isValidObjectId(offerId)) {
@@ -56,7 +59,7 @@ exports.getOfferById = async (req, res) => {
 
     const offer = await Offer.findById(offerId).populate(
       'projectId',
-      'projectName estimatedBudget endDate expertId location category dailySalary teamRequirements status startDate'
+      'projectName estimatedBudget endDate expertId location category dailySalary teamRequirements'
     );
     if (!offer) {
       return res.status(404).json({ message: 'Offer not found' });

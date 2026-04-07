@@ -1,0 +1,306 @@
+{
+  "login": "Login",
+  "dashboard": "Dashboard",
+  "projects": "Projects",
+  "quotes": "Quotes",
+  "invoices": "Invoices",
+  "logout": "Logout",
+  "language": {
+    "label": "Language",
+    "switcher": "Choose language",
+    "english": "English",
+    "french": "French",
+    "arabic": "Arabic"
+  },
+  "common": {
+    "back": "Back",
+    "loading": "Loading...",
+    "refresh": "Refresh",
+    "save": "Save",
+    "saving": "Saving...",
+    "settings": "Settings",
+    "guest": "Guest",
+    "name": "Name",
+    "email": "Email",
+    "password": "Password",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "trade": "Trade",
+    "description": "Description",
+    "milestones": "Milestones",
+    "today": "Today"
+  },
+  "status": {
+    "recruiting": "Recruiting",
+    "in_progress": "In Progress",
+    "finished": "Finished",
+    "closed": "Closed",
+    "pending": "Pending",
+    "done": "Done",
+    "not_done": "Not Done",
+    "accepted": "Accepted",
+    "rejected": "Rejected"
+  },
+  "nav": {
+    "features": "Features",
+    "actors": "Actors",
+    "howItWorks": "How it works",
+    "access": "Access",
+    "contact": "Contact",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "mainNavigation": "Main navigation",
+    "dashboardSections": "Dashboard sections",
+    "openSidebar": "Open sidebar",
+    "collapseMenu": "Collapse menu"
+  },
+  "landing": {
+    "brandSubtitle": "Construction operations platform",
+    "hero": {
+      "badge": "BMP.tn for modern construction teams",
+      "title": "Manage Construction Projects Smarter",
+      "subtitle": "Coordinate projects, hire the right specialists, validate deliverables, and source materials from one professional workspace built for construction management.",
+      "highlightsLabel": "Platform highlights",
+      "tag1": "Project oversight",
+      "tag2": "Expert-backed validation",
+      "tag3": "Supplier marketplace",
+      "tag4": "Team coordination",
+      "snapshotEyebrow": "Operations snapshot",
+      "snapshotTitle": "One view for planning, staffing, and supply",
+      "livePlatform": "Live platform",
+      "imageAlt": "Construction planning session with project documents",
+      "metrics": {
+        "activeProjects": "Active projects",
+        "marketplaceItems": "Marketplace items",
+        "validatedWorkflows": "Validated workflows"
+      }
+    },
+    "features": {
+      "eyebrow": "Features",
+      "title": "Everything needed to run construction work with clarity",
+      "subtitle": "The platform brings operations, hiring, material sourcing, and review into a single reliable workspace.",
+      "projectManagementTitle": "Project management",
+      "projectManagementDescription": "Organize construction tasks, track milestones, and keep every chantier on schedule.",
+      "marketplaceTitle": "Marketplace",
+      "marketplaceDescription": "Browse manufacturer catalogs, compare product offers, and access documentation quickly.",
+      "validationTitle": "Expert validation",
+      "validationDescription": "Bring expert oversight into the workflow to review progress and validate key decisions.",
+      "collaborationTitle": "Team collaboration",
+      "collaborationDescription": "Connect artisans, experts, and manufacturers in one shared space for smoother coordination."
+    },
+    "actors": {
+      "eyebrow": "Actors",
+      "title": "Built around the people who keep projects moving",
+      "subtitle": "Each role gets a focused experience while staying connected to the rest of the construction ecosystem.",
+      "artisanTitle": "Artisan",
+      "artisanDescription": "Apply for jobs, manage assigned work, and stay connected to project teams in real time.",
+      "expertTitle": "Expert",
+      "expertDescription": "Create projects, review progress, and validate key construction decisions with confidence.",
+      "manufacturerTitle": "Manufacturer",
+      "manufacturerDescription": "Publish product catalogs, manage documentation, and reach construction professionals directly."
+    },
+    "steps": {
+      "eyebrow": "How It Works",
+      "title": "A clear flow from kickoff to delivery",
+      "subtitle": "Simple steps keep the platform easy to adopt while still supporting serious project execution.",
+      "step1Title": "Create project",
+      "step1Description": "Set up a construction project, define needs, and organize the work structure from day one.",
+      "step2Title": "Apply for jobs",
+      "step2Description": "Artisans discover open opportunities while experts and managers review the right candidates.",
+      "step3Title": "Manage progress",
+      "step3Description": "Track work, coordinate stakeholders, and keep documentation and supply activity aligned."
+    },
+    "auth": {
+      "eyebrow": "Access",
+      "title": "Start with the role that fits your work",
+      "subtitle": "Join the platform to publish projects, apply for work, manage product catalogs, and collaborate across the construction lifecycle.",
+      "roleBasedTitle": "Role-based experience",
+      "roleBasedDescription": "Each actor sees tools tailored to their responsibilities.",
+      "fastAccessTitle": "Fast access",
+      "fastAccessDescription": "Create an account or log in from the same modern entry point.",
+      "formsLabel": "Authentication forms",
+      "signUp": "Sign Up"
+    },
+    "footer": {
+      "subtitle": "Construction management, sourcing, and collaboration in one platform.",
+      "platform": "Platform",
+      "access": "Access",
+      "contact": "Contact",
+      "builtForTeams": "Built for connected construction teams",
+      "rights": "All rights reserved.",
+      "bottom": "Experts, artisans, and manufacturers working smarter together."
+    }
+  },
+  "auth": {
+    "signIn": {
+      "brandSubtitle": "Smart Building Marketplace",
+      "title": "Welcome Back",
+      "subtitle": "Sign in to your account",
+      "staySignedIn": "Stay signed in",
+      "forgotPassword": "Forgot password?",
+      "closeForgotPassword": "Close forgot password",
+      "accountEmail": "Account Email",
+      "resetCode": "Reset Code",
+      "newPassword": "New Password",
+      "sendResetCode": "Send reset code",
+      "sending": "Sending...",
+      "resetPassword": "Reset password",
+      "resetting": "Resetting...",
+      "submit": "Sign in",
+      "submitting": "Signing in...",
+      "googleLabel": "Sign in with Google",
+      "orContinueWith": "Or continue with",
+      "success": "Signed in successfully.",
+      "googleSuccess": "Signed in with Google",
+      "failed": "Sign in failed",
+      "googleFailed": "Google sign-in failed",
+      "fixErrors": "Please fix form errors before submitting.",
+      "resetSent": "Reset code sent to your email.",
+      "resetSuccess": "Password reset successful.",
+      "sendResetFailed": "Failed to send reset code",
+      "resetFailed": "Failed to reset password",
+      "placeholders": {
+        "email": "you@email.com",
+        "password": "Your password",
+        "code": "6-digit code",
+        "newPassword": "Minimum 8 characters"
+      },
+      "errors": {
+        "emailRequired": "Email is required",
+        "invalidEmail": "Invalid email",
+        "passwordRequired": "Password is required",
+        "codeRequired": "Reset code is required",
+        "newPasswordRequired": "New password is required",
+        "minPassword": "Min 8 characters"
+      }
+    },
+    "signUp": {
+      "title": "Create Account",
+      "subtitle": "Register as expert, artisan or manufacturer",
+      "submit": "Create account",
+      "submitting": "Submitting...",
+      "success": "Account created successfully.",
+      "registered": "Registered",
+      "failed": "Registration failed",
+      "networkFailed": "Cannot reach server. Check API base URL.",
+      "fixErrors": "Please fix form errors before submitting.",
+      "roles": {
+        "expert": "Expert",
+        "artisan": "Artisan",
+        "manufacturer": "Manufacturer"
+      },
+      "patent": "Patent",
+      "address": "Address",
+      "companyPhone": "Company Phone",
+      "placeholders": {
+        "name": "Your full name",
+        "email": "you@email.com",
+        "password": "Minimum 8 characters",
+        "patent": "Patent reference",
+        "address": "Company address",
+        "companyPhone": "+216 xx xxx xxx"
+      },
+      "errors": {
+        "nameRequired": "Name is required",
+        "emailRequired": "Email is required",
+        "invalidEmail": "Invalid email",
+        "passwordRequired": "Password is required",
+        "minPassword": "Min 8 characters",
+        "patentRequired": "Patent is required",
+        "addressRequired": "Address is required",
+        "companyPhoneRequired": "Company phone is required"
+      }
+    }
+  },
+  "dashboardUi": {
+    "constructionPlatform": "Construction platform",
+    "roleFallback": "Role"
+  },
+  "artisan": {
+    "menu": {
+      "overview": "Overview",
+      "overviewSubtitle": "Snapshot",
+      "offers": "Offers",
+      "offersSubtitle": "Apply to projects",
+      "projects": "Projects",
+      "projectsSubtitle": "Assigned work",
+      "marketplace": "Marketplace",
+      "marketplaceSubtitle": "Manufacturer docs",
+      "settings": "Settings",
+      "settingsSubtitle": "Profile & security"
+    },
+    "execution": "Execution",
+    "myProjects": "My Projects",
+    "myProjectsDescription": "Track your assigned work, open project details, and update daily progress from one clean space.",
+    "openCalendar": "Open calendar",
+    "assignedProjects": "Assigned projects",
+    "totalCount": "{{count}} total",
+    "loadingProjects": "Loading projects...",
+    "noAssignedProjects": "No assigned projects yet.",
+    "dailyTasks": "Daily tasks",
+    "dailyTasksDescription": "Your latest milestone updates for today.",
+    "selectProjectForTasks": "Select a project with milestones to start logging daily work.",
+    "workspaceTitle": "Project execution workspace",
+    "workspaceSubtitle": "Move between dashboard, details, and calendar without leaving your artisan area.",
+    "workspaceDashboard": "Dashboard",
+    "workspaceDetails": "Details",
+    "workspaceCalendar": "Calendar"
+  },
+  "expert": {
+    "menu": {
+      "overview": "Overview",
+      "overviewSubtitle": "Recruitment snapshot",
+      "create": "Create Project",
+      "createSubtitle": "Project + chantier",
+      "projects": "Projects",
+      "projectsSubtitle": "Offers and applications",
+      "settings": "Settings",
+      "settingsSubtitle": "Account summary"
+    }
+  },
+  "project": {
+    "untitled": "Untitled project",
+    "generalAssignment": "General assignment",
+    "general": "General",
+    "progress": "Progress",
+    "select": "Select",
+    "selected": "Selected",
+    "openDetails": "Open details",
+    "detailsEmpty": "Select a project to view its execution details.",
+    "noDescription": "No project description has been added yet.",
+    "startProject": "Start project",
+    "closeProject": "Close project",
+    "markFinished": "Mark finished",
+    "createMilestone": "Create milestone",
+    "createMilestoneDescription": "Assign a focused task to one artisan on this project.",
+    "milestoneTitle": "Milestone title",
+    "selectArtisan": "Select artisan",
+    "shortDescription": "Short description",
+    "reviewTasks": "Review the tasks assigned to your team.",
+    "trackTasks": "Track your assigned milestones and update today's work.",
+    "loadingMilestones": "Loading milestone details...",
+    "noMilestones": "No milestones created for this project yet."
+  },
+  "task": {
+    "dailyTask": "Daily task",
+    "addUpdate": "Add today's update...",
+    "saveTask": "Save task"
+  },
+  "calendarUi": {
+    "planning": "Planning",
+    "calendarView": "Calendar View",
+    "calendarDescription": "Projects appear by duration, and daily task updates are shown as calendar events.",
+    "backToProjects": "Back to projects",
+    "loadingCalendar": "Loading calendar..."
+  },
+  "admin": {
+    "controlCenter": "Control center",
+    "dashboardTitle": "Admin Dashboard",
+    "adminUser": "Admin user",
+    "administrator": "Administrator"
+  },
+  "manufacturer": {
+    "dashboardTitle": "Manufacturer Dashboard",
+    "manufacturer": "Manufacturer"
+  }
+}

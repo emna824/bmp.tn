@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import api from '../api'
 import { BmpLogo, LockIcon, MailIcon, ShieldIcon, UserIcon } from './Icons'
 
@@ -13,6 +14,7 @@ const initialForm = {
 }
 
 function SignUpForm({ onRegisterSuccess }) {
+  const { t } = useTranslation()
   const [form, setForm] = useState(initialForm)
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
@@ -37,16 +39,16 @@ function SignUpForm({ onRegisterSuccess }) {
   const validate = () => {
     const nextErrors = {}
 
-    if (!form.name.trim()) nextErrors.name = 'Name is required'
-    if (!form.email.trim()) nextErrors.email = 'Email is required'
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) nextErrors.email = 'Invalid email'
-    if (!form.password) nextErrors.password = 'Password is required'
-    if (form.password.length < 8) nextErrors.password = 'Min 8 characters'
+    if (!form.name.trim()) nextErrors.name = t('auth.signUp.errors.nameRequired')
+    if (!form.email.trim()) nextErrors.email = t('auth.signUp.errors.emailRequired')
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) nextErrors.email = t('auth.signUp.errors.invalidEmail')
+    if (!form.password) nextErrors.password = t('auth.signUp.errors.passwordRequired')
+    if (form.password.length < 8) nextErrors.password = t('auth.signUp.errors.minPassword')
 
     if (isManufacturer) {
-      if (!form.patent.trim()) nextErrors.patent = 'Patent is required'
-      if (!form.address.trim()) nextErrors.address = 'Address is required'
-      if (!form.companyPhone.trim()) nextErrors.companyPhone = 'Company phone is required'
+      if (!form.patent.trim()) nextErrors.patent = t('auth.signUp.errors.patentRequired')
+      if (!form.address.trim()) nextErrors.address = t('auth.signUp.errors.addressRequired')
+      if (!form.companyPhone.trim()) nextErrors.companyPhone = t('auth.signUp.errors.companyPhoneRequired')
     }
 
     setErrors(nextErrors)
@@ -69,7 +71,7 @@ function SignUpForm({ onRegisterSuccess }) {
       setNotification({
         show: true,
         type: 'error',
-        text: 'Please fix form errors before submitting.',
+        text: t('auth.signUp.fixErrors'),
       })
       return
     }
@@ -90,11 +92,11 @@ function SignUpForm({ onRegisterSuccess }) {
       }
 
       const response = await api.post('/users/register', payload)
-      setResult({ type: 'success', text: response.data?.message || 'Registered' })
+      setResult({ type: 'success', text: response.data?.message || t('auth.signUp.registered') })
       setNotification({
         show: true,
         type: 'success',
-        text: 'Account created successfully.',
+        text: t('auth.signUp.success'),
       })
       setForm(initialForm)
       setErrors({})
@@ -104,7 +106,7 @@ function SignUpForm({ onRegisterSuccess }) {
     } catch (error) {
       const message =
         error.response?.data?.message ||
-        (error.code === 'ERR_NETWORK' ? 'Cannot reach server. Check API base URL.' : 'Registration failed')
+        (error.code === 'ERR_NETWORK' ? t('auth.signUp.networkFailed') : t('auth.signUp.failed'))
       setResult({ type: 'error', text: message })
       setNotification({ show: true, type: 'error', text: message })
     } finally {
@@ -126,11 +128,11 @@ function SignUpForm({ onRegisterSuccess }) {
           <BmpLogo className="auth-brand-logo" />
           <div>
             <strong>BMP.tn</strong>
-            <p>Smart Building Marketplace</p>
+            <p>{t('auth.signIn.brandSubtitle')}</p>
           </div>
         </div>
-        <h1>Create Account</h1>
-        <p className="subtitle">Register as expert, artisan or manufacturer</p>
+        <h1>{t('auth.signUp.title')}</h1>
+        <p className="subtitle">{t('auth.signUp.subtitle')}</p>
 
         <form onSubmit={onSubmit} noValidate>
           <div className="role-grid">
@@ -143,7 +145,7 @@ function SignUpForm({ onRegisterSuccess }) {
                   checked={form.role === role}
                   onChange={onChange}
                 />
-                <span>{role}</span>
+                <span>{t(`auth.signUp.roles.${role}`)}</span>
               </label>
             ))}
           </div>
@@ -151,23 +153,23 @@ function SignUpForm({ onRegisterSuccess }) {
           <label>
             <span className="label-with-icon">
               <UserIcon className="icon tiny" />
-              Name
+              {t('common.name')}
             </span>
-            <input name="name" value={form.name} onChange={onChange} placeholder="Your full name" />
+            <input name="name" value={form.name} onChange={onChange} placeholder={t('auth.signUp.placeholders.name')} />
             {errors.name && <small>{errors.name}</small>}
           </label>
 
           <label>
             <span className="label-with-icon">
               <MailIcon className="icon tiny" />
-              Email
+              {t('common.email')}
             </span>
             <input
               name="email"
               type="email"
               value={form.email}
               onChange={onChange}
-              placeholder="you@email.com"
+              placeholder={t('auth.signUp.placeholders.email')}
             />
             {errors.email && <small>{errors.email}</small>}
           </label>
@@ -175,14 +177,14 @@ function SignUpForm({ onRegisterSuccess }) {
           <label>
             <span className="label-with-icon">
               <LockIcon className="icon tiny" />
-              Password
+              {t('common.password')}
             </span>
             <input
               name="password"
               type="password"
               value={form.password}
               onChange={onChange}
-              placeholder="Minimum 8 characters"
+              placeholder={t('auth.signUp.placeholders.password')}
             />
             {errors.password && <small>{errors.password}</small>}
           </label>
@@ -192,13 +194,13 @@ function SignUpForm({ onRegisterSuccess }) {
               <label>
                 <span className="label-with-icon">
                   <ShieldIcon className="icon tiny" />
-                  Patent
+                  {t('auth.signUp.patent')}
                 </span>
                 <input
                   name="patent"
                   value={form.patent}
                   onChange={onChange}
-                  placeholder="Patent reference"
+                  placeholder={t('auth.signUp.placeholders.patent')}
                 />
                 {errors.patent && <small>{errors.patent}</small>}
               </label>
@@ -206,13 +208,13 @@ function SignUpForm({ onRegisterSuccess }) {
               <label>
                 <span className="label-with-icon">
                   <UserIcon className="icon tiny" />
-                  Address
+                  {t('auth.signUp.address')}
                 </span>
                 <input
                   name="address"
                   value={form.address}
                   onChange={onChange}
-                  placeholder="Company address"
+                  placeholder={t('auth.signUp.placeholders.address')}
                 />
                 {errors.address && <small>{errors.address}</small>}
               </label>
@@ -220,13 +222,13 @@ function SignUpForm({ onRegisterSuccess }) {
               <label>
                 <span className="label-with-icon">
                   <ShieldIcon className="icon tiny" />
-                  Company Phone
+                  {t('auth.signUp.companyPhone')}
                 </span>
                 <input
                   name="companyPhone"
                   value={form.companyPhone}
                   onChange={onChange}
-                  placeholder="+216 xx xxx xxx"
+                  placeholder={t('auth.signUp.placeholders.companyPhone')}
                 />
                 {errors.companyPhone && <small>{errors.companyPhone}</small>}
               </label>
@@ -236,7 +238,7 @@ function SignUpForm({ onRegisterSuccess }) {
           <button disabled={loading} type="submit">
             <UserIcon className="icon tiny" />
             {loading ? <span className="btn-loader" aria-hidden="true" /> : null}
-            {loading ? 'Submitting...' : 'Create account'}
+            {loading ? t('auth.signUp.submitting') : t('auth.signUp.submit')}
           </button>
         </form>
 

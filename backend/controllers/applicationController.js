@@ -4,7 +4,6 @@ const Offer = require('../models/offer');
 const Project = require('../models/project');
 const User = require('../models/user');
 const { notifyArtisanAboutApplicationReview } = require('./notificationController');
-const { syncRecruitingProjectState } = require('../utils/projectExecution');
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -53,20 +52,13 @@ exports.applyToOffer = async (req, res) => {
       return res.status(400).json({ message: 'Artisan cannot apply to a closed offer' });
     }
 
-    let project = await Project.findById(offer.projectId).select(
-      'projectName teamRequirements status startDate assignedArtisans'
-    );
+    const project = await Project.findById(offer.projectId).select('teamRequirements status');
     if (!project) {
       return res.status(404).json({ message: 'Project not found' });
     }
 
-    if (project.status === 'recruiting') {
-      const transitionResult = await syncRecruitingProjectState(project);
-      project = transitionResult.project || project;
-    }
-
     if (project.status !== 'recruiting') {
-      return res.status(400).json({ message: 'Applications are only open while the project is recruiting' });
+      return res.status(400).json({ message: 'Applications are only allowed while the project is recruiting' });
     }
 
     const matchingRequirement = project.teamRequirements.find((entry) => entry.job === offer.job);
@@ -119,7 +111,7 @@ exports.listApplicationsByProject = async (req, res) => {
       return res.status(expertCheck.status).json({ message: expertCheck.message });
     }
 
-    const project = await Project.findById(projectId).select('expertId projectName status teamRequirements assignedArtisans');
+    const project = await Project.findById(projectId).select('expertId title');
     if (!project) {
       return res.status(404).json({ message: 'Project not found' });
     }
@@ -132,7 +124,7 @@ exports.listApplicationsByProject = async (req, res) => {
       .populate('artisanId', 'name email job profileImage')
       .sort({ createdAt: -1 });
 
-    return res.status(200).json({ project, applications });
+    return res.status(200).json({ applications });
   } catch (err) {
     return res.status(500).json({ message: err.message || 'Failed to fetch applications' });
   }
@@ -166,7 +158,7 @@ exports.reviewApplication = async (req, res) => {
       return res.status(400).json({ message: 'Application has already been reviewed' });
     }
 
-    let project = await Project.findById(application.projectId);
+    const project = await Project.findById(application.projectId);
     if (!project) {
       return res.status(404).json({ message: 'Project not found' });
     }
@@ -175,13 +167,8 @@ exports.reviewApplication = async (req, res) => {
       return res.status(403).json({ message: 'Expert can only manage their own projects' });
     }
 
-    if (project.status === 'recruiting') {
-      const transitionResult = await syncRecruitingProjectState(project);
-      project = transitionResult.project || project;
-    }
-
-    if (project.status !== 'recruiting') {
-      return res.status(400).json({ message: 'Recruitment is closed for this project' });
+    if (normalizedAction === 'accept' && project.status !== 'recruiting') {
+      return res.status(400).json({ message: 'Accepted assignments are only allowed while the project is recruiting' });
     }
 
     const requirement = project.teamRequirements.find((entry) => entry.job === application.job);
@@ -197,7 +184,6 @@ exports.reviewApplication = async (req, res) => {
     if (normalizedAction === 'reject') {
       application.status = 'rejected';
       await application.save();
-
       try {
         await notifyArtisanAboutApplicationReview({
           application,
@@ -207,7 +193,6 @@ exports.reviewApplication = async (req, res) => {
       } catch (notificationError) {
         console.error('Failed to notify artisan about rejected application', notificationError);
       }
-
       return res.status(200).json({ message: 'Application rejected', application });
     }
 
@@ -224,13 +209,11 @@ exports.reviewApplication = async (req, res) => {
     if (!assignedArtisans.some((artisanId) => String(artisanId) === String(application.artisanId))) {
       project.assignedArtisans = [...assignedArtisans, application.artisanId];
     }
-
     offer.availableSlots = Math.max(0, offer.availableSlots - 1);
     offer.status = offer.availableSlots === 0 ? 'closed' : 'open';
     application.status = 'accepted';
 
     await Promise.all([project.save(), offer.save(), application.save()]);
-
     try {
       await notifyArtisanAboutApplicationReview({
         application,
@@ -241,16 +224,11 @@ exports.reviewApplication = async (req, res) => {
       console.error('Failed to notify artisan about accepted application', notificationError);
     }
 
-    const transitionResult = await syncRecruitingProjectState(project);
-    const updatedProject = transitionResult.project || project;
-    const projectStarted = transitionResult.transition === 'started';
-
     return res.status(200).json({
-      message: projectStarted ? 'Application accepted and project started automatically' : 'Application accepted',
+      message: 'Application accepted',
       application,
-      project: updatedProject,
+      project,
       offer,
-      projectStarted,
     });
   } catch (err) {
     return res.status(500).json({ message: err.message || 'Failed to review application' });

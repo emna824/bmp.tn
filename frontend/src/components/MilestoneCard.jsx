@@ -1,76 +1,38 @@
-import StatusBadge from './StatusBadge'
-import { CalendarIcon, CheckCircleIcon, LayersIcon, TargetIcon } from './ExecutionIcons'
-import { formatExecutionDate } from '../utils/execution'
+import StatusBadge, { formatDisplayDate, getStatusProgress } from './StatusBadge'
+import { useTranslation } from 'react-i18next'
 
 function MilestoneCard({ milestone }) {
+  const { t } = useTranslation()
+  const progress = getStatusProgress(milestone?.status)
+
   return (
-    <article className="rounded-2xl border border-white/35 bg-white/55 p-5 shadow-xl shadow-slate-200/50 backdrop-blur-md dark:border-white/10 dark:bg-slate-800/45 dark:shadow-slate-950/30">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex min-w-0 items-start gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white">
-            <LayersIcon className="h-5 w-5" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">{milestone.title}</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-300">{milestone.artisan?.name || 'Assigned artisan'}</p>
-          </div>
+    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-md">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h4 className="text-sm font-semibold text-slate-900">{milestone?.title || t('project.milestoneTitle')}</h4>
+          <p className="mt-1 text-sm text-slate-500">{milestone?.description || t('project.noDescription')}</p>
         </div>
-        <StatusBadge status={milestone.status} />
+        <StatusBadge status={milestone?.status} />
       </div>
 
-      <p className="mt-4 text-sm leading-6 text-slate-600 dark:text-slate-300">{milestone.description || 'No description provided.'}</p>
-
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border border-white/30 bg-white/40 p-3.5 backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/30">
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
-            <TargetIcon className="h-4 w-4" />
-            Progress
-          </div>
-          <p className="mt-2 text-lg font-semibold text-slate-900 dark:text-slate-100">{milestone.progressPercent}%</p>
-        </div>
-        <div className="rounded-xl border border-white/30 bg-white/40 p-3.5 backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/30">
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
-            <CheckCircleIcon className="h-4 w-4" />
-            Done days
-          </div>
-          <p className="mt-2 text-lg font-semibold text-slate-900 dark:text-slate-100">{milestone.doneDays}</p>
-        </div>
-        <div className="rounded-xl border border-white/30 bg-white/40 p-3.5 backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/30">
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
-            <LayersIcon className="h-4 w-4" />
-            Total days
-          </div>
-          <p className="mt-2 text-lg font-semibold text-slate-900 dark:text-slate-100">{milestone.totalDays}</p>
-        </div>
+      <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">
+        <span className="rounded-full bg-slate-100 px-3 py-1">{formatDisplayDate(milestone?.startDate)}</span>
+        <span className="rounded-full bg-slate-100 px-3 py-1">{formatDisplayDate(milestone?.endDate)}</span>
+        {milestone?.artisanId?.name ? (
+          <span className="rounded-full bg-orange-50 px-3 py-1 text-orange-700">{milestone.artisanId.name}</span>
+        ) : null}
       </div>
 
-      <div className="mt-4 space-y-2">
-        <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-300">
-          <span>Completion track</span>
-          <span>{milestone.progressPercent}%</span>
+      <div className="mt-4">
+        <div className="mb-2 flex items-center justify-between text-xs font-medium text-slate-500">
+          <span>{t('project.progress')}</span>
+          <span>{progress}%</span>
         </div>
-        <div className="h-2.5 rounded-full bg-white/45 dark:bg-slate-700/70">
+        <div className="h-2 rounded-full bg-slate-100">
           <div
-            className="h-2.5 rounded-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all"
-            style={{ width: `${Math.min(100, Math.max(0, milestone.progressPercent))}%` }}
+            className="h-2 rounded-full bg-gradient-to-r from-slate-900 to-slate-600 transition-all duration-300"
+            style={{ width: `${progress}%` }}
           />
-        </div>
-      </div>
-
-      <div className="mt-5 grid gap-3 text-sm text-slate-600 dark:text-slate-300 sm:grid-cols-2">
-        <div className="rounded-xl border border-white/30 bg-white/40 p-3.5 backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/30">
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
-            <CalendarIcon className="h-4 w-4" />
-            Start
-          </div>
-          <p className="mt-2 font-medium text-slate-800 dark:text-slate-100">{formatExecutionDate(milestone.startDate)}</p>
-        </div>
-        <div className="rounded-xl border border-white/30 bg-white/40 p-3.5 backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/30">
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
-            <CalendarIcon className="h-4 w-4" />
-            End
-          </div>
-          <p className="mt-2 font-medium text-slate-800 dark:text-slate-100">{formatExecutionDate(milestone.endDate)}</p>
         </div>
       </div>
     </article>
