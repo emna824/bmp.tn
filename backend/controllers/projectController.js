@@ -4,9 +4,11 @@ const Chantier = require('../models/chantier');
 const Offer = require('../models/offer');
 const Application = require('../models/application');
 const User = require('../models/user');
+const Milestone = require('../models/milestone');
 const { TRADES } = require('../constants/trades');
 const { assertUserNotBanned } = require('../utils/banUtils');
 const { notifyArtisansForNewProject } = require('./notificationController');
+const { startProject, syncProjectStatusFromMilestones } = require('../utils/projectExecution');
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -140,6 +142,7 @@ exports.createProject = async (req, res) => {
       description: String(description || '').trim(),
       expertId,
       teamRequirements: projectRequirements,
+      status: 'recruiting',
     });
 
     try {
@@ -189,7 +192,9 @@ exports.listProjects = async (req, res) => {
   try {
     const { expertId } = req.params;
     const filter = expertId && isValidObjectId(expertId) ? { expertId } : {};
-    const projects = await Project.find(filter).sort({ createdAt: -1 });
+    const projects = await Project.find(filter)
+      .populate('assignedArtisans', 'name email job')
+      .sort({ createdAt: -1 });
     return res.status(200).json({ projects });
   } catch (err) {
     return res.status(500).json({ message: err.message || 'Failed to fetch projects' });
@@ -207,7 +212,9 @@ exports.listArtisanProjects = async (req, res) => {
     }
 
     const projects = await Project.find({ assignedArtisans: req.user._id })
-      .select('_id projectName startDate endDate job status')
+      .select(
+        '_id projectName startDate endDate job status description category dailySalary location teamRequirements'
+      )
       .sort({ startDate: 1, createdAt: -1 })
       .lean();
 
@@ -225,7 +232,7 @@ exports.listProjectOffers = async (req, res) => {
       return res.status(400).json({ message: 'Invalid projectId' });
     }
 
-    const project = await Project.findById(projectId).select('_id title expertId');
+    const project = await Project.findById(projectId).select('_id projectName title expertId status');
     if (!project) {
       return res.status(404).json({ message: 'Project not found' });
     }
@@ -234,6 +241,98 @@ exports.listProjectOffers = async (req, res) => {
     return res.status(200).json({ project, offers });
   } catch (err) {
     return res.status(500).json({ message: err.message || 'Failed to fetch offers' });
+  }
+};
+
+exports.startProject = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authenticated user is required' });
+    }
+
+    if (req.user.role !== 'expert') {
+      return res.status(403).json({ message: 'Only experts can start projects' });
+    }
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: 'Invalid project id' });
+    }
+
+    const project = await Project.findById(id).select('expertId');
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    if (String(project.expertId) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'You can only start your own projects' });
+    }
+
+    const updatedProject = await startProject(id);
+
+    return res.status(200).json({
+      message: 'Project started successfully',
+      project: updatedProject,
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({ message: error.message || 'Failed to start project' });
+  }
+};
+
+exports.updateProjectStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authenticated user is required' });
+    }
+
+    if (req.user.role !== 'expert') {
+      return res.status(403).json({ message: 'Only experts can update project status' });
+    }
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: 'Invalid project id' });
+    }
+
+    const normalizedStatus = String(status || '').trim().toLowerCase();
+    if (!['closed', 'finished'].includes(normalizedStatus)) {
+      return res.status(400).json({ message: 'status must be closed or finished' });
+    }
+
+    const project = await Project.findById(id);
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    if (String(project.expertId) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'You can only update your own projects' });
+    }
+
+    if (normalizedStatus === 'finished') {
+      const milestones = await Milestone.find({ projectId: id }).select('status');
+      const allDone = milestones.length && milestones.every((milestone) => milestone.status === 'done');
+
+      if (!allDone) {
+        return res.status(400).json({ message: 'Project can only be finished once all milestones are done' });
+      }
+
+      await syncProjectStatusFromMilestones(id);
+      project.status = 'finished';
+    } else {
+      project.status = 'closed';
+    }
+
+    await project.save();
+
+    return res.status(200).json({
+      message: 'Project status updated successfully',
+      project,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message || 'Failed to update project status' });
   }
 };
 

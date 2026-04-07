@@ -1,11 +1,13 @@
 import SignInForm from '../SignInForm'
 import SignUpForm from '../SignUpForm'
+import LanguageSwitcher from '../LanguageSwitcher'
 import { BmpLogo, LockIcon, UserIcon } from '../Icons'
 import LandingActors from './LandingActors'
 import LandingFeatures from './LandingFeatures'
 import LandingFooter from './LandingFooter'
 import LandingHero from './LandingHero'
 import LandingHowItWorks from './LandingHowItWorks'
+import { useTranslation } from 'react-i18next'
 
 function scrollToSection(sectionId) {
   if (typeof document === 'undefined') return
@@ -13,6 +15,8 @@ function scrollToSection(sectionId) {
 }
 
 function LandingPage({ mode, navOpen, onToggleNav, onSelectMode, onLoginSuccess }) {
+  const { t } = useTranslation()
+
   const handleModeChange = (nextMode) => {
     onSelectMode(nextMode)
     scrollToSection('auth')
@@ -25,14 +29,14 @@ function LandingPage({ mode, navOpen, onToggleNav, onSelectMode, onLoginSuccess 
           <BmpLogo className="landing-nav-logo" />
           <div>
             <strong>BMP.tn</strong>
-            <p>Construction operations platform</p>
+            <p>{t('landing.brandSubtitle')}</p>
           </div>
         </div>
 
         <button
           type="button"
           className="landing-nav-burger"
-          aria-label={navOpen ? 'Close menu' : 'Open menu'}
+          aria-label={navOpen ? t('nav.closeMenu') : t('nav.openMenu')}
           aria-expanded={navOpen}
           onClick={onToggleNav}
         >
@@ -41,20 +45,21 @@ function LandingPage({ mode, navOpen, onToggleNav, onSelectMode, onLoginSuccess 
           <span />
         </button>
 
-        <nav className={`landing-nav-links ${navOpen ? 'show' : ''}`} aria-label="Main navigation">
-          <a href="#features">Features</a>
-          <a href="#roles">Actors</a>
-          <a href="#steps">How it works</a>
-          <a href="#auth">Access</a>
-          <a href="#contact">Contact</a>
+        <nav className={`landing-nav-links ${navOpen ? 'show' : ''}`} aria-label={t('nav.mainNavigation')}>
+          <a href="#features">{t('nav.features')}</a>
+          <a href="#roles">{t('nav.actors')}</a>
+          <a href="#steps">{t('nav.howItWorks')}</a>
+          <a href="#auth">{t('nav.access')}</a>
+          <a href="#contact">{t('nav.contact')}</a>
         </nav>
 
         <div className={`landing-nav-actions ${navOpen ? 'show' : ''}`}>
+          <LanguageSwitcher />
           <button type="button" className="secondary-btn nav-btn" onClick={() => handleModeChange('signin')}>
-            Login
+            {t('login')}
           </button>
           <button type="button" className="nav-btn" onClick={() => handleModeChange('signup')}>
-            Sign Up
+            {t('landing.auth.signUp')}
           </button>
         </div>
       </header>
@@ -68,33 +73,30 @@ function LandingPage({ mode, navOpen, onToggleNav, onSelectMode, onLoginSuccess 
 
           <section className="landing-section landing-auth-section" id="auth">
             <div className="landing-auth-copy">
-              <p className="landing-section-eyebrow">Access</p>
-              <h2>Start with the role that fits your work</h2>
-              <p>
-                Join the platform to publish projects, apply for work, manage product catalogs, and
-                collaborate across the construction lifecycle.
-              </p>
+              <p className="landing-section-eyebrow">{t('landing.auth.eyebrow')}</p>
+              <h2>{t('landing.auth.title')}</h2>
+              <p>{t('landing.auth.subtitle')}</p>
 
               <div className="landing-auth-points">
                 <article>
                   <UserIcon className="icon" />
                   <div>
-                    <strong>Role-based experience</strong>
-                    <span>Each actor sees tools tailored to their responsibilities.</span>
+                    <strong>{t('landing.auth.roleBasedTitle')}</strong>
+                    <span>{t('landing.auth.roleBasedDescription')}</span>
                   </div>
                 </article>
                 <article>
                   <LockIcon className="icon" />
                   <div>
-                    <strong>Fast access</strong>
-                    <span>Create an account or log in from the same modern entry point.</span>
+                    <strong>{t('landing.auth.fastAccessTitle')}</strong>
+                    <span>{t('landing.auth.fastAccessDescription')}</span>
                   </div>
                 </article>
               </div>
             </div>
 
             <div className="home-auth-panel landing-auth-panel">
-              <div className="auth-toggle" role="tablist" aria-label="Authentication forms">
+              <div className="auth-toggle" role="tablist" aria-label={t('landing.auth.formsLabel')}>
                 <button
                   type="button"
                   className={`toggle-btn ${mode === 'signin' ? 'active' : ''}`}
@@ -103,7 +105,7 @@ function LandingPage({ mode, navOpen, onToggleNav, onSelectMode, onLoginSuccess 
                   aria-selected={mode === 'signin'}
                 >
                   <LockIcon className="icon tiny" />
-                  Login
+                  {t('login')}
                 </button>
                 <button
                   type="button"
@@ -113,7 +115,7 @@ function LandingPage({ mode, navOpen, onToggleNav, onSelectMode, onLoginSuccess 
                   aria-selected={mode === 'signup'}
                 >
                   <UserIcon className="icon tiny" />
-                  Sign Up
+                  {t('landing.auth.signUp')}
                 </button>
               </div>
 

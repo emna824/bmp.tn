@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Offer = require('../models/offer');
+const Project = require('../models/project');
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -21,6 +22,15 @@ exports.listOffers = async (req, res) => {
         return res.status(400).json({ message: 'Invalid projectId' });
       }
       filter.projectId = projectId;
+
+      const project = await Project.findById(projectId).select('status');
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+
+      if (project.status !== 'recruiting') {
+        return res.status(200).json({ offers: [] });
+      }
     }
 
     if (filter.status === 'open') {
@@ -28,10 +38,12 @@ exports.listOffers = async (req, res) => {
     }
 
     const offers = await Offer.find(filter)
-      .populate('projectId', 'projectName estimatedBudget endDate expertId location category dailySalary')
+      .populate('projectId', 'projectName estimatedBudget endDate expertId location category dailySalary status')
       .sort({ createdAt: -1 });
 
-    return res.status(200).json({ offers });
+    const visibleOffers = offers.filter((offer) => offer.projectId?.status === 'recruiting');
+
+    return res.status(200).json({ offers: visibleOffers });
   } catch (err) {
     return res.status(500).json({ message: err.message || 'Failed to fetch offers' });
   }

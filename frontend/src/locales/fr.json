@@ -1,0 +1,306 @@
+{
+  "login": "Connexion",
+  "dashboard": "Tableau de bord",
+  "projects": "Projets",
+  "quotes": "Devis",
+  "invoices": "Factures",
+  "logout": "Déconnexion",
+  "language": {
+    "label": "Langue",
+    "switcher": "Choisir la langue",
+    "english": "Anglais",
+    "french": "Français",
+    "arabic": "Arabe"
+  },
+  "common": {
+    "back": "Retour",
+    "loading": "Chargement...",
+    "refresh": "Actualiser",
+    "save": "Enregistrer",
+    "saving": "Enregistrement...",
+    "settings": "Paramètres",
+    "guest": "Invité",
+    "name": "Nom",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "startDate": "Date de début",
+    "endDate": "Date de fin",
+    "trade": "Métier",
+    "description": "Description",
+    "milestones": "Jalons",
+    "today": "Aujourd'hui"
+  },
+  "status": {
+    "recruiting": "Recrutement",
+    "in_progress": "En cours",
+    "finished": "Terminé",
+    "closed": "Clôturé",
+    "pending": "En attente",
+    "done": "Fait",
+    "not_done": "Non fait",
+    "accepted": "Accepté",
+    "rejected": "Refusé"
+  },
+  "nav": {
+    "features": "Fonctionnalités",
+    "actors": "Acteurs",
+    "howItWorks": "Comment ça marche",
+    "access": "Accès",
+    "contact": "Contact",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu",
+    "mainNavigation": "Navigation principale",
+    "dashboardSections": "Sections du tableau de bord",
+    "openSidebar": "Ouvrir la barre latérale",
+    "collapseMenu": "Réduire le menu"
+  },
+  "landing": {
+    "brandSubtitle": "Plateforme d'opérations de construction",
+    "hero": {
+      "badge": "BMP.tn pour les équipes de construction modernes",
+      "title": "Gérez les projets de construction plus intelligemment",
+      "subtitle": "Coordonnez les projets, recrutez les bons spécialistes, validez les livrables et approvisionnez les matériaux depuis un espace professionnel conçu pour la gestion de chantier.",
+      "highlightsLabel": "Points forts de la plateforme",
+      "tag1": "Pilotage des projets",
+      "tag2": "Validation experte",
+      "tag3": "Marketplace fournisseurs",
+      "tag4": "Coordination d'équipe",
+      "snapshotEyebrow": "Vue d'ensemble",
+      "snapshotTitle": "Une seule vue pour planifier, recruter et approvisionner",
+      "livePlatform": "Plateforme active",
+      "imageAlt": "Réunion de planification de chantier avec documents de projet",
+      "metrics": {
+        "activeProjects": "Projets actifs",
+        "marketplaceItems": "Articles marketplace",
+        "validatedWorkflows": "Processus validés"
+      }
+    },
+    "features": {
+      "eyebrow": "Fonctionnalités",
+      "title": "Tout le nécessaire pour gérer un chantier avec clarté",
+      "subtitle": "La plateforme réunit opérations, recrutement, approvisionnement et revue dans un espace fiable unique.",
+      "projectManagementTitle": "Gestion de projet",
+      "projectManagementDescription": "Organisez les tâches du chantier, suivez les jalons et gardez chaque chantier sur le bon planning.",
+      "marketplaceTitle": "Marketplace",
+      "marketplaceDescription": "Parcourez les catalogues fabricants, comparez les offres produits et accédez rapidement à la documentation.",
+      "validationTitle": "Validation experte",
+      "validationDescription": "Intégrez l'expertise au flux de travail pour suivre l'avancement et valider les décisions clés.",
+      "collaborationTitle": "Collaboration d'équipe",
+      "collaborationDescription": "Connectez artisans, experts et fabricants dans un même espace pour une meilleure coordination."
+    },
+    "actors": {
+      "eyebrow": "Acteurs",
+      "title": "Pensé pour ceux qui font avancer les projets",
+      "subtitle": "Chaque rôle bénéficie d'une expérience ciblée tout en restant connecté au reste de l'écosystème.",
+      "artisanTitle": "Artisan",
+      "artisanDescription": "Postulez aux missions, gérez le travail attribué et restez connecté aux équipes projet en temps réel.",
+      "expertTitle": "Expert",
+      "expertDescription": "Créez des projets, suivez l'avancement et validez les décisions clés avec confiance.",
+      "manufacturerTitle": "Fabricant",
+      "manufacturerDescription": "Publiez des catalogues, gérez la documentation et atteignez directement les professionnels du bâtiment."
+    },
+    "steps": {
+      "eyebrow": "Comment ça marche",
+      "title": "Un flux clair du lancement à la livraison",
+      "subtitle": "Des étapes simples rendent la plateforme facile à adopter tout en soutenant une vraie exécution chantier.",
+      "step1Title": "Créer un projet",
+      "step1Description": "Configurez un chantier, définissez les besoins et organisez la structure du travail dès le premier jour.",
+      "step2Title": "Postuler aux missions",
+      "step2Description": "Les artisans découvrent les opportunités tandis que les experts et responsables évaluent les bons candidats.",
+      "step3Title": "Suivre l'avancement",
+      "step3Description": "Suivez le travail, coordonnez les parties prenantes et gardez la documentation et les approvisionnements alignés."
+    },
+    "auth": {
+      "eyebrow": "Accès",
+      "title": "Commencez avec le rôle adapté à votre activité",
+      "subtitle": "Rejoignez la plateforme pour publier des projets, postuler, gérer des catalogues produits et collaborer sur tout le cycle de construction.",
+      "roleBasedTitle": "Expérience par rôle",
+      "roleBasedDescription": "Chaque acteur voit les outils adaptés à ses responsabilités.",
+      "fastAccessTitle": "Accès rapide",
+      "fastAccessDescription": "Créez un compte ou connectez-vous depuis le même point d'entrée moderne.",
+      "formsLabel": "Formulaires d'authentification",
+      "signUp": "S'inscrire"
+    },
+    "footer": {
+      "subtitle": "Gestion de chantier, approvisionnement et collaboration sur une seule plateforme.",
+      "platform": "Plateforme",
+      "access": "Accès",
+      "contact": "Contact",
+      "builtForTeams": "Conçu pour des équipes de construction connectées",
+      "rights": "Tous droits réservés.",
+      "bottom": "Experts, artisans et fabricants travaillent plus intelligemment ensemble."
+    }
+  },
+  "auth": {
+    "signIn": {
+      "brandSubtitle": "Marketplace intelligente du bâtiment",
+      "title": "Bon retour",
+      "subtitle": "Connectez-vous à votre compte",
+      "staySignedIn": "Rester connecté",
+      "forgotPassword": "Mot de passe oublié ?",
+      "closeForgotPassword": "Fermer la récupération",
+      "accountEmail": "E-mail du compte",
+      "resetCode": "Code de réinitialisation",
+      "newPassword": "Nouveau mot de passe",
+      "sendResetCode": "Envoyer le code",
+      "sending": "Envoi...",
+      "resetPassword": "Réinitialiser le mot de passe",
+      "resetting": "Réinitialisation...",
+      "submit": "Se connecter",
+      "submitting": "Connexion...",
+      "googleLabel": "Se connecter avec Google",
+      "orContinueWith": "Ou continuer avec",
+      "success": "Connexion réussie.",
+      "googleSuccess": "Connexion Google réussie",
+      "failed": "Échec de la connexion",
+      "googleFailed": "Échec de la connexion Google",
+      "fixErrors": "Veuillez corriger les erreurs du formulaire avant l'envoi.",
+      "resetSent": "Le code de réinitialisation a été envoyé à votre e-mail.",
+      "resetSuccess": "Mot de passe réinitialisé avec succès.",
+      "sendResetFailed": "Échec de l'envoi du code",
+      "resetFailed": "Échec de la réinitialisation",
+      "placeholders": {
+        "email": "vous@email.com",
+        "password": "Votre mot de passe",
+        "code": "Code à 6 chiffres",
+        "newPassword": "8 caractères minimum"
+      },
+      "errors": {
+        "emailRequired": "L'e-mail est requis",
+        "invalidEmail": "E-mail invalide",
+        "passwordRequired": "Le mot de passe est requis",
+        "codeRequired": "Le code de réinitialisation est requis",
+        "newPasswordRequired": "Le nouveau mot de passe est requis",
+        "minPassword": "8 caractères minimum"
+      }
+    },
+    "signUp": {
+      "title": "Créer un compte",
+      "subtitle": "Inscrivez-vous en tant qu'expert, artisan ou fabricant",
+      "submit": "Créer un compte",
+      "submitting": "Envoi...",
+      "success": "Compte créé avec succès.",
+      "registered": "Inscription réussie",
+      "failed": "Échec de l'inscription",
+      "networkFailed": "Impossible d'atteindre le serveur. Vérifiez l'URL de l'API.",
+      "fixErrors": "Veuillez corriger les erreurs du formulaire avant l'envoi.",
+      "roles": {
+        "expert": "Expert",
+        "artisan": "Artisan",
+        "manufacturer": "Fabricant"
+      },
+      "patent": "Brevet",
+      "address": "Adresse",
+      "companyPhone": "Téléphone de l'entreprise",
+      "placeholders": {
+        "name": "Votre nom complet",
+        "email": "vous@email.com",
+        "password": "8 caractères minimum",
+        "patent": "Référence du brevet",
+        "address": "Adresse de l'entreprise",
+        "companyPhone": "+216 xx xxx xxx"
+      },
+      "errors": {
+        "nameRequired": "Le nom est requis",
+        "emailRequired": "L'e-mail est requis",
+        "invalidEmail": "E-mail invalide",
+        "passwordRequired": "Le mot de passe est requis",
+        "minPassword": "8 caractères minimum",
+        "patentRequired": "Le brevet est requis",
+        "addressRequired": "L'adresse est requise",
+        "companyPhoneRequired": "Le téléphone de l'entreprise est requis"
+      }
+    }
+  },
+  "dashboardUi": {
+    "constructionPlatform": "Plateforme de construction",
+    "roleFallback": "Rôle"
+  },
+  "artisan": {
+    "menu": {
+      "overview": "Vue d'ensemble",
+      "overviewSubtitle": "Résumé",
+      "offers": "Offres",
+      "offersSubtitle": "Postuler aux projets",
+      "projects": "Projets",
+      "projectsSubtitle": "Travail attribué",
+      "marketplace": "Marketplace",
+      "marketplaceSubtitle": "Documents fabricants",
+      "settings": "Paramètres",
+      "settingsSubtitle": "Profil et sécurité"
+    },
+    "execution": "Exécution",
+    "myProjects": "Mes projets",
+    "myProjectsDescription": "Suivez le travail qui vous est attribué, ouvrez les détails du projet et mettez à jour l'avancement quotidien depuis un seul espace.",
+    "openCalendar": "Ouvrir le calendrier",
+    "assignedProjects": "Projets attribués",
+    "totalCount": "{{count}} au total",
+    "loadingProjects": "Chargement des projets...",
+    "noAssignedProjects": "Aucun projet attribué pour le moment.",
+    "dailyTasks": "Tâches quotidiennes",
+    "dailyTasksDescription": "Vos dernières mises à jour de jalons pour aujourd'hui.",
+    "selectProjectForTasks": "Sélectionnez un projet avec des jalons pour commencer à enregistrer le travail quotidien.",
+    "workspaceTitle": "Espace d'exécution du projet",
+    "workspaceSubtitle": "Passez du tableau de bord aux détails et au calendrier sans quitter votre espace artisan.",
+    "workspaceDashboard": "Tableau de bord",
+    "workspaceDetails": "Détails",
+    "workspaceCalendar": "Calendrier"
+  },
+  "expert": {
+    "menu": {
+      "overview": "Vue d'ensemble",
+      "overviewSubtitle": "Résumé du recrutement",
+      "create": "Créer un projet",
+      "createSubtitle": "Projet + chantier",
+      "projects": "Projets",
+      "projectsSubtitle": "Offres et candidatures",
+      "settings": "Paramètres",
+      "settingsSubtitle": "Résumé du compte"
+    }
+  },
+  "project": {
+    "untitled": "Projet sans titre",
+    "generalAssignment": "Mission générale",
+    "general": "Général",
+    "progress": "Progression",
+    "select": "Sélectionner",
+    "selected": "Sélectionné",
+    "openDetails": "Ouvrir les détails",
+    "detailsEmpty": "Sélectionnez un projet pour afficher ses détails d'exécution.",
+    "noDescription": "Aucune description de projet n'a encore été ajoutée.",
+    "startProject": "Démarrer le projet",
+    "closeProject": "Clôturer le projet",
+    "markFinished": "Marquer comme terminé",
+    "createMilestone": "Créer un jalon",
+    "createMilestoneDescription": "Assignez une tâche ciblée à un artisan sur ce projet.",
+    "milestoneTitle": "Titre du jalon",
+    "selectArtisan": "Sélectionner un artisan",
+    "shortDescription": "Description courte",
+    "reviewTasks": "Consultez les tâches assignées à votre équipe.",
+    "trackTasks": "Suivez vos jalons assignés et mettez à jour le travail d'aujourd'hui.",
+    "loadingMilestones": "Chargement des détails des jalons...",
+    "noMilestones": "Aucun jalon créé pour ce projet."
+  },
+  "task": {
+    "dailyTask": "Tâche quotidienne",
+    "addUpdate": "Ajouter la mise à jour du jour...",
+    "saveTask": "Enregistrer la tâche"
+  },
+  "calendarUi": {
+    "planning": "Planification",
+    "calendarView": "Vue calendrier",
+    "calendarDescription": "Les projets s'affichent selon leur durée, et les mises à jour quotidiennes apparaissent comme des événements.",
+    "backToProjects": "Retour aux projets",
+    "loadingCalendar": "Chargement du calendrier..."
+  },
+  "admin": {
+    "controlCenter": "Centre de contrôle",
+    "dashboardTitle": "Tableau de bord administrateur",
+    "adminUser": "Utilisateur admin",
+    "administrator": "Administrateur"
+  },
+  "manufacturer": {
+    "dashboardTitle": "Tableau de bord fabricant",
+    "manufacturer": "Fabricant"
+  }
+}

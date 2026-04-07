@@ -1,0 +1,99 @@
+import ProjectCard from '../components/ProjectCard'
+import TaskCard from '../components/TaskCard'
+import { useTranslation } from 'react-i18next'
+
+function ArtisanDashboard({
+  projects,
+  selectedProjectId,
+  loading,
+  tasks,
+  savingTaskId,
+  onSelectProject,
+  onOpenDetails,
+  onOpenCalendar,
+  onTaskChange,
+  onSaveTask,
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <section className="space-y-6">
+      <div className="rounded-2xl bg-white p-6 shadow-md">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-500">{t('artisan.execution')}</p>
+            <h2 className="mt-2 text-3xl font-semibold text-slate-900">{t('artisan.myProjects')}</h2>
+            <p className="mt-2 max-w-2xl text-sm text-slate-500">{t('artisan.myProjectsDescription')}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onOpenCalendar}
+            className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-5 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:brightness-105"
+          >
+            {t('artisan.openCalendar')}
+          </button>
+        </div>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1.7fr_1fr]">
+        <div className="rounded-2xl bg-white p-6 shadow-md">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-slate-900">{t('artisan.assignedProjects')}</h3>
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+              {t('artisan.totalCount', { count: projects.length })}
+            </span>
+          </div>
+
+          {loading ? (
+            <p className="text-sm text-slate-500">{t('artisan.loadingProjects')}</p>
+          ) : projects.length ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {projects.map((project) => (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  isSelected={selectedProjectId === project.id}
+                  onSelect={() => onSelectProject(project.id)}
+                  onOpenDetails={() => {
+                    onSelectProject(project.id)
+                    onOpenDetails()
+                  }}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">{t('artisan.noAssignedProjects')}</p>
+          )}
+        </div>
+
+        <div className="rounded-2xl bg-white p-6 shadow-md">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-slate-900">{t('artisan.dailyTasks')}</h3>
+            <p className="mt-1 text-sm text-slate-500">{t('artisan.dailyTasksDescription')}</p>
+          </div>
+
+          <div className="space-y-3">
+            {tasks.length ? (
+              tasks.slice(0, 3).map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  disabled={savingTaskId === task.id}
+                  onToggle={(status) => onTaskChange(task.id, { status })}
+                  onDescriptionChange={(description) => onTaskChange(task.id, { description })}
+                  onSave={() => onSaveTask(task.id)}
+                />
+              ))
+            ) : (
+              <div className="rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">
+                {t('artisan.selectProjectForTasks')}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+export default ArtisanDashboard

@@ -1,22 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import api, { withUserHeaders } from '../api'
 import { LockIcon, SettingsIcon, UserIcon } from './Icons'
 import DashboardLayout from './DashboardLayout'
 import ProductCard from './ProductCard'
 import ReportModal from './ReportModal'
-import ArtisanCalendarPage from '../pages/ArtisanCalendarPage'
-import ArtisanProjectsPage from '../pages/ArtisanProjectsPage'
+import ArtisanDashboard from '../pages/ArtisanDashboard'
+import CalendarPage from '../pages/CalendarPage'
+import ProjectDetails from '../pages/ProjectDetails'
 import { downloadFileReference } from '../utils/fileHelpers'
 import { formatProductPrice, normalizeProduct } from '../utils/adminDashboard'
 import { getStripeClient } from '../utils/stripe'
-
-const MENU_ITEMS = [
-  { key: 'overview', label: 'Overview', subtitle: 'Snapshot' },
-  { key: 'offers', label: 'Offers', subtitle: 'Apply to projects' },
-  { key: 'projects', label: 'Projects', subtitle: 'Assigned work' },
-  { key: 'marketplace', label: 'Marketplace', subtitle: 'Manufacturer docs' },
-  { key: 'settings', label: 'Settings', subtitle: 'Profile & security' },
-]
 
 const JOB_OPTIONS = ['Painter', 'Mason', 'Electrician', 'Plumber', 'Carpenter', 'Metalworker', 'Laborer']
 
@@ -27,8 +21,33 @@ function normalizeAssignedProject(project = {}) {
     startDate: project.startDate || '',
     endDate: project.endDate || '',
     job: project.job || '',
-    status: project.status || 'open',
+    status: project.status || 'recruiting',
+    description: project.description || '',
+    category: project.category || '',
+    dailySalary: Number(project.dailySalary || 0),
+    location: project.location || { address: '' },
+    teamRequirements: Array.isArray(project.teamRequirements) ? project.teamRequirements : [],
   }
+}
+
+function normalizeMilestone(milestone = {}) {
+  return {
+    ...milestone,
+    _id: milestone._id || milestone.id || '',
+    status: milestone.status || 'pending',
+  }
+}
+
+function normalizeWorkLog(workLog = {}) {
+  return {
+    ...workLog,
+    _id: workLog._id || workLog.id || '',
+    status: workLog.status || 'not_done',
+  }
+}
+
+function getTodayDateInput() {
+  return new Date().toISOString().slice(0, 10)
 }
 
 function formatProjectStatus(status) {
@@ -44,6 +63,7 @@ function normalizeQuantity(value, max = 99) {
 }
 
 function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
+  const { t } = useTranslation()
   const userId = user?.id || user?._id || ''
   const [activeView, setActiveView] = useState('overview')
   const [profile, setProfile] = useState(user)
@@ -64,8 +84,15 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
   const [salaryByOffer, setSalaryByOffer] = useState({})
   const [offerJobFilter, setOfferJobFilter] = useState(user?.job || '')
   const [assignedProjects, setAssignedProjects] = useState([])
+  const [selectedProjectId, setSelectedProjectId] = useState('')
   const [loadingAssignedProjects, setLoadingAssignedProjects] = useState(false)
-  const [projectsDisplayMode, setProjectsDisplayMode] = useState('list')
+  const [projectsDisplayMode, setProjectsDisplayMode] = useState('dashboard')
+  const [projectMilestones, setProjectMilestones] = useState({})
+  const [artisanWorkLogs, setArtisanWorkLogs] = useState([])
+  const [taskDrafts, setTaskDrafts] = useState({})
+  const [loadingMilestones, setLoadingMilestones] = useState(false)
+  const [loadingWorkLogs, setLoadingWorkLogs] = useState(false)
+  const [savingTaskId, setSavingTaskId] = useState('')
   const [marketplaceProducts, setMarketplaceProducts] = useState([])
   const [loadingMarketplace, setLoadingMarketplace] = useState(false)
   const [downloadingProductId, setDownloadingProductId] = useState(null)
@@ -179,12 +206,55 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
     setLoadingAssignedProjects(true)
     try {
       const response = await api.get('/projects/artisan', withUserHeaders(userId))
-      setAssignedProjects((response.data?.projects || []).map((project) => normalizeAssignedProject(project)))
+      const nextProjects = (response.data?.projects || []).map((project) => normalizeAssignedProject(project))
+      setAssignedProjects(nextProjects)
+      setSelectedProjectId((current) => {
+        if (current && nextProjects.some((project) => project.id === current)) {
+          return current
+        }
+        return nextProjects[0]?.id || ''
+      })
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to load assigned projects'
       showNotification('error', message)
     } finally {
       setLoadingAssignedProjects(false)
+    }
+  }, [showNotification, userId])
+
+  const loadProjectMilestones = useCallback(async (projectId) => {
+    if (!projectId || !userId) return
+
+    setLoadingMilestones(true)
+    try {
+      const response = await api.get(`/milestones/project/${projectId}`, withUserHeaders(userId))
+      setProjectMilestones((current) => ({
+        ...current,
+        [projectId]: (response.data?.milestones || []).map((milestone) => normalizeMilestone(milestone)),
+      }))
+    } catch (error) {
+      showNotification('error', error.response?.data?.message || 'Failed to load milestones')
+    } finally {
+      setLoadingMilestones(false)
+    }
+  }, [showNotification, userId])
+
+  const loadArtisanWorkLogs = useCallback(async (projectId = '') => {
+    if (!userId) return
+
+    setLoadingWorkLogs(true)
+    try {
+      const response = await api.get(
+        '/worklog/artisan',
+        withUserHeaders(userId, {
+          params: projectId ? { projectId } : {},
+        }),
+      )
+      setArtisanWorkLogs((response.data?.workLogs || []).map((workLog) => normalizeWorkLog(workLog)))
+    } catch (error) {
+      showNotification('error', error.response?.data?.message || 'Failed to load work logs')
+    } finally {
+      setLoadingWorkLogs(false)
     }
   }, [showNotification, userId])
 
@@ -219,6 +289,12 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
   useEffect(() => {
     loadAssignedProjects()
   }, [loadAssignedProjects])
+
+  useEffect(() => {
+    if (!selectedProjectId) return
+    loadProjectMilestones(selectedProjectId)
+    loadArtisanWorkLogs(selectedProjectId)
+  }, [loadArtisanWorkLogs, loadProjectMilestones, selectedProjectId])
 
   useEffect(() => {
     loadMarketplace()
@@ -257,6 +333,42 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
     return Array.from(names)
   }, [marketplaceProducts])
 
+  const selectedProject = useMemo(
+    () => assignedProjects.find((project) => project.id === selectedProjectId) || null,
+    [assignedProjects, selectedProjectId],
+  )
+
+  const selectedProjectMilestones = useMemo(
+    () => projectMilestones[selectedProjectId] || [],
+    [projectMilestones, selectedProjectId],
+  )
+
+  const dailyTasks = useMemo(() => {
+    const today = getTodayDateInput()
+    const workLogsByMilestone = {}
+
+    artisanWorkLogs.forEach((workLog) => {
+      const workLogDate = String(workLog?.date || '').slice(0, 10)
+      const milestoneId = workLog?.milestoneId?._id || workLog?.milestoneId?.id || workLog?.milestoneId
+      if (workLogDate === today && milestoneId) {
+        workLogsByMilestone[milestoneId] = workLog
+      }
+    })
+
+    return selectedProjectMilestones.map((milestone) => {
+      const draft = taskDrafts[milestone._id]
+      const existingWorkLog = workLogsByMilestone[milestone._id]
+      return {
+        id: milestone._id,
+        title: milestone.title,
+        description: draft?.description ?? existingWorkLog?.description ?? '',
+        status: draft?.status ?? existingWorkLog?.status ?? 'not_done',
+        date: today,
+        dateLabel: 'Today',
+      }
+    })
+  }, [artisanWorkLogs, selectedProjectMilestones, taskDrafts])
+
   const availableOfferJobs = useMemo(() => {
     const jobs = new Set()
     offers.forEach((offer) => {
@@ -266,10 +378,21 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
     return Array.from(jobs)
   }, [offers, profile?.job])
 
+  const menuItems = useMemo(
+    () => [
+      { key: 'overview', label: t('artisan.menu.overview'), subtitle: t('artisan.menu.overviewSubtitle') },
+      { key: 'offers', label: t('artisan.menu.offers'), subtitle: t('artisan.menu.offersSubtitle') },
+      { key: 'projects', label: t('artisan.menu.projects'), subtitle: t('artisan.menu.projectsSubtitle') },
+      { key: 'marketplace', label: t('artisan.menu.marketplace'), subtitle: t('artisan.menu.marketplaceSubtitle') },
+      { key: 'settings', label: t('artisan.menu.settings'), subtitle: t('artisan.menu.settingsSubtitle') },
+    ],
+    [t],
+  )
+
   const overviewStats = [
     { label: 'Offers', value: offers.length, detail: offerJobFilter ? `Filtered by ${offerJobFilter}` : 'Open now' },
     {
-      label: 'Assigned projects',
+      label: t('artisan.assignedProjects'),
       value: assignedProjects.length,
       detail: assignedProjects.length ? 'List and calendar ready' : 'No active assignments yet',
     },
@@ -440,6 +563,65 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
     }
   }
 
+  const handleTaskDraftChange = useCallback((milestoneId, patch) => {
+    if (!milestoneId) return
+
+    setTaskDrafts((current) => {
+      const currentTask =
+        current[milestoneId] ||
+        dailyTasks.find((task) => task.id === milestoneId) || {
+          id: milestoneId,
+          date: getTodayDateInput(),
+          status: 'not_done',
+          description: '',
+        }
+
+      return {
+        ...current,
+        [milestoneId]: {
+          ...currentTask,
+          ...patch,
+        },
+      }
+    })
+  }, [dailyTasks])
+
+  const handleSaveTask = useCallback(async (milestoneId) => {
+    const task = taskDrafts[milestoneId] || dailyTasks.find((entry) => entry.id === milestoneId)
+    if (!task) return
+
+    setSavingTaskId(milestoneId)
+    try {
+      await api.post(
+        '/worklog',
+        {
+          milestoneId,
+          date: task.date || getTodayDateInput(),
+          description: task.description || '',
+          status: task.status || 'not_done',
+        },
+        withUserHeaders(userId),
+      )
+
+      await Promise.all([
+        loadArtisanWorkLogs(selectedProjectId),
+        loadProjectMilestones(selectedProjectId),
+        loadAssignedProjects(),
+      ])
+
+      setTaskDrafts((current) => {
+        const nextDrafts = { ...current }
+        delete nextDrafts[milestoneId]
+        return nextDrafts
+      })
+      showNotification('success', 'Daily task saved')
+    } catch (error) {
+      showNotification('error', error.response?.data?.message || 'Failed to save daily task')
+    } finally {
+      setSavingTaskId('')
+    }
+  }, [dailyTasks, loadArtisanWorkLogs, loadAssignedProjects, loadProjectMilestones, selectedProjectId, showNotification, taskDrafts, userId])
+
   const handleDownloadMarketplaceDocument = async (productId, fallbackName) => {
     if (!productId) return
     setDownloadingProductId(productId)
@@ -544,7 +726,7 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
 
       <DashboardLayout
         user={profile}
-        menuItems={MENU_ITEMS}
+        menuItems={menuItems}
         activeView={activeView}
         onNavigate={setActiveView}
         onLogout={onLogout}
@@ -567,11 +749,11 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                   type="button"
                   className="secondary-btn"
                   onClick={() => {
-                    setProjectsDisplayMode('list')
+                    setProjectsDisplayMode('dashboard')
                     setActiveView('projects')
                   }}
                 >
-                  Projects
+                  {t('projects')}
                 </button>
                 <button type="button" className="secondary-btn" onClick={() => setActiveView('marketplace')}>
                   Marketplace
@@ -624,7 +806,7 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
 
               <section className="card-panel">
                 <div className="panel-header">
-                  <h3>Assigned projects</h3>
+                  <h3>{t('artisan.assignedProjects')}</h3>
                   <button
                     type="button"
                     className="text-btn"
@@ -633,7 +815,7 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                       setActiveView('projects')
                     }}
                   >
-                    Open calendar
+                    {t('artisan.openCalendar')}
                   </button>
                 </div>
                 <div className="invitation-list">
@@ -655,7 +837,7 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                       </div>
                     </article>
                   ))}
-                  {!assignedProjects.length ? <p className="subtitle">No assigned projects yet.</p> : null}
+                  {!assignedProjects.length ? <p className="subtitle">{t('artisan.noAssignedProjects')}</p> : null}
                 </div>
               </section>
 
@@ -755,49 +937,91 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
         )}
 
         {activeView === 'projects' && (
-          <section className="artisan-projects-view">
+          <section className="space-y-4">
             <div className="dashboard-card artisan-projects-toolbar">
               <div className="section-header">
                 <div>
-                  <h3>My assigned projects</h3>
-                  <p className="subtitle">Switch between a clean list and a calendar schedule.</p>
+                  <h3>{t('artisan.workspaceTitle')}</h3>
+                  <p className="subtitle">{t('artisan.workspaceSubtitle')}</p>
                 </div>
-                <button type="button" className="secondary-btn" onClick={loadAssignedProjects} disabled={loadingAssignedProjects}>
-                  {loadingAssignedProjects ? 'Refreshing...' : 'Refresh'}
+                <button
+                  type="button"
+                  className="secondary-btn"
+                  onClick={() => {
+                    loadAssignedProjects()
+                    if (selectedProjectId) {
+                      loadProjectMilestones(selectedProjectId)
+                      loadArtisanWorkLogs(selectedProjectId)
+                    }
+                  }}
+                  disabled={loadingAssignedProjects || loadingMilestones || loadingWorkLogs}
+                >
+                  {loadingAssignedProjects || loadingMilestones || loadingWorkLogs ? t('common.loading') : t('common.refresh')}
                 </button>
               </div>
 
-              <div className="view-toggle-group" role="tablist" aria-label="Assigned projects view">
+              <div className="view-toggle-group" role="tablist" aria-label="Assigned projects workspace">
                 <button
                   type="button"
-                  className={`view-toggle-btn ${projectsDisplayMode === 'list' ? 'active' : ''}`}
-                  onClick={() => setProjectsDisplayMode('list')}
+                  className={`view-toggle-btn ${projectsDisplayMode === 'dashboard' ? 'active' : ''}`}
+                  onClick={() => setProjectsDisplayMode('dashboard')}
                 >
-                  List view
+                  {t('artisan.workspaceDashboard')}
+                </button>
+                <button
+                  type="button"
+                  className={`view-toggle-btn ${projectsDisplayMode === 'details' ? 'active' : ''}`}
+                  onClick={() => setProjectsDisplayMode('details')}
+                >
+                  {t('artisan.workspaceDetails')}
                 </button>
                 <button
                   type="button"
                   className={`view-toggle-btn ${projectsDisplayMode === 'calendar' ? 'active' : ''}`}
                   onClick={() => setProjectsDisplayMode('calendar')}
                 >
-                  Calendar view
+                  {t('artisan.workspaceCalendar')}
                 </button>
               </div>
             </div>
 
             {projectsDisplayMode === 'calendar' ? (
-              <ArtisanCalendarPage
+              <CalendarPage
                 projects={assignedProjects}
-                loading={loadingAssignedProjects}
-                onRetry={loadAssignedProjects}
+                workLogs={artisanWorkLogs}
+                loading={loadingAssignedProjects || loadingWorkLogs}
+                onBack={() => setProjectsDisplayMode('dashboard')}
               />
-            ) : (
-              <ArtisanProjectsPage
+            ) : null}
+
+            {projectsDisplayMode === 'details' ? (
+              <ProjectDetails
+                role="artisan"
+                project={selectedProject}
+                milestones={selectedProjectMilestones}
+                workLogs={artisanWorkLogs}
+                loading={loadingMilestones || loadingWorkLogs}
+                savingTaskId={savingTaskId}
+                onBack={() => setProjectsDisplayMode('dashboard')}
+                onTaskChange={handleTaskDraftChange}
+                onSaveTask={handleSaveTask}
+              />
+            ) : null}
+
+            {projectsDisplayMode === 'dashboard' ? (
+              <ArtisanDashboard
                 projects={assignedProjects}
+                selectedProjectId={selectedProjectId}
                 loading={loadingAssignedProjects}
-                onRetry={loadAssignedProjects}
+                tasks={dailyTasks}
+                savingTaskId={savingTaskId}
+                onSelectProject={setSelectedProjectId}
+                onOpenDetails={() => setProjectsDisplayMode('details')}
+                onOpenCalendar={() => setProjectsDisplayMode('calendar')}
+                onTaskChange={handleTaskDraftChange}
+                onSaveTask={handleSaveTask}
               />
-            )}
+            ) : null}
           </section>
         )}
 

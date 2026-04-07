@@ -1,37 +1,36 @@
 import { MarketplaceIcon, ShieldIcon, UserIcon } from '../Icons'
-
-const ACTORS = [
-  {
-    title: 'Artisan',
-    description: 'Apply for jobs, manage assigned work, and stay connected to project teams in real time.',
-    Icon: UserIcon,
-  },
-  {
-    title: 'Expert',
-    description: 'Create projects, review progress, and validate key construction decisions with confidence.',
-    Icon: ShieldIcon,
-  },
-  {
-    title: 'Manufacturer',
-    description: 'Publish product catalogs, manage documentation, and reach construction professionals directly.',
-    Icon: MarketplaceIcon,
-  },
-]
+import { useTranslation } from 'react-i18next'
 
 function LandingActors() {
+  const { t } = useTranslation()
+  const actors = [
+    {
+      title: t('landing.actors.artisanTitle'),
+      description: t('landing.actors.artisanDescription'),
+      Icon: UserIcon,
+    },
+    {
+      title: t('landing.actors.expertTitle'),
+      description: t('landing.actors.expertDescription'),
+      Icon: ShieldIcon,
+    },
+    {
+      title: t('landing.actors.manufacturerTitle'),
+      description: t('landing.actors.manufacturerDescription'),
+      Icon: MarketplaceIcon,
+    },
+  ]
+
   return (
     <section className="landing-section" id="roles">
       <div className="landing-section-head">
-        <p className="landing-section-eyebrow">Actors</p>
-        <h2>Built around the people who keep projects moving</h2>
-        <p>
-          Each role gets a focused experience while staying connected to the rest of the construction
-          ecosystem.
-        </p>
+        <p className="landing-section-eyebrow">{t('landing.actors.eyebrow')}</p>
+        <h2>{t('landing.actors.title')}</h2>
+        <p>{t('landing.actors.subtitle')}</p>
       </div>
 
       <div className="landing-actor-grid">
-        {ACTORS.map(({ title, description, Icon }) => (
+        {actors.map(({ title, description, Icon }) => (
           <article key={title} className="landing-actor-card">
             <div className="landing-actor-icon">
               <Icon className="icon" />

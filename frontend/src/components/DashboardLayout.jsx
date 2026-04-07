@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import LanguageSwitcher from './LanguageSwitcher'
 import { BmpLogo, LogoutIcon, MenuIcon, SettingsIcon } from './Icons'
 import NotificationBell from './NotificationBell'
 
@@ -10,15 +12,16 @@ function DashboardLayout({
   onLogout,
   children,
 }) {
+  const { t } = useTranslation()
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
 
   const userInitials = useMemo(() => {
-    const raw = user?.name || 'User'
+    const raw = user?.name || t('common.guest')
     const parts = raw.trim().split(/\s+/).slice(0, 2)
     const letters = parts.map((part) => part.charAt(0).toUpperCase()).join('')
     return letters || 'U'
-  }, [user?.name])
+  }, [t, user?.name])
 
   const handleNavigate = (key) => {
     onNavigate(key)
@@ -45,10 +48,10 @@ function DashboardLayout({
           <BmpLogo className="sidebar-brand-icon" />
           <div>
             <strong>BMP.tn</strong>
-            <p>Construction platform</p>
+            <p>{t('dashboardUi.constructionPlatform')}</p>
           </div>
         </div>
-        <nav className="sidebar-nav" aria-label="Dashboard sections">
+        <nav className="sidebar-nav" aria-label={t('nav.dashboardSections')}>
           {menuItems.map((item) => (
             <button
               key={item.key}
@@ -63,7 +66,7 @@ function DashboardLayout({
         <div className="sidebar-footer">
           <button type="button" className="sidebar-logout" onClick={handleLogout}>
             <LogoutIcon className="icon tiny" />
-            Log out
+            {t('logout')}
           </button>
         </div>
       </aside>
@@ -74,7 +77,7 @@ function DashboardLayout({
               type="button"
               className={`sidebar-burger-btn ${isSidebarOpen ? 'is-open' : ''}`}
               onClick={() => setIsSidebarOpen((open) => !open)}
-              aria-label={isSidebarOpen ? 'Collapse menu' : 'Open menu'}
+              aria-label={isSidebarOpen ? t('nav.collapseMenu') : t('nav.openSidebar')}
             >
               <MenuIcon className="icon" />
             </button>
@@ -83,6 +86,7 @@ function DashboardLayout({
             </div>
           </div>
           <div className="header-actions">
+            <LanguageSwitcher />
             <NotificationBell user={user} />
             <div className={`header-user ${isUserMenuOpen ? 'open' : ''}`}>
               <button
@@ -96,8 +100,8 @@ function DashboardLayout({
                   {user?.profileImage ? <img src={user.profileImage} alt="Profile" /> : <span>{userInitials}</span>}
                 </div>
                 <div className="header-user-meta">
-                  <strong>{user?.name || 'Guest'}</strong>
-                  <small>{(user?.role || 'Role').toUpperCase()}</small>
+                  <strong>{user?.name || t('common.guest')}</strong>
+                  <small>{(user?.role || t('dashboardUi.roleFallback')).toUpperCase()}</small>
                 </div>
                 <span className="header-caret" aria-hidden="true">
                   {isUserMenuOpen ? '▴' : '▾'}
@@ -106,11 +110,11 @@ function DashboardLayout({
               <div className="header-user-menu" role="menu">
                 <button type="button" onClick={handleSettings} className="header-menu-item" role="menuitem">
                   <SettingsIcon className="icon tiny" />
-                  Settings
+                  {t('common.settings')}
                 </button>
                 <button type="button" onClick={handleLogout} className="header-menu-item" role="menuitem">
                   <LogoutIcon className="icon tiny" />
-                  Log out
+                  {t('logout')}
                 </button>
               </div>
             </div>

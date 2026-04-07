@@ -18,6 +18,8 @@ const offerRoutes = require('./routes/offerRoutes');
 const applicationRoutes = require('./routes/applicationRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const milestoneRoutes = require('./routes/milestoneRoutes');
+const workLogRoutes = require('./routes/workLogRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -62,6 +64,8 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/offers', offerRoutes);
 app.use('/api/applications', applicationRoutes);
+app.use('/api/milestones', milestoneRoutes);
+app.use('/api/worklog', workLogRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/payments', paymentRoutes);
 

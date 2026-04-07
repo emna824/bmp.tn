@@ -35,7 +35,11 @@ const projectSchema = new mongoose.Schema(
       type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
       default: [],
     },
-    status: { type: String, default: 'open', enum: ['open', 'in_progress', 'closed'] },
+    status: {
+      type: String,
+      default: 'recruiting',
+      enum: ['recruiting', 'in_progress', 'finished', 'closed'],
+    },
     teamRequirements: { type: [teamRequirementSchema], default: [] },
   },
   { timestamps: true }

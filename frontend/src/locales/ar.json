@@ -1,0 +1,306 @@
+{
+  "login": "تسجيل الدخول",
+  "dashboard": "لوحة التحكم",
+  "projects": "المشاريع",
+  "quotes": "عروض الأسعار",
+  "invoices": "الفواتير",
+  "logout": "تسجيل الخروج",
+  "language": {
+    "label": "اللغة",
+    "switcher": "اختر اللغة",
+    "english": "الإنجليزية",
+    "french": "الفرنسية",
+    "arabic": "العربية"
+  },
+  "common": {
+    "back": "رجوع",
+    "loading": "جارٍ التحميل...",
+    "refresh": "تحديث",
+    "save": "حفظ",
+    "saving": "جارٍ الحفظ...",
+    "settings": "الإعدادات",
+    "guest": "زائر",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "startDate": "تاريخ البداية",
+    "endDate": "تاريخ النهاية",
+    "trade": "الحرفة",
+    "description": "الوصف",
+    "milestones": "المهام المرحلية",
+    "today": "اليوم"
+  },
+  "status": {
+    "recruiting": "قيد التوظيف",
+    "in_progress": "قيد التنفيذ",
+    "finished": "مكتمل",
+    "closed": "مغلق",
+    "pending": "قيد الانتظار",
+    "done": "منجز",
+    "not_done": "غير منجز",
+    "accepted": "مقبول",
+    "rejected": "مرفوض"
+  },
+  "nav": {
+    "features": "المزايا",
+    "actors": "الأطراف",
+    "howItWorks": "كيف يعمل",
+    "access": "الوصول",
+    "contact": "اتصل بنا",
+    "openMenu": "فتح القائمة",
+    "closeMenu": "إغلاق القائمة",
+    "mainNavigation": "التنقل الرئيسي",
+    "dashboardSections": "أقسام لوحة التحكم",
+    "openSidebar": "فتح الشريط الجانبي",
+    "collapseMenu": "طي القائمة"
+  },
+  "landing": {
+    "brandSubtitle": "منصة تشغيل مشاريع البناء",
+    "hero": {
+      "badge": "BMP.tn لفرق البناء الحديثة",
+      "title": "أدر مشاريع البناء بذكاء أكبر",
+      "subtitle": "نسّق المشاريع، ووظّف المختصين المناسبين، واعتمد المخرجات، ووفّر المواد من مساحة عمل احترافية مصممة لإدارة البناء.",
+      "highlightsLabel": "مزايا المنصة",
+      "tag1": "إشراف على المشاريع",
+      "tag2": "اعتماد بخبرة متخصصة",
+      "tag3": "سوق الموردين",
+      "tag4": "تنسيق الفرق",
+      "snapshotEyebrow": "نظرة تشغيلية",
+      "snapshotTitle": "واجهة واحدة للتخطيط والتوظيف والتوريد",
+      "livePlatform": "منصة مباشرة",
+      "imageAlt": "جلسة تخطيط لمشروع بناء مع مستندات المشروع",
+      "metrics": {
+        "activeProjects": "المشاريع النشطة",
+        "marketplaceItems": "عناصر السوق",
+        "validatedWorkflows": "سير العمل المعتمدة"
+      }
+    },
+    "features": {
+      "eyebrow": "المزايا",
+      "title": "كل ما تحتاجه لإدارة أعمال البناء بوضوح",
+      "subtitle": "تجمع المنصة التشغيل والتوظيف والتوريد والمراجعة داخل مساحة عمل واحدة موثوقة.",
+      "projectManagementTitle": "إدارة المشاريع",
+      "projectManagementDescription": "نظّم مهام البناء، وتابع المراحل، وحافظ على سير كل ورشة وفق الجدول.",
+      "marketplaceTitle": "السوق",
+      "marketplaceDescription": "تصفح كتالوجات المصنّعين، وقارن عروض المنتجات، واطلع على الوثائق بسرعة.",
+      "validationTitle": "اعتماد الخبراء",
+      "validationDescription": "أدخل الإشراف الخبير إلى سير العمل لمراجعة التقدم واعتماد القرارات المهمة.",
+      "collaborationTitle": "تعاون الفريق",
+      "collaborationDescription": "اجمع الحرفيين والخبراء والمصنّعين في مساحة مشتركة لتنسيق أسهل."
+    },
+    "actors": {
+      "eyebrow": "الأطراف",
+      "title": "مصممة لمن يحرّك المشاريع إلى الأمام",
+      "subtitle": "يحصل كل دور على تجربة مخصصة مع بقاء الاتصال ببقية منظومة البناء.",
+      "artisanTitle": "الحرفي",
+      "artisanDescription": "قدّم على الأعمال، وأدر العمل المسند إليك، وابقَ متصلاً بفرق المشروع لحظة بلحظة.",
+      "expertTitle": "الخبير",
+      "expertDescription": "أنشئ المشاريع، وراجع التقدم، واعتمد القرارات الإنشائية المهمة بثقة.",
+      "manufacturerTitle": "المصنّع",
+      "manufacturerDescription": "انشر كتالوجات المنتجات، وأدر الوثائق، واصل مباشرة إلى محترفي البناء."
+    },
+    "steps": {
+      "eyebrow": "كيف يعمل",
+      "title": "مسار واضح من البداية إلى التسليم",
+      "subtitle": "خطوات بسيطة تجعل المنصة سهلة الاستخدام مع دعم تنفيذ مشاريع جاد.",
+      "step1Title": "إنشاء مشروع",
+      "step1Description": "أنشئ مشروع بناء، وحدد الاحتياجات، ونظّم هيكل العمل من اليوم الأول.",
+      "step2Title": "التقديم على الأعمال",
+      "step2Description": "يكتشف الحرفيون الفرص المفتوحة بينما يراجع الخبراء والمديرون المرشحين المناسبين.",
+      "step3Title": "إدارة التقدم",
+      "step3Description": "تابع العمل ونسّق الأطراف واحفظ الوثائق والتوريد في مسار واحد."
+    },
+    "auth": {
+      "eyebrow": "الوصول",
+      "title": "ابدأ بالدور المناسب لعملك",
+      "subtitle": "انضم إلى المنصة لنشر المشاريع، والتقديم على الأعمال، وإدارة كتالوجات المنتجات، والتعاون عبر دورة البناء كاملة.",
+      "roleBasedTitle": "تجربة حسب الدور",
+      "roleBasedDescription": "كل طرف يرى الأدوات المناسبة لمسؤولياته.",
+      "fastAccessTitle": "دخول سريع",
+      "fastAccessDescription": "أنشئ حسابًا أو سجّل الدخول من نفس نقطة البداية الحديثة.",
+      "formsLabel": "نماذج المصادقة",
+      "signUp": "إنشاء حساب"
+    },
+    "footer": {
+      "subtitle": "إدارة البناء والتوريد والتعاون في منصة واحدة.",
+      "platform": "المنصة",
+      "access": "الوصول",
+      "contact": "اتصال",
+      "builtForTeams": "مصممة لفرق البناء المتصلة",
+      "rights": "جميع الحقوق محفوظة.",
+      "bottom": "الخبراء والحرفيون والمصنّعون يعملون معًا بذكاء أكبر."
+    }
+  },
+  "auth": {
+    "signIn": {
+      "brandSubtitle": "سوق البناء الذكي",
+      "title": "مرحبًا بعودتك",
+      "subtitle": "سجّل الدخول إلى حسابك",
+      "staySignedIn": "البقاء مسجلاً",
+      "forgotPassword": "هل نسيت كلمة المرور؟",
+      "closeForgotPassword": "إغلاق استعادة كلمة المرور",
+      "accountEmail": "بريد الحساب",
+      "resetCode": "رمز إعادة التعيين",
+      "newPassword": "كلمة مرور جديدة",
+      "sendResetCode": "إرسال الرمز",
+      "sending": "جارٍ الإرسال...",
+      "resetPassword": "إعادة تعيين كلمة المرور",
+      "resetting": "جارٍ إعادة التعيين...",
+      "submit": "تسجيل الدخول",
+      "submitting": "جارٍ تسجيل الدخول...",
+      "googleLabel": "تسجيل الدخول باستخدام Google",
+      "orContinueWith": "أو المتابعة باستخدام",
+      "success": "تم تسجيل الدخول بنجاح.",
+      "googleSuccess": "تم تسجيل الدخول باستخدام Google",
+      "failed": "فشل تسجيل الدخول",
+      "googleFailed": "فشل تسجيل الدخول باستخدام Google",
+      "fixErrors": "يرجى تصحيح أخطاء النموذج قبل الإرسال.",
+      "resetSent": "تم إرسال رمز إعادة التعيين إلى بريدك الإلكتروني.",
+      "resetSuccess": "تمت إعادة تعيين كلمة المرور بنجاح.",
+      "sendResetFailed": "فشل إرسال الرمز",
+      "resetFailed": "فشل إعادة التعيين",
+      "placeholders": {
+        "email": "you@email.com",
+        "password": "كلمة المرور",
+        "code": "رمز من 6 أرقام",
+        "newPassword": "8 أحرف على الأقل"
+      },
+      "errors": {
+        "emailRequired": "البريد الإلكتروني مطلوب",
+        "invalidEmail": "بريد إلكتروني غير صالح",
+        "passwordRequired": "كلمة المرور مطلوبة",
+        "codeRequired": "رمز إعادة التعيين مطلوب",
+        "newPasswordRequired": "كلمة المرور الجديدة مطلوبة",
+        "minPassword": "8 أحرف على الأقل"
+      }
+    },
+    "signUp": {
+      "title": "إنشاء حساب",
+      "subtitle": "سجل كخبير أو حرفي أو مصنّع",
+      "submit": "إنشاء الحساب",
+      "submitting": "جارٍ الإرسال...",
+      "success": "تم إنشاء الحساب بنجاح.",
+      "registered": "تم التسجيل",
+      "failed": "فشل التسجيل",
+      "networkFailed": "تعذر الوصول إلى الخادم. تحقق من عنوان الـ API.",
+      "fixErrors": "يرجى تصحيح أخطاء النموذج قبل الإرسال.",
+      "roles": {
+        "expert": "خبير",
+        "artisan": "حرفي",
+        "manufacturer": "مصنّع"
+      },
+      "patent": "براءة",
+      "address": "العنوان",
+      "companyPhone": "هاتف الشركة",
+      "placeholders": {
+        "name": "اسمك الكامل",
+        "email": "you@email.com",
+        "password": "8 أحرف على الأقل",
+        "patent": "مرجع البراءة",
+        "address": "عنوان الشركة",
+        "companyPhone": "+216 xx xxx xxx"
+      },
+      "errors": {
+        "nameRequired": "الاسم مطلوب",
+        "emailRequired": "البريد الإلكتروني مطلوب",
+        "invalidEmail": "بريد إلكتروني غير صالح",
+        "passwordRequired": "كلمة المرور مطلوبة",
+        "minPassword": "8 أحرف على الأقل",
+        "patentRequired": "البراءة مطلوبة",
+        "addressRequired": "العنوان مطلوب",
+        "companyPhoneRequired": "هاتف الشركة مطلوب"
+      }
+    }
+  },
+  "dashboardUi": {
+    "constructionPlatform": "منصة البناء",
+    "roleFallback": "الدور"
+  },
+  "artisan": {
+    "menu": {
+      "overview": "نظرة عامة",
+      "overviewSubtitle": "ملخص",
+      "offers": "العروض",
+      "offersSubtitle": "التقديم على المشاريع",
+      "projects": "المشاريع",
+      "projectsSubtitle": "العمل المكلّف",
+      "marketplace": "السوق",
+      "marketplaceSubtitle": "وثائق المصنّعين",
+      "settings": "الإعدادات",
+      "settingsSubtitle": "الملف الشخصي والأمان"
+    },
+    "execution": "التنفيذ",
+    "myProjects": "مشاريعي",
+    "myProjectsDescription": "تابع الأعمال المسندة إليك، وافتح تفاصيل المشروع، وحدّث التقدم اليومي من مساحة واحدة.",
+    "openCalendar": "فتح التقويم",
+    "assignedProjects": "المشاريع المسندة",
+    "totalCount": "{{count}} إجمالاً",
+    "loadingProjects": "جارٍ تحميل المشاريع...",
+    "noAssignedProjects": "لا توجد مشاريع مسندة بعد.",
+    "dailyTasks": "المهام اليومية",
+    "dailyTasksDescription": "آخر تحديثاتك المرحلية لليوم.",
+    "selectProjectForTasks": "اختر مشروعًا يحتوي على مهام مرحلية لبدء تسجيل العمل اليومي.",
+    "workspaceTitle": "مساحة تنفيذ المشروع",
+    "workspaceSubtitle": "انتقل بين لوحة التحكم والتفاصيل والتقويم دون مغادرة مساحة الحرفي.",
+    "workspaceDashboard": "لوحة التحكم",
+    "workspaceDetails": "التفاصيل",
+    "workspaceCalendar": "التقويم"
+  },
+  "expert": {
+    "menu": {
+      "overview": "نظرة عامة",
+      "overviewSubtitle": "ملخص التوظيف",
+      "create": "إنشاء مشروع",
+      "createSubtitle": "مشروع + ورشة",
+      "projects": "المشاريع",
+      "projectsSubtitle": "العروض والطلبات",
+      "settings": "الإعدادات",
+      "settingsSubtitle": "ملخص الحساب"
+    }
+  },
+  "project": {
+    "untitled": "مشروع بدون عنوان",
+    "generalAssignment": "مهمة عامة",
+    "general": "عام",
+    "progress": "نسبة التقدم",
+    "select": "اختيار",
+    "selected": "محدد",
+    "openDetails": "فتح التفاصيل",
+    "detailsEmpty": "اختر مشروعًا لعرض تفاصيل التنفيذ الخاصة به.",
+    "noDescription": "لم تتم إضافة وصف للمشروع بعد.",
+    "startProject": "بدء المشروع",
+    "closeProject": "إغلاق المشروع",
+    "markFinished": "وضعه كمكتمل",
+    "createMilestone": "إنشاء مهمة مرحلية",
+    "createMilestoneDescription": "اسند مهمة مركزة إلى حرفي واحد في هذا المشروع.",
+    "milestoneTitle": "عنوان المهمة المرحلية",
+    "selectArtisan": "اختر حرفيًا",
+    "shortDescription": "وصف قصير",
+    "reviewTasks": "راجع المهام المسندة إلى فريقك.",
+    "trackTasks": "تابع مهامك المرحلية وحدّث عمل اليوم.",
+    "loadingMilestones": "جارٍ تحميل تفاصيل المهام المرحلية...",
+    "noMilestones": "لم يتم إنشاء مهام مرحلية لهذا المشروع بعد."
+  },
+  "task": {
+    "dailyTask": "مهمة يومية",
+    "addUpdate": "أضف تحديث اليوم...",
+    "saveTask": "حفظ المهمة"
+  },
+  "calendarUi": {
+    "planning": "التخطيط",
+    "calendarView": "عرض التقويم",
+    "calendarDescription": "تظهر المشاريع حسب مدتها، وتُعرض تحديثات العمل اليومية كأحداث في التقويم.",
+    "backToProjects": "العودة إلى المشاريع",
+    "loadingCalendar": "جارٍ تحميل التقويم..."
+  },
+  "admin": {
+    "controlCenter": "مركز التحكم",
+    "dashboardTitle": "لوحة تحكم الإدارة",
+    "adminUser": "مستخدم الإدارة",
+    "administrator": "مدير"
+  },
+  "manufacturer": {
+    "dashboardTitle": "لوحة تحكم المصنّع",
+    "manufacturer": "مصنّع"
+  }
+}

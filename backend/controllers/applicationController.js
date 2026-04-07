@@ -52,9 +52,13 @@ exports.applyToOffer = async (req, res) => {
       return res.status(400).json({ message: 'Artisan cannot apply to a closed offer' });
     }
 
-    const project = await Project.findById(offer.projectId).select('teamRequirements');
+    const project = await Project.findById(offer.projectId).select('teamRequirements status');
     if (!project) {
       return res.status(404).json({ message: 'Project not found' });
+    }
+
+    if (project.status !== 'recruiting') {
+      return res.status(400).json({ message: 'Applications are only allowed while the project is recruiting' });
     }
 
     const matchingRequirement = project.teamRequirements.find((entry) => entry.job === offer.job);
@@ -161,6 +165,10 @@ exports.reviewApplication = async (req, res) => {
 
     if (String(project.expertId) !== String(expertId)) {
       return res.status(403).json({ message: 'Expert can only manage their own projects' });
+    }
+
+    if (normalizedAction === 'accept' && project.status !== 'recruiting') {
+      return res.status(400).json({ message: 'Accepted assignments are only allowed while the project is recruiting' });
     }
 
     const requirement = project.teamRequirements.find((entry) => entry.job === application.job);
