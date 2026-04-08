@@ -35,6 +35,11 @@ const projectSchema = new mongoose.Schema(
       type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
       default: [],
     },
+    totalSpent: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     status: {
       type: String,
       default: 'recruiting',

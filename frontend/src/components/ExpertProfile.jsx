@@ -19,6 +19,7 @@ function normalizeProject(project) {
     endDate: project?.endDate || project?.deadline || '',
     job: project?.job || project?.teamRequirements?.[0]?.job || '',
     dailySalary: Number(project?.dailySalary ?? 0),
+    totalSpent: Number(project?.totalSpent ?? 0),
     location: project?.location || { address: '', latitude: null, longitude: null },
     teamRequirements: Array.isArray(project?.teamRequirements) ? project.teamRequirements : [],
     assignedArtisans: Array.isArray(project?.assignedArtisans) ? project.assignedArtisans : [],
@@ -442,6 +443,7 @@ function ExpertProfile({
                   <div className="space-y-6">
                     <ProjectDetails
                       role="expert"
+                      userId={userId}
                       project={selectedProject}
                       milestones={selectedMilestones}
                       workLogs={[]}
@@ -453,6 +455,7 @@ function ExpertProfile({
                       onStartProject={() => handleProjectStatusAction('start')}
                       onCloseProject={() => handleProjectStatusAction('closed')}
                       onFinishProject={() => handleProjectStatusAction('finished')}
+                      onProjectRefresh={() => Promise.all([loadProjects(), loadProjectDetails(selectedProjectId)])}
                     />
 
                     <div className="project-board">

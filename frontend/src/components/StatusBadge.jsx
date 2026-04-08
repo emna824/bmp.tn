@@ -12,6 +12,9 @@ const STATUS_STYLES = {
   finished: 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300',
   closed: 'bg-gray-200 text-gray-700 dark:bg-slate-700/70 dark:text-slate-200',
   pending: 'bg-slate-100 text-slate-700 dark:bg-slate-700/70 dark:text-slate-200',
+  accepted: 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300',
+  rejected: 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',
+  generated: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
   done: 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300',
   not_done: 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',
 }

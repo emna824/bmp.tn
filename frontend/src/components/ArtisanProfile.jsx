@@ -25,9 +25,34 @@ function normalizeAssignedProject(project = {}) {
     description: project.description || '',
     category: project.category || '',
     dailySalary: Number(project.dailySalary || 0),
+    totalSpent: Number(project.totalSpent || 0),
     location: project.location || { address: '' },
     teamRequirements: Array.isArray(project.teamRequirements) ? project.teamRequirements : [],
   }
+}
+
+function getProjectStatusPriority(status) {
+  if (status === 'in_progress') return 0
+  if (status === 'recruiting') return 1
+  if (status === 'finished') return 2
+  if (status === 'closed') return 3
+  return 4
+}
+
+function sortAssignedProjects(projects = []) {
+  return [...projects].sort((firstProject, secondProject) => {
+    const priorityDiff =
+      getProjectStatusPriority(firstProject?.status) - getProjectStatusPriority(secondProject?.status)
+
+    if (priorityDiff !== 0) {
+      return priorityDiff
+    }
+
+    const firstTime = new Date(firstProject?.startDate || 0).getTime()
+    const secondTime = new Date(secondProject?.startDate || 0).getTime()
+
+    return secondTime - firstTime
+  })
 }
 
 function normalizeMilestone(milestone = {}) {
@@ -155,7 +180,8 @@ function ArtisanProfile({
     if (!paymentStatus) return
 
     if (view === 'marketplace') {
-      setActiveView('marketplace')
+      setActiveView('projects')
+      setProjectsDisplayMode('details')
     }
 
     if (paymentStatus === 'success') {
@@ -225,13 +251,21 @@ function ArtisanProfile({
     setLoadingAssignedProjects(true)
     try {
       const response = await api.get('/projects/artisan', withUserHeaders(userId))
-      const nextProjects = (response.data?.projects || []).map((project) => normalizeAssignedProject(project))
+      const nextProjects = sortAssignedProjects(
+        (response.data?.projects || []).map((project) => normalizeAssignedProject(project)),
+      )
       setAssignedProjects(nextProjects)
       setSelectedProjectId((current) => {
-        if (current && nextProjects.some((project) => project.id === current)) {
+        const currentProject = nextProjects.find((project) => project.id === current)
+        const activeProject =
+          nextProjects.find((project) => ['in_progress', 'recruiting'].includes(project.status)) ||
+          nextProjects[0]
+
+        if (currentProject && !['closed', 'finished'].includes(currentProject.status)) {
           return current
         }
-        return nextProjects[0]?.id || ''
+
+        return activeProject?.id || ''
       })
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to load assigned projects'
@@ -414,7 +448,6 @@ function ArtisanProfile({
       { key: 'overview', label: t('artisan.menu.overview'), subtitle: t('artisan.menu.overviewSubtitle') },
       { key: 'offers', label: t('artisan.menu.offers'), subtitle: t('artisan.menu.offersSubtitle') },
       { key: 'projects', label: t('artisan.menu.projects'), subtitle: t('artisan.menu.projectsSubtitle') },
-      { key: 'marketplace', label: t('artisan.menu.marketplace'), subtitle: t('artisan.menu.marketplaceSubtitle') },
       { key: 'settings', label: t('artisan.menu.settings'), subtitle: t('artisan.menu.settingsSubtitle') },
     ],
     [t],
@@ -1038,6 +1071,7 @@ function ArtisanProfile({
             {projectsDisplayMode === 'details' ? (
               <ProjectDetails
                 role="artisan"
+                userId={userId}
                 project={selectedProject}
                 milestones={selectedProjectMilestones}
                 workLogs={artisanWorkLogs}
@@ -1046,6 +1080,7 @@ function ArtisanProfile({
                 onBack={() => setProjectsDisplayMode('dashboard')}
                 onTaskChange={handleTaskDraftChange}
                 onSaveTask={handleSaveTask}
+                onProjectRefresh={loadAssignedProjects}
               />
             ) : null}
 

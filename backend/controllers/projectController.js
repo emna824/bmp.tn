@@ -213,7 +213,7 @@ exports.listArtisanProjects = async (req, res) => {
 
     const projects = await Project.find({ assignedArtisans: req.user._id })
       .select(
-        '_id projectName startDate endDate job status description category dailySalary location teamRequirements'
+        '_id projectName startDate endDate job status description category dailySalary location teamRequirements totalSpent'
       )
       .sort({ startDate: 1, createdAt: -1 })
       .lean();
