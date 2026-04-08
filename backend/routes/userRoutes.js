@@ -255,7 +255,9 @@ router.post('/google-login', async (req, res) => {
 router.get('/:id/profile', async (req, res) => {
     try {
         const { id } = req.params;
-        const user = await User.findById(id).select('name email role patent address companyPhone profileImage job trade');
+        const user = await User.findById(id).select(
+            'name email role patent address companyPhone profileImage job trade isPremium subscriptionType'
+        );
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });

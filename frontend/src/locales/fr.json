@@ -297,6 +297,36 @@
     "mason": "Maçon",
     "plumber": "Plombier"
   },
+  "premium": {
+    "premiumLabel": "Premium",
+    "standardLabel": "Standard",
+    "eyebrow": "Accès premium",
+    "modalTitle": "Passez au Premium",
+    "modalSubtitle": "Débloquez les outils de planification et un meilleur suivi de vos projets avec une simple mise à niveau.",
+    "monthlyButton": "Abonnement mensuel ($1.99)",
+    "yearlyButton": "Abonnement annuel ($20)",
+    "maybeLater": "Plus tard",
+    "redirecting": "Redirection...",
+    "close": "Fermer la fenêtre premium",
+    "featureTooltip": "Fonction premium",
+    "calendarLocked": "L'accès au calendrier est une fonction premium.",
+    "projectCreationLocked": "La création de projets est réservée aux utilisateurs premium.",
+    "unlockProjectCreation": "Passez au premium pour créer vos propres projets et garder vos outils de planification au même endroit.",
+    "checkoutStartFailed": "Impossible de démarrer le paiement premium.",
+    "upgradeSuccess": "L'abonnement premium a été activé avec succès.",
+    "checkoutCancelled": "Le paiement premium a été annulé.",
+    "confirmationFailed": "Nous n'avons pas pu confirmer votre abonnement premium.",
+    "cancelButton": "Annuler l'abonnement",
+    "cancelling": "Annulation...",
+    "cancelConfirm": "Voulez-vous vraiment annuler votre abonnement premium maintenant ?",
+    "cancelSuccess": "L'abonnement premium a été annulé avec succès.",
+    "cancelFailed": "Nous n'avons pas pu annuler votre abonnement premium.",
+    "benefits": {
+      "createProjects": "Créer vos propres projets",
+      "accessCalendar": "Accéder au calendrier",
+      "avoidConflicts": "Éviter les conflits de planning"
+    }
+  },
   "calendarUi": {
     "planning": "Planification",
     "calendarView": "Vue calendrier",

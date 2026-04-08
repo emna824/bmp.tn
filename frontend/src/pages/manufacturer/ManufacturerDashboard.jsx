@@ -58,7 +58,13 @@ async function fetchManufacturerProducts(manufacturerId) {
   return fallbackResponse.data?.products || []
 }
 
-function ManufacturerDashboard({ user, onLogout }) {
+function ManufacturerDashboard({
+  user,
+  onLogout,
+  onProfileUpdate,
+  onCancelSubscription,
+  cancellingSubscription = false,
+}) {
   const manufacturerId = user?.id || user?._id || ''
   const [activeView, setActiveView] = useState('dashboard')
   const [products, setProducts] = useState([])
@@ -118,6 +124,16 @@ function ManufacturerDashboard({ user, onLogout }) {
     loadProfile()
     loadProducts()
   }, [loadProfile, loadProducts])
+
+  useEffect(() => {
+    if (!user) return
+
+    setProfile((current) => ({
+      ...current,
+      ...user,
+      companyName: current?.companyName || user?.companyName || user?.name || '',
+    }))
+  }, [user])
 
   const handleCreateProduct = async (payload) => {
     setSubmittingProduct(true)
@@ -237,6 +253,7 @@ function ManufacturerDashboard({ user, onLogout }) {
         companyName: companyName || name,
       }
       setProfile(nextProfile)
+      onProfileUpdate?.(nextProfile)
       showNotification('success', response.data?.message || 'Profile updated successfully')
     } catch (error) {
       showNotification('error', error.response?.data?.message || 'Failed to update profile')
@@ -307,6 +324,7 @@ function ManufacturerDashboard({ user, onLogout }) {
           submitting={submittingProduct}
           onSubmit={handleCreateProduct}
           onCancel={() => setActiveView('products')}
+          userId={manufacturerId}
         />
       )
     }
@@ -321,6 +339,7 @@ function ManufacturerDashboard({ user, onLogout }) {
             setEditingProductId('')
             setActiveView('products')
           }}
+          userId={manufacturerId}
         />
       )
     }
@@ -398,7 +417,13 @@ function ManufacturerDashboard({ user, onLogout }) {
       <Sidebar items={NAV_ITEMS} activeView={activeView} onNavigate={setActiveView} />
 
       <div className="manufacturer-shell-main">
-        <Topbar manufacturerName={profile?.name || user?.name} onLogout={onLogout} />
+        <Topbar
+          manufacturerName={profile?.name || user?.name}
+          isPremium={profile?.isPremium ?? user?.isPremium}
+          onCancelSubscription={onCancelSubscription}
+          cancellingSubscription={cancellingSubscription}
+          onLogout={onLogout}
+        />
         <main className="manufacturer-shell-content">{renderContent()}</main>
       </div>
     </div>

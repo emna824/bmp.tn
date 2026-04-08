@@ -297,6 +297,36 @@
     "mason": "بناء",
     "plumber": "سباك"
   },
+  "premium": {
+    "premiumLabel": "بريميوم",
+    "standardLabel": "عادي",
+    "eyebrow": "وصول بريميوم",
+    "modalTitle": "الترقية إلى بريميوم",
+    "modalSubtitle": "افتح أدوات التخطيط ومتابعة المشاريع بشكل أفضل من خلال ترقية بسيطة.",
+    "monthlyButton": "اشتراك شهري ($1.99)",
+    "yearlyButton": "اشتراك سنوي ($20)",
+    "maybeLater": "لاحقًا",
+    "redirecting": "جارٍ التحويل...",
+    "close": "إغلاق نافذة بريميوم",
+    "featureTooltip": "ميزة بريميوم",
+    "calendarLocked": "الوصول إلى التقويم ميزة بريميوم.",
+    "projectCreationLocked": "إنشاء المشاريع متاح للمستخدمين البريميوم فقط.",
+    "unlockProjectCreation": "قم بالترقية إلى بريميوم لإنشاء مشاريعك الخاصة والحفاظ على أدوات التخطيط في مكان واحد.",
+    "checkoutStartFailed": "فشل بدء عملية الدفع لبريميوم.",
+    "upgradeSuccess": "تم تفعيل اشتراك بريميوم بنجاح.",
+    "checkoutCancelled": "تم إلغاء عملية الدفع لبريميوم.",
+    "confirmationFailed": "تعذر تأكيد اشتراك بريميوم الخاص بك.",
+    "cancelButton": "إلغاء الاشتراك",
+    "cancelling": "جارٍ الإلغاء...",
+    "cancelConfirm": "هل أنت متأكد أنك تريد إلغاء اشتراك بريميوم الآن؟",
+    "cancelSuccess": "تم إلغاء اشتراك بريميوم بنجاح.",
+    "cancelFailed": "تعذر إلغاء اشتراك بريميوم الخاص بك.",
+    "benefits": {
+      "createProjects": "إنشاء مشاريعك الخاصة",
+      "accessCalendar": "الوصول إلى التقويم",
+      "avoidConflicts": "تجنب تعارضات الجدولة"
+    }
+  },
   "calendarUi": {
     "planning": "التخطيط",
     "calendarView": "عرض التقويم",

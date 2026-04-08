@@ -24,6 +24,8 @@ function serializeUser(user, notificationCount = 0) {
         profileImage: user.profileImage || '',
         trade,
         job: user.job || formatTradeLabel(trade),
+        isPremium: Boolean(user.isPremium),
+        subscriptionType: user.subscriptionType || null,
         notificationCount,
     };
 }

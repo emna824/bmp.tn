@@ -1,5 +1,6 @@
 import ProjectCard from '../components/ProjectCard'
 import TaskCard from '../components/TaskCard'
+import { LockIcon } from '../components/Icons'
 import { useTranslation } from 'react-i18next'
 
 function ArtisanDashboard({
@@ -8,6 +9,7 @@ function ArtisanDashboard({
   loading,
   tasks,
   savingTaskId,
+  isPremium,
   onSelectProject,
   onOpenDetails,
   onOpenCalendar,
@@ -28,8 +30,10 @@ function ArtisanDashboard({
           <button
             type="button"
             onClick={onOpenCalendar}
-            className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200/60 transition-all duration-300 hover:scale-[1.02] hover:brightness-105 dark:shadow-orange-950/25"
+            title={!isPremium ? t('premium.featureTooltip') : undefined}
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200/60 transition-all duration-300 hover:scale-[1.02] hover:brightness-105 dark:shadow-orange-950/25"
           >
+            {!isPremium ? <LockIcon className="h-4 w-4" /> : null}
             {t('artisan.openCalendar')}
           </button>
         </div>

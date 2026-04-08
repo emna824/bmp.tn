@@ -53,6 +53,25 @@ const userSchema = new mongoose.Schema(
             trim: true,
             default: '',
         },
+        isPremium: {
+            type: Boolean,
+            default: false,
+        },
+        subscriptionType: {
+            type: String,
+            enum: ['monthly', 'yearly', null],
+            default: null,
+        },
+        stripeCustomerId: {
+            type: String,
+            default: '',
+            trim: true,
+        },
+        stripeSubscriptionId: {
+            type: String,
+            default: '',
+            trim: true,
+        },
         isBanned: {
             type: Boolean,
             default: false,

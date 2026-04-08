@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import api, { withUserHeaders } from '../api'
 import DashboardLayout from './DashboardLayout'
 import CreateProjectForm from './CreateProjectForm'
+import { LockIcon } from './Icons'
 import ReportModal from './ReportModal'
 import ProjectDetails from '../pages/ProjectDetails'
 
@@ -34,9 +35,18 @@ function normalizeMilestone(milestone) {
   }
 }
 
-function ExpertProfile({ user, onLogout }) {
+function ExpertProfile({
+  user,
+  onLogout,
+  onProfileUpdate,
+  isPremium = false,
+  onRequirePremium,
+  onCancelSubscription,
+  cancellingSubscription = false,
+}) {
   const { t } = useTranslation()
   const userId = user?.id || user?._id || ''
+  const isPremiumUser = Boolean(user?.isPremium ?? isPremium)
   const [activeView, setActiveView] = useState('overview')
   const [projects, setProjects] = useState([])
   const [offersByProject, setOffersByProject] = useState({})
@@ -143,12 +153,36 @@ function ExpertProfile({ user, onLogout }) {
   const menuItems = useMemo(
     () => [
       { key: 'overview', label: t('expert.menu.overview'), subtitle: t('expert.menu.overviewSubtitle') },
-      { key: 'create', label: t('expert.menu.create'), subtitle: t('expert.menu.createSubtitle') },
+      {
+        key: 'create',
+        label: `${t('expert.menu.create')}${isPremiumUser ? '' : ' 🔒'}`,
+        subtitle: t('expert.menu.createSubtitle'),
+      },
       { key: 'projects', label: t('expert.menu.projects'), subtitle: t('expert.menu.projectsSubtitle') },
       { key: 'settings', label: t('expert.menu.settings'), subtitle: t('expert.menu.settingsSubtitle') },
     ],
-    [t],
+    [isPremiumUser, t],
   )
+
+  const openCreateView = useCallback(() => {
+    if (isPremiumUser) {
+      setActiveView('create')
+      return
+    }
+
+    onRequirePremium?.()
+    showNotification('error', t('premium.projectCreationLocked'))
+  }, [isPremiumUser, onRequirePremium, showNotification, t])
+
+  const handleNavigate = useCallback((nextView) => {
+    if (nextView === 'create' && !isPremiumUser) {
+      onRequirePremium?.()
+      showNotification('error', t('premium.projectCreationLocked'))
+      return
+    }
+
+    setActiveView(nextView)
+  }, [isPremiumUser, onRequirePremium, showNotification, t])
 
   const selectedMilestones = milestonesByProject[selectedProjectId] || []
 
@@ -249,8 +283,10 @@ function ExpertProfile({ user, onLogout }) {
         user={user}
         menuItems={menuItems}
         activeView={activeView}
-        onNavigate={setActiveView}
+        onNavigate={handleNavigate}
         onLogout={onLogout}
+        onCancelSubscription={onCancelSubscription}
+        cancellingSubscription={cancellingSubscription}
       >
         {activeView === 'overview' && (
           <section className="expert-dash-card">
@@ -260,7 +296,8 @@ function ExpertProfile({ user, onLogout }) {
                 <h2>Launch projects, publish offers, and review artisan applications in one place.</h2>
                 <p className="subtitle">Each new project creates its chantier automatically and opens the required job offers.</p>
                 <div className="hero-actions">
-                  <button type="button" onClick={() => setActiveView('create')}>
+                  <button type="button" onClick={openCreateView} className="inline-flex items-center gap-2">
+                    {!isPremiumUser ? <LockIcon className="icon tiny" /> : null}
                     New project
                   </button>
                   <button type="button" className="secondary-btn" onClick={() => setActiveView('projects')}>
@@ -343,13 +380,41 @@ function ExpertProfile({ user, onLogout }) {
         )}
 
         {activeView === 'create' && (
-          <section className="dashboard-card">
-            <div className="section-header">
-              <h3>{t('expert.menu.create')}</h3>
-              <p className="subtitle">Set the project details, map location, trade, and salary in one clean form.</p>
-            </div>
-            <CreateProjectForm expertId={userId} onCreated={handleProjectCreated} />
-          </section>
+          isPremiumUser ? (
+            <section className="dashboard-card">
+              <div className="section-header">
+                <h3>{t('expert.menu.create')}</h3>
+                <p className="subtitle">Set the project details, map location, trade, and salary in one clean form.</p>
+              </div>
+              <CreateProjectForm expertId={userId} onCreated={handleProjectCreated} />
+            </section>
+          ) : (
+            <section className="dashboard-card">
+              <div className="section-header">
+                <h3>{t('expert.menu.create')}</h3>
+                <p className="subtitle">{t('premium.projectCreationLocked')}</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white/85 p-6 shadow-sm transition-colors duration-300 dark:border-slate-700 dark:bg-slate-900/70">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-xl bg-orange-100 p-2 text-orange-600 dark:bg-orange-500/15 dark:text-orange-300">
+                    <LockIcon className="h-4 w-4" />
+                  </div>
+                  <div className="space-y-3">
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                      {t('premium.unlockProjectCreation')}
+                    </p>
+                    <button
+                      type="button"
+                      className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-orange-200/50 transition-all duration-300 hover:scale-[1.02] hover:brightness-105 dark:shadow-orange-950/25"
+                      onClick={() => onRequirePremium?.()}
+                    >
+                      {t('premium.modalTitle')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )
         )}
 
         {activeView === 'projects' && (

@@ -21,6 +21,7 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const milestoneRoutes = require('./routes/milestoneRoutes');
 const workLogRoutes = require('./routes/workLogRoutes');
 const taskClassifierRoutes = require('./routes/taskClassifierRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -70,6 +71,7 @@ app.use('/api/worklog', workLogRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/task-classifier', taskClassifierRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);

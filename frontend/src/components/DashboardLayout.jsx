@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import LanguageSwitcher from './LanguageSwitcher'
+import SubscriptionStatusBadge from './SubscriptionStatusBadge'
 import ThemeToggle from './ThemeToggle'
 import { BmpLogo, LogoutIcon, SettingsIcon } from './Icons'
 import NotificationBell from './NotificationBell'
@@ -11,6 +12,8 @@ function DashboardLayout({
   activeView,
   onNavigate,
   onLogout,
+  onCancelSubscription,
+  cancellingSubscription = false,
   children,
 }) {
   const { t } = useTranslation()
@@ -87,6 +90,7 @@ function DashboardLayout({
                 <div className="header-user-meta">
                   <strong>{user?.name || t('common.guest')}</strong>
                   <small>{(user?.role || t('dashboardUi.roleFallback')).toUpperCase()}</small>
+                  <SubscriptionStatusBadge isPremium={user?.isPremium} />
                 </div>
                 <span className="header-caret" aria-hidden="true">
                   {isUserMenuOpen ? '▴' : '▾'}
@@ -97,6 +101,20 @@ function DashboardLayout({
                   <SettingsIcon className="icon tiny" />
                   {t('common.settings')}
                 </button>
+                {user?.isPremium ? (
+                  <button
+                    type="button"
+                    onClick={onCancelSubscription}
+                    className="header-menu-item"
+                    role="menuitem"
+                    disabled={cancellingSubscription}
+                  >
+                    <SettingsIcon className="icon tiny" />
+                    {cancellingSubscription
+                      ? t('premium.cancelling', { defaultValue: 'Cancelling...' })
+                      : t('premium.cancelButton', { defaultValue: 'Cancel subscription' })}
+                  </button>
+                ) : null}
                 <button type="button" onClick={handleLogout} className="header-menu-item" role="menuitem">
                   <LogoutIcon className="icon tiny" />
                   {t('logout')}

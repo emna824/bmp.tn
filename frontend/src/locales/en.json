@@ -297,6 +297,36 @@
     "mason": "Mason",
     "plumber": "Plumber"
   },
+  "premium": {
+    "premiumLabel": "Premium",
+    "standardLabel": "Standard",
+    "eyebrow": "Premium access",
+    "modalTitle": "Upgrade to Premium",
+    "modalSubtitle": "Unlock project planning tools and smoother scheduling with a simple premium upgrade.",
+    "monthlyButton": "Subscribe Monthly ($1.99)",
+    "yearlyButton": "Subscribe Yearly ($20)",
+    "maybeLater": "Maybe Later",
+    "redirecting": "Redirecting...",
+    "close": "Close premium modal",
+    "featureTooltip": "Premium feature",
+    "calendarLocked": "Calendar access is a premium feature.",
+    "projectCreationLocked": "Project creation is available for premium users.",
+    "unlockProjectCreation": "Upgrade to premium to create your own projects and keep your planning tools in one place.",
+    "checkoutStartFailed": "Failed to start premium checkout.",
+    "upgradeSuccess": "Premium subscription activated successfully.",
+    "checkoutCancelled": "Premium checkout was cancelled.",
+    "confirmationFailed": "We could not confirm your premium subscription.",
+    "cancelButton": "Cancel subscription",
+    "cancelling": "Cancelling...",
+    "cancelConfirm": "Are you sure you want to cancel your premium subscription now?",
+    "cancelSuccess": "Premium subscription cancelled successfully.",
+    "cancelFailed": "We could not cancel your premium subscription.",
+    "benefits": {
+      "createProjects": "Create your own projects",
+      "accessCalendar": "Access calendar",
+      "avoidConflicts": "Avoid scheduling conflicts"
+    }
+  },
   "calendarUi": {
     "planning": "Planning",
     "calendarView": "Calendar View",

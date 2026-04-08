@@ -62,7 +62,15 @@ function normalizeQuantity(value, max = 99) {
   return Number.isInteger(parsed) && parsed > 0 ? Math.min(parsed, limit) : 1
 }
 
-function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
+function ArtisanProfile({
+  user,
+  onLogout,
+  onProfileUpdate,
+  isPremium = false,
+  onRequirePremium,
+  onCancelSubscription,
+  cancellingSubscription = false,
+}) {
   const { t } = useTranslation()
   const userId = user?.id || user?._id || ''
   const [activeView, setActiveView] = useState('overview')
@@ -102,6 +110,7 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
   const [previewProduct, setPreviewProduct] = useState(null)
   const [marketplaceQuantities, setMarketplaceQuantities] = useState({})
   const [reportTarget, setReportTarget] = useState(null)
+  const isPremiumUser = Boolean(profile?.isPremium ?? user?.isPremium ?? isPremium)
 
   const getMarketplaceQuantity = useCallback(
     (productId, stock) => normalizeQuantity(marketplaceQuantities[productId], stock),
@@ -125,6 +134,16 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
     const timer = setTimeout(() => setNotification({ show: false, type: '', text: '' }), 3000)
     return () => clearTimeout(timer)
   }, [notification])
+
+  useEffect(() => {
+    if (!user) return
+
+    setProfile((current) => ({
+      ...(current || {}),
+      ...user,
+      profileImage: typeof user.profileImage === 'string' ? user.profileImage : current?.profileImage || '',
+    }))
+  }, [user])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -300,6 +319,12 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
     loadMarketplace()
   }, [loadMarketplace])
 
+  useEffect(() => {
+    if (projectsDisplayMode === 'calendar' && !isPremiumUser) {
+      setProjectsDisplayMode('dashboard')
+    }
+  }, [isPremiumUser, projectsDisplayMode])
+
   const filteredOffers = useMemo(() => {
     const term = offerSearch.trim().toLowerCase()
     return offers.filter((offer) => {
@@ -378,6 +403,11 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
     if (profile?.job) jobs.add(profile.job)
     return Array.from(jobs)
   }, [offers, profile?.job])
+
+  const handlePremiumCalendarAccess = useCallback(() => {
+    onRequirePremium?.()
+    showNotification('error', t('premium.calendarLocked'))
+  }, [onRequirePremium, showNotification, t])
 
   const menuItems = useMemo(
     () => [
@@ -731,6 +761,8 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
         activeView={activeView}
         onNavigate={setActiveView}
         onLogout={onLogout}
+        onCancelSubscription={onCancelSubscription}
+        cancellingSubscription={cancellingSubscription}
       >
         {activeView === 'overview' && (
           <div className="artisan-dashboard">
@@ -979,8 +1011,16 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                 <button
                   type="button"
                   className={`view-toggle-btn ${projectsDisplayMode === 'calendar' ? 'active' : ''}`}
-                  onClick={() => setProjectsDisplayMode('calendar')}
+                  onClick={() => {
+                    if (!isPremiumUser) {
+                      handlePremiumCalendarAccess()
+                      return
+                    }
+                    setProjectsDisplayMode('calendar')
+                  }}
+                  title={!isPremiumUser ? t('premium.featureTooltip') : undefined}
                 >
+                  {!isPremiumUser ? <LockIcon className="icon tiny" /> : null}
                   {t('artisan.workspaceCalendar')}
                 </button>
               </div>
@@ -1016,9 +1056,16 @@ function ArtisanProfile({ user, onLogout, onProfileUpdate }) {
                 loading={loadingAssignedProjects}
                 tasks={dailyTasks}
                 savingTaskId={savingTaskId}
+                isPremium={isPremiumUser}
                 onSelectProject={setSelectedProjectId}
                 onOpenDetails={() => setProjectsDisplayMode('details')}
-                onOpenCalendar={() => setProjectsDisplayMode('calendar')}
+                onOpenCalendar={() => {
+                  if (!isPremiumUser) {
+                    handlePremiumCalendarAccess()
+                    return
+                  }
+                  setProjectsDisplayMode('calendar')
+                }}
                 onTaskChange={handleTaskDraftChange}
                 onSaveTask={handleSaveTask}
               />
