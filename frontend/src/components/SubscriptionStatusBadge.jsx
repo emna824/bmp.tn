@@ -1,7 +1,11 @@
 import { useTranslation } from 'react-i18next'
 
-function SubscriptionStatusBadge({ isPremium = false, className = '' }) {
+function SubscriptionStatusBadge({ role = '', isPremium = false, className = '' }) {
   const { t } = useTranslation()
+
+  if (role !== 'artisan') {
+    return null
+  }
 
   return (
     <span
@@ -12,8 +16,8 @@ function SubscriptionStatusBadge({ isPremium = false, className = '' }) {
       } ${className}`.trim()}
     >
       {isPremium
-        ? t('premium.premiumLabel', { defaultValue: 'Premium' })
-        : t('premium.standardLabel', { defaultValue: 'Standard' })}
+        ? t('premium.premiumArtisanLabel', { defaultValue: 'Premium Artisan' })
+        : t('premium.standardArtisanLabel', { defaultValue: 'Standard Artisan' })}
     </span>
   )
 }

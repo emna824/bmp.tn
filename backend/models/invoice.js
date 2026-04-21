@@ -23,7 +23,7 @@ const invoiceSchema = new mongoose.Schema(
     expertId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      default: null,
     },
     manufacturerId: {
       type: mongoose.Schema.Types.ObjectId,

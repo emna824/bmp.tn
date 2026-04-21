@@ -28,7 +28,7 @@ function normalizeUser(user) {
 }
 
 function shouldPromptForPremium(user) {
-  return Boolean(user && !user.isPremium && user.role !== 'admin')
+  return Boolean(user && user.role === 'artisan' && !user.isPremium)
 }
 
 function persistUser(nextUser) {
@@ -302,7 +302,7 @@ function App() {
       {content}
 
       <PremiumModal
-        isOpen={Boolean(showPremiumModal && user && !user.isPremium)}
+        isOpen={Boolean(showPremiumModal && user?.role === 'artisan' && !user.isPremium)}
         user={user}
         onClose={handleClosePremiumModal}
       />

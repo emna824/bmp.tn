@@ -312,6 +312,10 @@ router.post('/premium-session', loadRequestUser, async (req, res) => {
             return res.status(500).json({ message: 'Stripe is not configured on the backend' });
         }
 
+        if (req.user?.role !== 'artisan') {
+            return res.status(403).json({ message: 'Only artisans can subscribe to premium' });
+        }
+
         const subscriptionType = String(req.body?.subscriptionType || '').trim().toLowerCase();
         const selectedPlan = PREMIUM_PLANS[subscriptionType];
 
@@ -387,6 +391,10 @@ router.post('/confirm-premium', loadRequestUser, async (req, res) => {
             return res.status(500).json({ message: 'Stripe is not configured on the backend' });
         }
 
+        if (req.user?.role !== 'artisan') {
+            return res.status(403).json({ message: 'Only artisans can activate premium subscriptions' });
+        }
+
         const sessionId = String(req.body?.sessionId || '').trim();
         if (!sessionId) {
             return res.status(400).json({ message: 'sessionId is required' });
@@ -450,6 +458,10 @@ router.post('/cancel-premium', loadRequestUser, async (req, res) => {
     try {
         if (!process.env.STRIPE_SECRET_KEY) {
             return res.status(500).json({ message: 'Stripe is not configured on the backend' });
+        }
+
+        if (req.user?.role !== 'artisan') {
+            return res.status(403).json({ message: 'Only artisans can cancel premium subscriptions' });
         }
 
         const premiumUser = await User.findById(req.user._id);

@@ -3,7 +3,7 @@ const router = express.Router();
 const projectController = require('../controllers/projectController');
 const loadRequestUser = require('../middleware/loadRequestUser');
 
-router.post('/', projectController.createProject);
+router.post('/', loadRequestUser, projectController.createProject);
 router.get('/', projectController.listProjects);
 router.get('/artisan', loadRequestUser, projectController.listArtisanProjects);
 router.post('/start/:id', loadRequestUser, projectController.startProject);

@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api, { withUserHeaders } from '../api'
 import MilestoneCard from '../components/MilestoneCard'
+import ReportModal from '../components/ReportModal'
 import StatusBadge, { formatDisplayDate } from '../components/StatusBadge'
 import TaskCard from '../components/TaskCard'
+import { downloadFileReference } from '../utils/fileHelpers'
 
 const todayKey = () => new Date().toISOString().slice(0, 10)
 const getId = (value) => value?._id || value?.id || value || ''
@@ -13,7 +15,7 @@ const formatCurrency = (value) => {
 
   try {
     return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'TND' }).format(amount)
-  } catch (_error) {
+  } catch {
     return `${amount.toFixed(2)} TND`
   }
 }
@@ -23,6 +25,8 @@ const normalizeProduct = (product = {}) => ({
   id: getId(product),
   stock: Number(product?.stock ?? 0),
   price: Number(product?.price ?? 0),
+  document: product?.document || product?.documentation || '',
+  documentName: product?.documentName || '',
   manufacturer: product?.manufacturer || (typeof product?.manufacturerId === 'object' ? product.manufacturerId : null),
 })
 
@@ -87,12 +91,20 @@ function ProjectDetails(props) {
   const [loadingInvoices, setLoadingInvoices] = useState(false)
   const [quoteProduct, setQuoteProduct] = useState(null)
   const [quoteQuantity, setQuoteQuantity] = useState(1)
+  const [downloadingProductId, setDownloadingProductId] = useState('')
+  const [reportTarget, setReportTarget] = useState(null)
   const [submittingQuote, setSubmittingQuote] = useState(false)
   const [reviewingQuoteId, setReviewingQuoteId] = useState('')
   const [generatingInvoiceId, setGeneratingInvoiceId] = useState('')
   const [feedback, setFeedback] = useState({ type: '', text: '' })
   const [invoiceFilters, setInvoiceFilters] = useState({ dateFrom: '', dateTo: '', status: '', sort: 'newest' })
   const [milestoneForm, setMilestoneForm] = useState({ title: '', description: '', artisanId: '', startDate: '', endDate: '' })
+  const projectType = String(project?.type || 'expert')
+  const projectOwnerId = getId(project?.ownerId) || getId(project?.expertId)
+  const isSoloProject = projectType === 'solo'
+  const isSoloOwner = role === 'artisan' && String(projectOwnerId) === String(userId || '')
+  const canManageProject = role === 'expert' || isSoloOwner
+  const canCreateMilestones = role === 'expert' || isSoloOwner
   const marketplaceLocked = ['finished', 'closed'].includes(String(project?.status || ''))
 
   useEffect(() => {
@@ -210,8 +222,37 @@ function ProjectDetails(props) {
 
   const submitMilestone = async (event) => {
     event.preventDefault()
-    await onCreateMilestone?.(milestoneForm)
+    await onCreateMilestone?.({
+      ...milestoneForm,
+      artisanId: milestoneForm.artisanId || userId,
+    })
     setMilestoneForm({ title: '', description: '', artisanId: '', startDate: '', endDate: '' })
+  }
+
+  const handleDownloadProductDocument = async (product) => {
+    if (!product?.id) return
+
+    setDownloadingProductId(product.id)
+    try {
+      if (!product.document) {
+        throw new Error('No product document is available for download yet')
+      }
+
+      downloadFileReference(product.document, product.documentName || `${product.name || 'product'}.pdf`)
+    } catch (error) {
+      setFeedback({ type: 'error', text: error.message || 'Failed to download product document' })
+    } finally {
+      setDownloadingProductId('')
+    }
+  }
+
+  const openReportModal = (product) => {
+    if (!product?.id) return
+    setReportTarget({
+      targetType: 'product',
+      targetId: product.id,
+      targetLabel: product.name || product.documentName || 'this product',
+    })
   }
 
   const requestQuote = async () => {
@@ -289,11 +330,13 @@ function ProjectDetails(props) {
             <p className="mt-3 max-w-3xl text-sm text-slate-500 dark:text-slate-300">{project.description || t('project.noDescription')}</p>
           </div>
 
-          {role === 'expert' ? (
+          {canManageProject ? (
             <div className="flex flex-wrap gap-2">
-              <button type="button" disabled={projectActionLoading || project.status !== 'recruiting'} onClick={onStartProject} className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-orange-200/50 transition-all duration-300 hover:scale-[1.02] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50 dark:shadow-orange-950/25">
-                {t('project.startProject')}
-              </button>
+              {role === 'expert' ? (
+                <button type="button" disabled={projectActionLoading || project.status !== 'recruiting'} onClick={onStartProject} className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-orange-200/50 transition-all duration-300 hover:scale-[1.02] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50 dark:shadow-orange-950/25">
+                  {t('project.startProject')}
+                </button>
+              ) : null}
               <button type="button" disabled={projectActionLoading || project.status === 'closed'} onClick={onCloseProject} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition-all duration-300 hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800">
                 {t('project.closeProject')}
               </button>
@@ -334,15 +377,21 @@ function ProjectDetails(props) {
 
       {activeTab === 'overview' ? (
         <>
-          {role === 'expert' ? (
+          {canCreateMilestones ? (
             <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
-              <div className="mb-4"><h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('project.createMilestone')}</h3><p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{t('project.createMilestoneDescription')}</p></div>
+              <div className="mb-4"><h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('project.createMilestone')}</h3><p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{isSoloProject ? t('project.createSoloMilestoneDescription', { defaultValue: 'Create personal tasks and milestones for your solo project.' }) : t('project.createMilestoneDescription')}</p></div>
               <form className="grid gap-4 md:grid-cols-2" onSubmit={submitMilestone}>
                 <input type="text" value={milestoneForm.title} onChange={(event) => setMilestoneForm((current) => ({ ...current, title: event.target.value }))} placeholder={t('project.milestoneTitle')} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition-all duration-300 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-orange-400 dark:focus:ring-orange-500/20" />
-                <select value={milestoneForm.artisanId} onChange={(event) => setMilestoneForm((current) => ({ ...current, artisanId: event.target.value }))} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition-all duration-300 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-orange-400 dark:focus:ring-orange-500/20">
-                  <option value="">{t('project.selectArtisan')}</option>
-                  {assignedArtisans.map((artisan) => <option key={getId(artisan)} value={getId(artisan)}>{artisan.name}</option>)}
-                </select>
+                {isSoloProject ? (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100">
+                    {t('project.assignedToYou', { defaultValue: 'Assigned to you' })}
+                  </div>
+                ) : (
+                  <select value={milestoneForm.artisanId} onChange={(event) => setMilestoneForm((current) => ({ ...current, artisanId: event.target.value }))} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition-all duration-300 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-orange-400 dark:focus:ring-orange-500/20">
+                    <option value="">{t('project.selectArtisan')}</option>
+                    {assignedArtisans.map((artisan) => <option key={getId(artisan)} value={getId(artisan)}>{artisan.name}</option>)}
+                  </select>
+                )}
                 <input type="date" value={milestoneForm.startDate} onChange={(event) => setMilestoneForm((current) => ({ ...current, startDate: event.target.value }))} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition-all duration-300 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-orange-400 dark:focus:ring-orange-500/20" />
                 <input type="date" value={milestoneForm.endDate} onChange={(event) => setMilestoneForm((current) => ({ ...current, endDate: event.target.value }))} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition-all duration-300 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-orange-400 dark:focus:ring-orange-500/20" />
                 <textarea rows={3} value={milestoneForm.description} onChange={(event) => setMilestoneForm((current) => ({ ...current, description: event.target.value }))} placeholder={t('project.shortDescription')} className="md:col-span-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition-all duration-300 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-orange-400 dark:focus:ring-orange-500/20" />
@@ -400,7 +449,15 @@ function ProjectDetails(props) {
                     <div className="flex items-start justify-between gap-3"><div><h4 className="text-base font-semibold text-slate-900 dark:text-white">{product.name}</h4><p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{product?.manufacturer?.name || 'Manufacturer'}</p></div><span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700 dark:bg-orange-500/10 dark:text-orange-300">{formatCurrency(product.price)}</span></div>
                     <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{product.description || t('project.noDescription')}</p>
                     <div className="mt-4 flex flex-wrap gap-2 text-xs"><span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600 dark:bg-slate-900/70 dark:text-slate-300">{product.documentName || 'PDF'}</span><span className={`rounded-full px-3 py-1 font-medium ${outOfStock ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'}`}>{outOfStock ? 'Out of stock' : `Stock: ${product.stock}`}</span></div>
-                    {role === 'artisan' ? <button type="button" disabled={submittingQuote || outOfStock || marketplaceLocked} onClick={() => { setQuoteProduct(product); setQuoteQuantity(1) }} className="mt-4 w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-orange-200/50 transition-all duration-300 hover:scale-[1.02] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50 dark:shadow-orange-950/25">{marketplaceLocked ? 'Unavailable for this project' : 'Request Quote'}</button> : <div className="mt-4 rounded-xl border border-dashed border-slate-200 px-4 py-3 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-300">Project team can request quotes from this marketplace.</div>}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button type="button" disabled={downloadingProductId === product.id || !product.document} onClick={() => handleDownloadProductDocument(product)} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition-all duration-300 hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800">
+                        {downloadingProductId === product.id ? 'Downloading...' : 'Download PDF'}
+                      </button>
+                      <button type="button" disabled={!userId} onClick={() => openReportModal(product)} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition-all duration-300 hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800">
+                        Report
+                      </button>
+                    </div>
+                    {role === 'artisan' ? <button type="button" disabled={submittingQuote || outOfStock || marketplaceLocked} onClick={() => { setQuoteProduct(product); setQuoteQuantity(1) }} className="mt-3 w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-orange-200/50 transition-all duration-300 hover:scale-[1.02] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50 dark:shadow-orange-950/25">{marketplaceLocked ? 'Unavailable for this project' : 'Request Quote'}</button> : <div className="mt-3 rounded-xl border border-dashed border-slate-200 px-4 py-3 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-300">Project team can request quotes from this marketplace.</div>}
                   </article>
                 )
               })}
@@ -411,7 +468,7 @@ function ProjectDetails(props) {
 
       {activeTab === 'quotes' ? (
         <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
-          <div className="mb-4"><h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('quotes')}</h3><p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{role === 'expert' ? 'Review and validate quote requests for this project.' : 'Track your requested quotes and confirm accepted purchases.'}</p></div>
+          <div className="mb-4"><h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('quotes')}</h3><p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{role === 'expert' ? 'Review and validate quote requests for this project.' : isSoloProject ? 'Request materials, review accepted quotes, and confirm purchases inside your solo project.' : 'Track your requested quotes and confirm accepted purchases.'}</p></div>
           {loadingQuotes ? (
             <p className="text-sm text-slate-500 dark:text-slate-300">{t('common.loading')}</p>
           ) : quotes.length ? (
@@ -432,7 +489,7 @@ function ProjectDetails(props) {
                       <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/70"><p className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Artisan</p><p className="mt-1 text-sm font-medium text-slate-900 dark:text-white">{quote?.artisanId?.name || 'Assigned artisan'}</p></div>
                     </div>
                     <div className="mt-4 flex flex-wrap gap-2">
-                      {role === 'expert' && quote.status === 'pending' ? (
+                      {(role === 'expert' || isSoloOwner) && quote.status === 'pending' ? (
                         <>
                           <button type="button" disabled={reviewingQuoteId === quote.id} onClick={() => reviewQuote(quote.id, 'accepted')} className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-orange-200/50 transition-all duration-300 hover:scale-[1.02] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50 dark:shadow-orange-950/25">{reviewingQuoteId === quote.id ? t('common.saving') : 'Accept'}</button>
                           <button type="button" disabled={reviewingQuoteId === quote.id} onClick={() => reviewQuote(quote.id, 'rejected')} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition-all duration-300 hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800">Reject</button>
@@ -465,7 +522,7 @@ function ProjectDetails(props) {
               {filteredInvoices.map((invoice) => (
                 <article key={invoice.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-md dark:border-slate-700 dark:bg-slate-800/80 dark:shadow-slate-950/20">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div><div className="flex flex-wrap items-center gap-3"><h4 className="text-base font-semibold text-slate-900 dark:text-white">{invoice?.productId?.name || 'Invoice'}</h4><StatusBadge status={invoice.status} /></div><p className="mt-2 text-sm text-slate-500 dark:text-slate-300">{`Invoice #${String(invoice.id).slice(-6).toUpperCase()}`}</p></div>
+                    <div><div className="flex flex-wrap items-center gap-3"><h4 className="text-base font-semibold text-slate-900 dark:text-white">{invoice?.productId?.name || 'Invoice'}</h4><StatusBadge status={invoice.status} /></div><p className="mt-2 text-sm text-slate-500 dark:text-slate-300">{`Invoice generated ${formatDisplayDate(invoice.issuedAt)}`}</p></div>
                     <div className="rounded-xl bg-slate-50 px-4 py-3 text-right dark:bg-slate-900/70"><p className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Total price</p><p className="mt-1 text-base font-semibold text-slate-900 dark:text-white">{formatCurrency(invoice.totalPrice)}</p></div>
                   </div>
                   <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
@@ -500,6 +557,16 @@ function ProjectDetails(props) {
           </div>
         </div>
       ) : null}
+
+      <ReportModal
+        isOpen={Boolean(reportTarget)}
+        currentUserId={userId}
+        targetType={reportTarget?.targetType || 'product'}
+        targetId={reportTarget?.targetId || ''}
+        targetLabel={reportTarget?.targetLabel || ''}
+        onClose={() => setReportTarget(null)}
+        onSuccess={(message) => setFeedback({ type: 'success', text: message || 'Report submitted successfully' })}
+      />
     </section>
   )
 }

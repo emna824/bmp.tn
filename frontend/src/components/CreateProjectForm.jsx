@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import api from '../api'
+import api, { withUserHeaders } from '../api'
 import { TRADES } from '../constants/trades'
 import { loadGoogleMapsPlaces } from '../utils/googleMaps'
 
@@ -16,8 +16,21 @@ const INITIAL_FORM = {
   workersByTrade: Object.fromEntries(TRADES.map((trade) => [trade, ''])),
 }
 
-function CreateProjectForm({ expertId, onCreated }) {
+function normalizeTrade(value) {
+  return String(value || '').trim().toLowerCase()
+}
+
+function CreateProjectForm({
+  userId,
+  role = 'expert',
+  defaultTrade = '',
+  isPremium = true,
+  onRequirePremium,
+  onCreated,
+}) {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+  const isSoloProject = role === 'artisan'
+  const normalizedDefaultTrade = normalizeTrade(defaultTrade)
   const addressInputRef = useRef(null)
   const autocompleteRef = useRef(null)
   const selectedPlaceRef = useRef(null)
@@ -38,15 +51,18 @@ function CreateProjectForm({ expertId, onCreated }) {
     if (Number(form.estimatedBudget) <= 0) nextErrors.estimatedBudget = 'Budget must be greater than 0'
     if (!form.startDate) nextErrors.startDate = 'Start date is required'
     if (Number(form.dailySalary) <= 0) nextErrors.dailySalary = 'Daily salary must be greater than 0'
-    if (!Object.values(form.workersByTrade).some((value) => Number(value) > 0)) {
+    if (!isSoloProject && !Object.values(form.workersByTrade).some((value) => Number(value) > 0)) {
       nextErrors.teamRequirements = 'Choose at least one trade and worker count'
+    }
+    if (isSoloProject && !normalizedDefaultTrade) {
+      nextErrors.trade = 'Your artisan trade must be set before creating a solo project'
     }
     if (form.endDate && form.startDate && new Date(form.endDate) < new Date(form.startDate)) {
       nextErrors.endDate = 'End date must be after start date'
     }
 
     return nextErrors
-  }, [form])
+  }, [form, isSoloProject, normalizedDefaultTrade])
 
   const isValid = Object.keys(validate).length === 0
 
@@ -189,26 +205,44 @@ function CreateProjectForm({ expertId, onCreated }) {
       return
     }
 
+    if (!userId) {
+      setMessage({ type: 'error', text: 'Authenticated user is required to create a project.' })
+      return
+    }
+
+    if (isSoloProject && !isPremium) {
+      onRequirePremium?.()
+      setMessage({ type: 'error', text: 'Upgrade to Premium to create your own solo projects.' })
+      return
+    }
+
     setSubmitting(true)
     try {
-      const response = await api.post('/projects', {
-        projectName: form.projectName.trim(),
-        location: {
-          address: form.address.trim(),
-          latitude: Number(form.latitude),
-          longitude: Number(form.longitude),
+      const response = await api.post(
+        '/projects',
+        {
+          projectName: form.projectName.trim(),
+          location: {
+            address: form.address.trim(),
+            latitude: Number(form.latitude),
+            longitude: Number(form.longitude),
+          },
+          estimatedBudget: Number(form.estimatedBudget),
+          category: form.category,
+          startDate: form.startDate,
+          endDate: form.endDate || undefined,
+          teamRequirements: isSoloProject
+            ? []
+            : TRADES.map((trade) => ({
+                job: trade,
+                required: Number(form.workersByTrade[trade] || 0),
+              })).filter((requirement) => requirement.required > 0),
+          job: isSoloProject ? normalizedDefaultTrade : undefined,
+          dailySalary: Number(form.dailySalary),
+          type: isSoloProject ? 'solo' : 'expert',
         },
-        estimatedBudget: Number(form.estimatedBudget),
-        category: form.category,
-        startDate: form.startDate,
-        endDate: form.endDate || undefined,
-        teamRequirements: TRADES.map((trade) => ({
-          job: trade,
-          required: Number(form.workersByTrade[trade] || 0),
-        })).filter((requirement) => requirement.required > 0),
-        dailySalary: Number(form.dailySalary),
-        expertId,
-      })
+        withUserHeaders(userId),
+      )
 
       setMessage({ type: 'success', text: response.data?.message || 'Project created successfully' })
       setForm(INITIAL_FORM)
@@ -232,7 +266,7 @@ function CreateProjectForm({ expertId, onCreated }) {
           <input
             value={form.projectName}
             onChange={(event) => handleChange('projectName', event.target.value)}
-            placeholder="Residential block A"
+            placeholder={isSoloProject ? 'My freelance renovation' : 'Residential block A'}
           />
           {errors.projectName ? <small>{errors.projectName}</small> : null}
         </label>
@@ -331,26 +365,39 @@ function CreateProjectForm({ expertId, onCreated }) {
           {errors.dailySalary ? <small>{errors.dailySalary}</small> : null}
         </label>
 
-        <div className="form-grid-span-two">
-          <label>
-            Worker requirements by trade
-            <div className="trade-worker-grid">
-              {TRADES.map((trade) => (
-                <div key={trade} className="trade-worker-row">
-                  <span>{trade}</span>
-                  <input
-                    type="number"
-                    min="0"
-                    value={form.workersByTrade[trade]}
-                    onChange={(event) => handleTradeCountChange(trade, event.target.value)}
-                    placeholder="0"
-                  />
-                </div>
-              ))}
-            </div>
-          </label>
-          {errors.teamRequirements ? <small>{errors.teamRequirements}</small> : null}
-        </div>
+        {isSoloProject ? (
+          <div className="form-grid-span-two rounded-2xl border border-orange-200 bg-orange-50/70 p-4 text-sm text-orange-800">
+            <strong>Solo project mode</strong>
+            <p className="mt-2">
+              This project will be created under your artisan account and managed without an expert.
+            </p>
+            <p className="mt-2">
+              Main trade: <strong>{normalizedDefaultTrade || 'Not set yet'}</strong>
+            </p>
+            {errors.trade ? <small className="mt-2 block">{errors.trade}</small> : null}
+          </div>
+        ) : (
+          <div className="form-grid-span-two">
+            <label>
+              Worker requirements by trade
+              <div className="trade-worker-grid">
+                {TRADES.map((trade) => (
+                  <div key={trade} className="trade-worker-row">
+                    <span>{trade}</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={form.workersByTrade[trade]}
+                      onChange={(event) => handleTradeCountChange(trade, event.target.value)}
+                      placeholder="0"
+                    />
+                  </div>
+                ))}
+              </div>
+            </label>
+            {errors.teamRequirements ? <small>{errors.teamRequirements}</small> : null}
+          </div>
+        )}
       </div>
 
       <p className="subtitle small map-helper">
@@ -364,7 +411,7 @@ function CreateProjectForm({ expertId, onCreated }) {
 
       <div className="inline-actions">
         <button type="submit" disabled={!isValid || submitting}>
-          {submitting ? 'Creating...' : 'Create project'}
+          {submitting ? 'Creating...' : isSoloProject ? 'Create my solo project' : 'Create project'}
         </button>
       </div>
     </form>

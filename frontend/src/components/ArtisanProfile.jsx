@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api, { withUserHeaders } from '../api'
+import CreateProjectForm from './CreateProjectForm'
 import { LockIcon, SettingsIcon, UserIcon } from './Icons'
 import DashboardLayout from './DashboardLayout'
 import ProductCard from './ProductCard'
@@ -26,8 +27,11 @@ function normalizeAssignedProject(project = {}) {
     category: project.category || '',
     dailySalary: Number(project.dailySalary || 0),
     totalSpent: Number(project.totalSpent || 0),
+    type: project.type || 'expert',
+    ownerId: project.ownerId || project.expertId || '',
     location: project.location || { address: '' },
     teamRequirements: Array.isArray(project.teamRequirements) ? project.teamRequirements : [],
+    assignedArtisans: Array.isArray(project.assignedArtisans) ? project.assignedArtisans : [],
   }
 }
 
@@ -359,6 +363,12 @@ function ArtisanProfile({
     }
   }, [isPremiumUser, projectsDisplayMode])
 
+  useEffect(() => {
+    if (projectsDisplayMode === 'create' && !isPremiumUser) {
+      setProjectsDisplayMode('dashboard')
+    }
+  }, [isPremiumUser, projectsDisplayMode])
+
   const filteredOffers = useMemo(() => {
     const term = offerSearch.trim().toLowerCase()
     return offers.filter((offer) => {
@@ -442,6 +452,66 @@ function ArtisanProfile({
     onRequirePremium?.()
     showNotification('error', t('premium.calendarLocked'))
   }, [onRequirePremium, showNotification, t])
+
+  const handleOpenSoloProjectCreator = useCallback(() => {
+    if (!isPremiumUser) {
+      onRequirePremium?.()
+      showNotification('error', t('premium.projectCreationLocked'))
+      return
+    }
+
+    setActiveView('projects')
+    setProjectsDisplayMode('create')
+  }, [isPremiumUser, onRequirePremium, showNotification, t])
+
+  const handleSoloProjectCreated = useCallback(async (payload) => {
+    const createdProject = normalizeAssignedProject(payload?.project || {})
+    setAssignedProjects((current) => sortAssignedProjects([createdProject, ...current.filter((project) => project.id !== createdProject.id)]))
+    setSelectedProjectId(createdProject.id)
+    setProjectsDisplayMode('details')
+    setProjectMilestones((current) => ({
+      ...current,
+      [createdProject.id]: [],
+    }))
+    await loadAssignedProjects()
+    showNotification('success', payload?.message || 'Solo project created successfully')
+  }, [loadAssignedProjects, showNotification])
+
+  const handleCreateSoloMilestone = useCallback(async (payload) => {
+    if (!selectedProjectId) return
+
+    try {
+      await api.post(
+        '/milestones',
+        {
+          projectId: selectedProjectId,
+          artisanId: userId,
+          title: payload.title,
+          description: payload.description,
+          startDate: payload.startDate,
+          endDate: payload.endDate,
+        },
+        withUserHeaders(userId),
+      )
+      await loadProjectMilestones(selectedProjectId)
+      showNotification('success', 'Task created successfully')
+    } catch (error) {
+      showNotification('error', error.response?.data?.message || 'Failed to create task')
+    }
+  }, [loadProjectMilestones, selectedProjectId, showNotification, userId])
+
+  const handleSoloProjectStatusAction = useCallback(async (status) => {
+    if (!selectedProjectId) return
+
+    try {
+      await api.put(`/projects/status/${selectedProjectId}`, { status }, withUserHeaders(userId))
+      await loadAssignedProjects()
+      await loadProjectMilestones(selectedProjectId)
+      showNotification('success', `Project ${status} successfully`)
+    } catch (error) {
+      showNotification('error', error.response?.data?.message || `Failed to ${status} project`)
+    }
+  }, [loadAssignedProjects, loadProjectMilestones, selectedProjectId, showNotification, userId])
 
   const menuItems = useMemo(
     () => [
@@ -1010,20 +1080,31 @@ function ArtisanProfile({
                   <h3>{t('artisan.workspaceTitle')}</h3>
                   <p className="subtitle">{t('artisan.workspaceSubtitle')}</p>
                 </div>
-                <button
-                  type="button"
-                  className="secondary-btn"
-                  onClick={() => {
-                    loadAssignedProjects()
-                    if (selectedProjectId) {
-                      loadProjectMilestones(selectedProjectId)
-                      loadArtisanWorkLogs(selectedProjectId)
-                    }
-                  }}
-                  disabled={loadingAssignedProjects || loadingMilestones || loadingWorkLogs}
-                >
-                  {loadingAssignedProjects || loadingMilestones || loadingWorkLogs ? t('common.loading') : t('common.refresh')}
-                </button>
+                <div className="inline-actions">
+                  <button
+                    type="button"
+                    className="secondary-btn"
+                    onClick={handleOpenSoloProjectCreator}
+                    title={!isPremiumUser ? t('premium.featureTooltip') : undefined}
+                  >
+                    {!isPremiumUser ? <LockIcon className="icon tiny" /> : null}
+                    {t('artisan.createMyProject', { defaultValue: 'Create My Project' })}
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-btn"
+                    onClick={() => {
+                      loadAssignedProjects()
+                      if (selectedProjectId) {
+                        loadProjectMilestones(selectedProjectId)
+                        loadArtisanWorkLogs(selectedProjectId)
+                      }
+                    }}
+                    disabled={loadingAssignedProjects || loadingMilestones || loadingWorkLogs}
+                  >
+                    {loadingAssignedProjects || loadingMilestones || loadingWorkLogs ? t('common.loading') : t('common.refresh')}
+                  </button>
+                </div>
               </div>
 
               <div className="view-toggle-group" role="tablist" aria-label="Assigned projects workspace">
@@ -1043,6 +1124,15 @@ function ArtisanProfile({
                 </button>
                 <button
                   type="button"
+                  className={`view-toggle-btn ${projectsDisplayMode === 'create' ? 'active' : ''}`}
+                  onClick={handleOpenSoloProjectCreator}
+                  title={!isPremiumUser ? t('premium.featureTooltip') : undefined}
+                >
+                  {!isPremiumUser ? <LockIcon className="icon tiny" /> : null}
+                  {t('artisan.createTab', { defaultValue: 'Create' })}
+                </button>
+                <button
+                  type="button"
                   className={`view-toggle-btn ${projectsDisplayMode === 'calendar' ? 'active' : ''}`}
                   onClick={() => {
                     if (!isPremiumUser) {
@@ -1058,6 +1148,29 @@ function ArtisanProfile({
                 </button>
               </div>
             </div>
+
+            {projectsDisplayMode === 'create' ? (
+              <section className="dashboard-card">
+                <div className="section-header">
+                  <div>
+                    <h3>{t('artisan.createMyProject', { defaultValue: 'Create My Project' })}</h3>
+                    <p className="subtitle">
+                      {t('artisan.createMyProjectSubtitle', {
+                        defaultValue: 'Launch a solo project under your artisan account and manage it end to end.',
+                      })}
+                    </p>
+                  </div>
+                </div>
+                <CreateProjectForm
+                  userId={userId}
+                  role="artisan"
+                  defaultTrade={profile?.trade || profile?.job || user?.trade || user?.job || ''}
+                  isPremium={isPremiumUser}
+                  onRequirePremium={onRequirePremium}
+                  onCreated={handleSoloProjectCreated}
+                />
+              </section>
+            ) : null}
 
             {projectsDisplayMode === 'calendar' ? (
               <CalendarPage
@@ -1077,9 +1190,13 @@ function ArtisanProfile({
                 workLogs={artisanWorkLogs}
                 loading={loadingMilestones || loadingWorkLogs}
                 savingTaskId={savingTaskId}
+                creatingMilestone={false}
                 onBack={() => setProjectsDisplayMode('dashboard')}
                 onTaskChange={handleTaskDraftChange}
                 onSaveTask={handleSaveTask}
+                onCreateMilestone={handleCreateSoloMilestone}
+                onCloseProject={() => handleSoloProjectStatusAction('closed')}
+                onFinishProject={() => handleSoloProjectStatusAction('finished')}
                 onProjectRefresh={loadAssignedProjects}
               />
             ) : null}
@@ -1093,6 +1210,7 @@ function ArtisanProfile({
                 savingTaskId={savingTaskId}
                 isPremium={isPremiumUser}
                 onSelectProject={setSelectedProjectId}
+                onCreateProject={handleOpenSoloProjectCreator}
                 onOpenDetails={() => setProjectsDisplayMode('details')}
                 onOpenCalendar={() => {
                   if (!isPremiumUser) {
@@ -1143,11 +1261,13 @@ function ArtisanProfile({
                       key={product.id}
                       variant="marketplace"
                       product={product}
+                      downloading={downloadingProductId === product.id}
                       paying={payingProductId === product.id}
                       quantity={getMarketplaceQuantity(product.id, product.stock)}
                       onQuantityChange={(value) =>
                         handleMarketplaceQuantityChange(product.id, value, product.stock)
                       }
+                      onDownload={() => handleDownloadMarketplaceDocument(product.id, product.documentName)}
                       onPayNow={() => handleCheckout(product)}
                       onViewDetails={() => setPreviewProduct(product)}
                       onOpenReport={() =>

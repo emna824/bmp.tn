@@ -11,6 +11,7 @@ function ArtisanDashboard({
   savingTaskId,
   isPremium,
   onSelectProject,
+  onCreateProject,
   onOpenDetails,
   onOpenCalendar,
   onTaskChange,
@@ -27,15 +28,26 @@ function ArtisanDashboard({
             <h2 className="mt-2 text-3xl font-semibold text-slate-900 dark:text-white">{t('artisan.myProjects')}</h2>
             <p className="mt-2 max-w-2xl text-sm text-slate-500 dark:text-slate-300">{t('artisan.myProjectsDescription')}</p>
           </div>
-          <button
-            type="button"
-            onClick={onOpenCalendar}
-            title={!isPremium ? t('premium.featureTooltip') : undefined}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200/60 transition-all duration-300 hover:scale-[1.02] hover:brightness-105 dark:shadow-orange-950/25"
-          >
-            {!isPremium ? <LockIcon className="h-4 w-4" /> : null}
-            {t('artisan.openCalendar')}
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={onCreateProject}
+              title={!isPremium ? t('premium.featureTooltip') : undefined}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:border-orange-200 hover:bg-orange-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:border-orange-500/40 dark:hover:bg-orange-500/10"
+            >
+              {!isPremium ? <LockIcon className="h-4 w-4" /> : null}
+              {t('artisan.createMyProject', { defaultValue: 'Create My Project' })}
+            </button>
+            <button
+              type="button"
+              onClick={onOpenCalendar}
+              title={!isPremium ? t('premium.featureTooltip') : undefined}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200/60 transition-all duration-300 hover:scale-[1.02] hover:brightness-105 dark:shadow-orange-950/25"
+            >
+              {!isPremium ? <LockIcon className="h-4 w-4" /> : null}
+              {t('artisan.openCalendar')}
+            </button>
+          </div>
         </div>
       </div>
 

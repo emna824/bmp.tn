@@ -90,7 +90,7 @@ function DashboardLayout({
                 <div className="header-user-meta">
                   <strong>{user?.name || t('common.guest')}</strong>
                   <small>{(user?.role || t('dashboardUi.roleFallback')).toUpperCase()}</small>
-                  <SubscriptionStatusBadge isPremium={user?.isPremium} />
+                  <SubscriptionStatusBadge role={user?.role} isPremium={user?.isPremium} />
                 </div>
                 <span className="header-caret" aria-hidden="true">
                   {isUserMenuOpen ? '▴' : '▾'}
@@ -101,7 +101,7 @@ function DashboardLayout({
                   <SettingsIcon className="icon tiny" />
                   {t('common.settings')}
                 </button>
-                {user?.isPremium ? (
+                {user?.role === 'artisan' && user?.isPremium ? (
                   <button
                     type="button"
                     onClick={onCancelSubscription}

@@ -30,7 +30,19 @@ const projectSchema = new mongoose.Schema(
     job: { type: String, required: true, enum: TRADES, lowercase: true, trim: true },
     dailySalary: { type: Number, required: true, min: 0 },
     description: { type: String, default: '', trim: true },
-    expertId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    type: {
+      type: String,
+      enum: ['expert', 'solo'],
+      default: 'expert',
+      index: true,
+    },
+    ownerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+      index: true,
+    },
+    expertId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null, index: true },
     assignedArtisans: {
       type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
       default: [],

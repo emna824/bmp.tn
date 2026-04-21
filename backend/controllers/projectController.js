@@ -25,6 +25,18 @@ async function ensureExpert(expertId) {
   return { expert };
 }
 
+function resolveProjectOwnerId(project) {
+  return String(project?.ownerId || project?.expertId || '').trim();
+}
+
+function isSoloOwner(project, user) {
+  return (
+    project?.type === 'solo' &&
+    user?.role === 'artisan' &&
+    resolveProjectOwnerId(project) === String(user?._id || '').trim()
+  );
+}
+
 exports.createProject = async (req, res) => {
   try {
     const {
@@ -37,9 +49,18 @@ exports.createProject = async (req, res) => {
       job,
       teamRequirements,
       dailySalary,
-      expertId,
       description,
     } = req.body;
+
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authenticated user is required' });
+    }
+
+    if (!['expert', 'artisan'].includes(req.user.role)) {
+      return res.status(403).json({ message: 'Only experts and artisans can create projects' });
+    }
+
+    const isSoloProject = req.user.role === 'artisan';
 
     if (
       !projectName ||
@@ -47,23 +68,31 @@ exports.createProject = async (req, res) => {
       estimatedBudget === undefined ||
       !category ||
       !startDate ||
-      dailySalary === undefined ||
-      !expertId
+      dailySalary === undefined
     ) {
       return res.status(400).json({
         message:
-          'projectName, location, estimatedBudget, category, startDate, dailySalary, and expertId are required',
+          'projectName, location, estimatedBudget, category, startDate, and dailySalary are required',
       });
     }
 
-    const expertCheck = await ensureExpert(expertId);
-    if (expertCheck.message) {
-      return res.status(expertCheck.status).json({ message: expertCheck.message });
+    if (isSoloProject && !req.user.isPremium) {
+      return res.status(403).json({ message: 'Only premium artisans can create solo projects' });
     }
 
-    const banCheck = await assertUserNotBanned(expertCheck.expert, 'create projects');
-    if (!banCheck.ok) {
-      return res.status(banCheck.status).json({ message: banCheck.message });
+    let expertId = null;
+    if (!isSoloProject) {
+      const expertCheck = await ensureExpert(req.user._id);
+      if (expertCheck.message) {
+        return res.status(expertCheck.status).json({ message: expertCheck.message });
+      }
+
+      const banCheck = await assertUserNotBanned(expertCheck.expert, 'create projects');
+      if (!banCheck.ok) {
+        return res.status(banCheck.status).json({ message: banCheck.message });
+      }
+
+      expertId = req.user._id;
     }
 
     const numericBudget = Number(estimatedBudget);
@@ -115,16 +144,22 @@ exports.createProject = async (req, res) => {
       return res.status(400).json({ message: 'All team requirement jobs must come from the predefined trades list' });
     }
 
-    const fallbackJob = String(job || '').trim().toLowerCase();
+    const fallbackJob = String(job || req.user.trade || req.user.job || '').trim().toLowerCase();
     const selectedJob = normalizedRequirements[0]?.job || fallbackJob;
 
     if (!selectedJob || !TRADES.includes(selectedJob)) {
-      return res.status(400).json({ message: 'Select at least one trade with a worker count greater than 0' });
+      return res.status(400).json({
+        message: isSoloProject
+          ? 'A valid artisan trade is required to create a solo project'
+          : 'Select at least one trade with a worker count greater than 0',
+      });
     }
 
-    const projectRequirements = normalizedRequirements.length
-      ? normalizedRequirements
-      : [{ job: selectedJob, required: 1, assigned: 0 }];
+    const projectRequirements = isSoloProject
+      ? [{ job: selectedJob, required: 1, assigned: 1 }]
+      : normalizedRequirements.length
+          ? normalizedRequirements
+          : [{ job: selectedJob, required: 1, assigned: 0 }];
 
     const project = await Project.create({
       projectName: String(projectName).trim(),
@@ -141,8 +176,11 @@ exports.createProject = async (req, res) => {
       dailySalary: numericDailySalary,
       description: String(description || '').trim(),
       expertId,
+      ownerId: req.user._id,
+      type: isSoloProject ? 'solo' : 'expert',
+      assignedArtisans: isSoloProject ? [req.user._id] : [],
       teamRequirements: projectRequirements,
-      status: 'recruiting',
+      status: isSoloProject ? 'in_progress' : 'recruiting',
     });
 
     try {
@@ -151,6 +189,15 @@ exports.createProject = async (req, res) => {
         location: project.location.address,
         progress: 0,
       });
+
+      if (isSoloProject) {
+        return res.status(201).json({
+          message: 'Solo project created successfully',
+          project,
+          chantier,
+          offers: [],
+        });
+      }
 
       const offers = await Offer.insertMany(
         projectRequirements.map((requirement) => ({
@@ -191,7 +238,7 @@ exports.createProject = async (req, res) => {
 exports.listProjects = async (req, res) => {
   try {
     const { expertId } = req.params;
-    const filter = expertId && isValidObjectId(expertId) ? { expertId } : {};
+    const filter = expertId && isValidObjectId(expertId) ? { $or: [{ expertId }, { ownerId: expertId }] } : {};
     const projects = await Project.find(filter)
       .populate('assignedArtisans', 'name email job')
       .sort({ createdAt: -1 });
@@ -211,9 +258,14 @@ exports.listArtisanProjects = async (req, res) => {
       return res.status(403).json({ message: 'Only artisans can access assigned projects' });
     }
 
-    const projects = await Project.find({ assignedArtisans: req.user._id })
+    const projects = await Project.find({
+      $or: [
+        { assignedArtisans: req.user._id },
+        { type: 'solo', ownerId: req.user._id },
+      ],
+    })
       .select(
-        '_id projectName startDate endDate job status description category dailySalary location teamRequirements totalSpent'
+        '_id projectName startDate endDate job status description category dailySalary location teamRequirements totalSpent type ownerId assignedArtisans expertId'
       )
       .sort({ startDate: 1, createdAt: -1 })
       .lean();
@@ -252,20 +304,20 @@ exports.startProject = async (req, res) => {
       return res.status(401).json({ message: 'Authenticated user is required' });
     }
 
-    if (req.user.role !== 'expert') {
-      return res.status(403).json({ message: 'Only experts can start projects' });
-    }
-
     if (!isValidObjectId(id)) {
       return res.status(400).json({ message: 'Invalid project id' });
     }
 
-    const project = await Project.findById(id).select('expertId');
+    const project = await Project.findById(id).select('expertId ownerId type status');
     if (!project) {
       return res.status(404).json({ message: 'Project not found' });
     }
 
-    if (String(project.expertId) !== String(req.user._id)) {
+    const canStartExpertProject =
+      req.user.role === 'expert' && String(project.expertId) === String(req.user._id);
+    const canStartSoloProject = isSoloOwner(project, req.user);
+
+    if (!canStartExpertProject && !canStartSoloProject) {
       return res.status(403).json({ message: 'You can only start your own projects' });
     }
 
@@ -289,10 +341,6 @@ exports.updateProjectStatus = async (req, res) => {
       return res.status(401).json({ message: 'Authenticated user is required' });
     }
 
-    if (req.user.role !== 'expert') {
-      return res.status(403).json({ message: 'Only experts can update project status' });
-    }
-
     if (!isValidObjectId(id)) {
       return res.status(400).json({ message: 'Invalid project id' });
     }
@@ -307,7 +355,19 @@ exports.updateProjectStatus = async (req, res) => {
       return res.status(404).json({ message: 'Project not found' });
     }
 
-    if (String(project.expertId) !== String(req.user._id)) {
+    if (!project.ownerId && project.expertId) {
+      project.ownerId = project.expertId;
+    }
+
+    if (!project.type) {
+      project.type = project.expertId ? 'expert' : 'solo';
+    }
+
+    const canManageExpertProject =
+      req.user.role === 'expert' && String(project.expertId) === String(req.user._id);
+    const canManageSoloProject = isSoloOwner(project, req.user);
+
+    if (!canManageExpertProject && !canManageSoloProject) {
       return res.status(403).json({ message: 'You can only update your own projects' });
     }
 

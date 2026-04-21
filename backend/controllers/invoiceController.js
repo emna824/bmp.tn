@@ -23,9 +23,13 @@ function isAssignedArtisan(project, userId) {
   );
 }
 
+function isSoloOwner(project, userId) {
+  return project?.type === 'solo' && String(project?.ownerId || '') === String(userId);
+}
+
 async function loadAccessibleProject(projectId, user) {
   const project = await Project.findById(projectId).select(
-    'projectName expertId assignedArtisans status totalSpent'
+    'projectName expertId ownerId type assignedArtisans status totalSpent'
   );
 
   if (!project) {
@@ -37,7 +41,7 @@ async function loadAccessibleProject(projectId, user) {
       return { error: { status: 403, message: 'You can only access invoices for your own projects' } };
     }
   } else if (user.role === 'artisan') {
-    if (!isAssignedArtisan(project, user._id)) {
+    if (!isAssignedArtisan(project, user._id) && !isSoloOwner(project, user._id)) {
       return { error: { status: 403, message: 'You are not assigned to this project' } };
     }
   } else {
@@ -120,16 +124,12 @@ exports.createInvoice = async (req, res) => {
     }
 
     const manufacturerId = quote.manufacturerId || product.manufacturerId;
-    const expertId = quote.expertId || access.project.expertId;
+    const expertId = quote.expertId || access.project.expertId || null;
     const unitPrice = Number(quote.unitPrice || product.price || 0);
     const totalPrice = Number(quote.totalPrice || unitPrice * Number(quote.quantity || 0));
 
     if (!manufacturerId) {
       return res.status(400).json({ message: 'This quote is missing a linked manufacturer' });
-    }
-
-    if (!expertId) {
-      return res.status(400).json({ message: 'This quote is missing a linked expert' });
     }
 
     if (!Number.isFinite(totalPrice) || totalPrice <= 0) {

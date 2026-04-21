@@ -20,6 +20,8 @@ function normalizeProject(project) {
     job: project?.job || project?.teamRequirements?.[0]?.job || '',
     dailySalary: Number(project?.dailySalary ?? 0),
     totalSpent: Number(project?.totalSpent ?? 0),
+    type: project?.type || 'expert',
+    ownerId: project?.ownerId || project?.expertId || '',
     location: project?.location || { address: '', latitude: null, longitude: null },
     teamRequirements: Array.isArray(project?.teamRequirements) ? project.teamRequirements : [],
     assignedArtisans: Array.isArray(project?.assignedArtisans) ? project.assignedArtisans : [],
@@ -39,15 +41,13 @@ function normalizeMilestone(milestone) {
 function ExpertProfile({
   user,
   onLogout,
-  onProfileUpdate,
-  isPremium = false,
   onRequirePremium,
   onCancelSubscription,
   cancellingSubscription = false,
 }) {
   const { t } = useTranslation()
   const userId = user?.id || user?._id || ''
-  const isPremiumUser = Boolean(user?.isPremium ?? isPremium)
+  const isPremiumUser = true
   const [activeView, setActiveView] = useState('overview')
   const [projects, setProjects] = useState([])
   const [offersByProject, setOffersByProject] = useState({})
@@ -387,7 +387,7 @@ function ExpertProfile({
                 <h3>{t('expert.menu.create')}</h3>
                 <p className="subtitle">Set the project details, map location, trade, and salary in one clean form.</p>
               </div>
-              <CreateProjectForm expertId={userId} onCreated={handleProjectCreated} />
+              <CreateProjectForm userId={userId} role="expert" onCreated={handleProjectCreated} />
             </section>
           ) : (
             <section className="dashboard-card">

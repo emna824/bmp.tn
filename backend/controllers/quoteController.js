@@ -21,9 +21,13 @@ function isAssignedArtisan(project, userId) {
   );
 }
 
+function isSoloOwner(project, userId) {
+  return project?.type === 'solo' && String(project?.ownerId || '') === String(userId);
+}
+
 async function loadAccessibleProject(projectId, user) {
   const project = await Project.findById(projectId).select(
-    'projectName expertId assignedArtisans status totalSpent'
+    'projectName expertId ownerId type assignedArtisans status totalSpent'
   );
 
   if (!project) {
@@ -35,7 +39,7 @@ async function loadAccessibleProject(projectId, user) {
       return { error: { status: 403, message: 'You can only access quotes for your own projects' } };
     }
   } else if (user.role === 'artisan') {
-    if (!isAssignedArtisan(project, user._id)) {
+    if (!isAssignedArtisan(project, user._id) && !isSoloOwner(project, user._id)) {
       return { error: { status: 403, message: 'You are not assigned to this project' } };
     }
   } else {
@@ -101,13 +105,13 @@ exports.createQuote = async (req, res) => {
     const createdQuote = await Quote.create({
       projectId,
       artisanId: req.user._id,
-      expertId: access.project.expertId,
+      expertId: access.project.type === 'solo' ? null : access.project.expertId,
       manufacturerId: product.manufacturerId,
       productId,
       quantity: parsedQuantity,
       unitPrice: Number(product.price),
       totalPrice: Number(product.price) * parsedQuantity,
-      status: 'pending',
+      status: access.project.type === 'solo' ? 'accepted' : 'pending',
     });
 
     const quote = await populateQuote(createdQuote._id);
@@ -162,10 +166,6 @@ exports.updateQuoteStatus = async (req, res) => {
       return res.status(401).json({ message: 'Authenticated user is required' });
     }
 
-    if (req.user.role !== 'expert') {
-      return res.status(403).json({ message: 'Only experts can validate quotes' });
-    }
-
     if (!isValidObjectId(id)) {
       return res.status(400).json({ message: 'Invalid quote id' });
     }
@@ -182,6 +182,16 @@ exports.updateQuoteStatus = async (req, res) => {
     const access = await loadAccessibleProject(quote.projectId, req.user);
     if (access.error) {
       return res.status(access.error.status).json({ message: access.error.message });
+    }
+
+    const canReviewQuote =
+      req.user.role === 'expert' ||
+      (req.user.role === 'artisan' &&
+        access.project.type === 'solo' &&
+        String(access.project.ownerId || '') === String(req.user._id));
+
+    if (!canReviewQuote) {
+      return res.status(403).json({ message: 'Only the project owner can validate quotes' });
     }
 
     if (quote.status !== 'pending') {
