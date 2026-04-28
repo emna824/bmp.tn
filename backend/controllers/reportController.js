@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
-const Report = require('../models/Report');
+const Report = require('../models/report');
 const User = require('../models/user');
 const path = require('path');
-const Product = require('../models/Product');
-const AdminActionLog = require('../models/AdminActionLog');
+const Product = require('../models/product');
+const AdminActionLog = require('../models/adminactionlog');
 
 function isValidObjectId(id) {
     return mongoose.Types.ObjectId.isValid(id);

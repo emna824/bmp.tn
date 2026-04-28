@@ -7,6 +7,7 @@ const User = require('../models/user');
 const Notification = require('../models/notification');
 const { TRADES } = require('../constants/trades');
 const loadRequestUser = require('../middleware/loadRequestUser');
+const checkAdminRole = require('../middleware/checkAdminRole');
 const { assertUserNotBanned } = require('../utils/banUtils');
 const { addOrUpdateArtisanTrade, serializeUser } = require('../controllers/userController');
 const passwordResetStore = new Map();
@@ -61,6 +62,19 @@ function formatTradeLabel(value) {
         .filter(Boolean)
         .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
         .join(' ');
+}
+
+function mapAdminUser(user) {
+    return {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profileImage: user.profileImage || '',
+        isBanned: Boolean(user.isBanned),
+        banType: user.banType || null,
+        banExpiresAt: user.banExpiresAt || null,
+    };
 }
 
 async function sendPasswordResetCodeEmail(email, code) {
@@ -274,6 +288,70 @@ router.get('/:id/profile', async (req, res) => {
 });
 
 router.put('/add-trade', loadRequestUser, addOrUpdateArtisanTrade);
+
+router.put('/ban/:id', loadRequestUser, checkAdminRole, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const targetUser = await User.findById(id);
+
+        if (!targetUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (targetUser.role === 'admin') {
+            return res.status(403).json({ message: 'Admin accounts cannot be banned' });
+        }
+
+        const shouldUnban =
+            req.body?.isBanned === false ||
+            (req.body?.banType === null && req.body?.banExpiresAt === null);
+
+        if (shouldUnban) {
+            targetUser.isBanned = false;
+            targetUser.banType = undefined;
+            targetUser.banExpiresAt = null;
+            await targetUser.save();
+
+            return res.status(200).json({
+                message: 'User unbanned successfully',
+                user: mapAdminUser(targetUser),
+            });
+        }
+
+        const normalizedBanType = String(req.body?.banType || 'permanent').trim().toLowerCase();
+        if (!['temporary', 'permanent'].includes(normalizedBanType)) {
+            return res.status(400).json({ message: 'banType must be temporary or permanent' });
+        }
+
+        let parsedExpiry = null;
+        if (normalizedBanType === 'temporary') {
+            parsedExpiry = new Date(req.body?.banExpiresAt);
+            if (!req.body?.banExpiresAt || Number.isNaN(parsedExpiry.getTime())) {
+                return res.status(400).json({
+                    message: 'banExpiresAt is required for a temporary ban and must be a valid date',
+                });
+            }
+
+            if (parsedExpiry <= new Date()) {
+                return res.status(400).json({
+                    message: 'banExpiresAt must be in the future for a temporary ban',
+                });
+            }
+        }
+
+        targetUser.isBanned = true;
+        targetUser.banType = normalizedBanType;
+        targetUser.banExpiresAt = normalizedBanType === 'temporary' ? parsedExpiry : null;
+        await targetUser.save();
+
+        return res.status(200).json({
+            message: 'User banned successfully',
+            user: mapAdminUser(targetUser),
+        });
+    } catch (err) {
+        return res.status(500).json({ message: err.message || 'Failed to update user ban status' });
+    }
+});
 
 router.put('/:id/profile', async (req, res) => {
     try {
