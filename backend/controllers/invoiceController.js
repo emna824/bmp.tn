@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const Project = require('../models/project');
-const Product = require('../models/Product');
+const Product = require('../models/product');
 const Quote = require('../models/quote');
 const Invoice = require('../models/invoice');
 

@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const Report = require('../models/Report');
 const User = require('../models/user');
 const path = require('path');
-const Product = require('../models/Product');
+const Product = require('../models/product');
 const AdminActionLog = require('../models/AdminActionLog');
 
 function isValidObjectId(id) {
