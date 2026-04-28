@@ -8,6 +8,7 @@ import PremiumModal from './components/PremiumModal'
 import LandingPage from './components/landing/LandingPage'
 import AdminDashboard from './pages/AdminDashboard'
 import SelectTradePage from './pages/SelectTradePage'
+import { getCurrentPath, getHomePathForRole, isRolePathAllowed, navigateToPath } from './utils/roleRoutes'
 import './App.css'
 
 function normalizeUser(user) {
@@ -49,6 +50,7 @@ function persistUser(nextUser) {
 
 function App() {
   const { t } = useTranslation()
+  const [currentPath, setCurrentPath] = useState(() => getCurrentPath())
   const [user, setUser] = useState(() => {
     const raw = localStorage.getItem('authUser') || sessionStorage.getItem('authUser')
     return raw ? normalizeUser(JSON.parse(raw)) : null
@@ -66,6 +68,25 @@ function App() {
     const timer = window.setTimeout(() => setPremiumNotice({ type: '', text: '' }), 3500)
     return () => window.clearTimeout(timer)
   }, [premiumNotice])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const handlePopState = () => {
+      setCurrentPath(getCurrentPath())
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  useEffect(() => {
+    if (!user?.role || user.role === 'admin') return
+
+    if (!isRolePathAllowed(user.role, currentPath)) {
+      navigateToPath(getHomePathForRole(user.role), { replace: true })
+    }
+  }, [currentPath, user?.role])
 
   const applyUserUpdate = (nextUser) => {
     const normalizedUser = normalizeUser(nextUser)
@@ -85,6 +106,10 @@ function App() {
       sessionStorage.setItem('authUser', JSON.stringify(normalizedUser))
       localStorage.removeItem('authUser')
     }
+
+    if (normalizedUser?.role && normalizedUser.role !== 'admin') {
+      navigateToPath(getHomePathForRole(normalizedUser.role), { replace: true })
+    }
   }
 
   const handleLogout = () => {
@@ -95,6 +120,7 @@ function App() {
     sessionStorage.removeItem('authUser')
     setMode('signin')
     setNavOpen(false)
+    navigateToPath('/', { replace: true })
   }
 
   const handleProfileUpdate = (nextUser) => {
@@ -231,11 +257,22 @@ function App() {
   let content = null
 
   if (user?.role === 'artisan' && !user?.trade) {
-    content = <SelectTradePage user={user} onTradeSaved={handleProfileUpdate} onLogout={handleLogout} />
+    content = (
+      <SelectTradePage
+        user={user}
+        onTradeSaved={(nextUser) => {
+          handleProfileUpdate(nextUser)
+          navigateToPath(getHomePathForRole('artisan'), { replace: true })
+        }}
+        onLogout={handleLogout}
+      />
+    )
   } else if (user?.role === 'artisan') {
     content = (
       <ArtisanProfile
         user={user}
+        currentPath={currentPath}
+        onNavigate={navigateToPath}
         isPremium={Boolean(user?.isPremium)}
         onLogout={handleLogout}
         onProfileUpdate={handleProfileUpdate}
@@ -248,6 +285,8 @@ function App() {
     content = (
       <ExpertProfile
         user={user}
+        currentPath={currentPath}
+        onNavigate={navigateToPath}
         isPremium={Boolean(user?.isPremium)}
         onLogout={handleLogout}
         onProfileUpdate={handleProfileUpdate}
@@ -260,6 +299,8 @@ function App() {
     content = (
       <ManufacturerProfile
         user={user}
+        currentPath={currentPath}
+        onNavigate={navigateToPath}
         onLogout={handleLogout}
         onProfileUpdate={handleProfileUpdate}
         onCancelSubscription={handleCancelPremium}

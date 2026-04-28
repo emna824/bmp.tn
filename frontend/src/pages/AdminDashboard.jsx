@@ -37,7 +37,6 @@ const NAV_ITEMS = [
 
 function AdminDashboard({ user, onLogout }) {
   const [activeView, setActiveView] = useState('dashboard')
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [overview, setOverview] = useState({
     loading: true,
     error: '',
@@ -95,7 +94,6 @@ function AdminDashboard({ user, onLogout }) {
 
   const handleNavigate = (nextView) => {
     setActiveView(nextView)
-    setSidebarOpen(false)
   }
 
   const renderActivePage = () => {
@@ -186,25 +184,10 @@ function AdminDashboard({ user, onLogout }) {
 
   return (
     <div className="admin-shell">
-      <Sidebar
-        items={NAV_ITEMS}
-        activeView={activeView}
-        isOpen={sidebarOpen}
-        onNavigate={handleNavigate}
-        onClose={() => setSidebarOpen(false)}
-      />
-
-      {sidebarOpen ? (
-        <button
-          type="button"
-          className="admin-sidebar-backdrop"
-          onClick={() => setSidebarOpen(false)}
-          aria-label="Close sidebar backdrop"
-        />
-      ) : null}
+      <Sidebar items={NAV_ITEMS} activeView={activeView} onNavigate={handleNavigate} />
 
       <div className="admin-main">
-        <Topbar user={user} onLogout={onLogout} onMenuToggle={() => setSidebarOpen((open) => !open)} />
+        <Topbar user={user} onLogout={onLogout} />
         <main className="admin-content">{renderActivePage()}</main>
       </div>
     </div>

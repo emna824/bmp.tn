@@ -47,11 +47,17 @@ export function formatProductPrice(value) {
 export function normalizeReport(report = {}) {
   const reporter = report.reporter && typeof report.reporter === 'object' ? report.reporter : null
   const target = report.target && typeof report.target === 'object' ? report.target : null
+  const targetLabel =
+    target?.name ||
+    target?.email ||
+    target?.documentName ||
+    (report.targetType === 'product' ? 'Reported product' : 'Reported user')
 
   return {
     id: getEntityId(report),
     targetType: report.targetType || 'product',
     targetId: report.targetId || getEntityId(target),
+    targetLabel,
     reason: report.reason || 'No reason provided',
     description: report.description || '',
     status: report.status || 'pending',
@@ -71,6 +77,7 @@ export function normalizeReport(report = {}) {
           name: target.name || '',
           email: target.email || '',
           role: target.role || '',
+          description: target.description || '',
           price: target.price ?? null,
           documentName: target.documentName || '',
         }

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import api, { withUserHeaders } from '../api'
 import CreateProjectForm from './CreateProjectForm'
 import { LockIcon, SettingsIcon, UserIcon } from './Icons'
-import DashboardLayout from './DashboardLayout'
+import ArtisanLayout from '../layouts/ArtisanLayout'
 import ProductCard from './ProductCard'
 import ReportModal from './ReportModal'
 import ArtisanDashboard from '../pages/ArtisanDashboard'
@@ -12,6 +12,7 @@ import ProjectDetails from '../pages/ProjectDetails'
 import { downloadFileReference } from '../utils/fileHelpers'
 import { formatProductPrice, normalizeProduct } from '../utils/adminDashboard'
 import { getStripeClient } from '../utils/stripe'
+import { ARTISAN_ROUTES, resolveArtisanRoute } from '../utils/roleRoutes'
 
 const JOB_OPTIONS = ['Painter', 'Mason', 'Electrician', 'Plumber', 'Carpenter', 'Metalworker', 'Laborer']
 
@@ -93,6 +94,8 @@ function normalizeQuantity(value, max = 99) {
 
 function ArtisanProfile({
   user,
+  currentPath = ARTISAN_ROUTES.dashboard,
+  onNavigate,
   onLogout,
   onProfileUpdate,
   isPremium = false,
@@ -102,7 +105,6 @@ function ArtisanProfile({
 }) {
   const { t } = useTranslation()
   const userId = user?.id || user?._id || ''
-  const [activeView, setActiveView] = useState('overview')
   const [profile, setProfile] = useState(user)
   const [name, setName] = useState(user?.name || '')
   const [profileImage, setProfileImage] = useState(user?.profileImage || '')
@@ -140,6 +142,7 @@ function ArtisanProfile({
   const [marketplaceQuantities, setMarketplaceQuantities] = useState({})
   const [reportTarget, setReportTarget] = useState(null)
   const isPremiumUser = Boolean(profile?.isPremium ?? user?.isPremium ?? isPremium)
+  const activeView = useMemo(() => resolveArtisanRoute(currentPath), [currentPath])
 
   const getMarketplaceQuantity = useCallback(
     (productId, stock) => normalizeQuantity(marketplaceQuantities[productId], stock),
@@ -184,7 +187,7 @@ function ArtisanProfile({
     if (!paymentStatus) return
 
     if (view === 'marketplace') {
-      setActiveView('projects')
+      onNavigate?.(ARTISAN_ROUTES.projects)
       setProjectsDisplayMode('details')
     }
 
@@ -199,7 +202,7 @@ function ArtisanProfile({
     url.searchParams.delete('productId')
     url.searchParams.delete('session_id')
     window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`)
-  }, [showNotification])
+  }, [onNavigate, showNotification])
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -460,9 +463,9 @@ function ArtisanProfile({
       return
     }
 
-    setActiveView('projects')
+    onNavigate?.(ARTISAN_ROUTES.projects)
     setProjectsDisplayMode('create')
-  }, [isPremiumUser, onRequirePremium, showNotification, t])
+  }, [isPremiumUser, onNavigate, onRequirePremium, showNotification, t])
 
   const handleSoloProjectCreated = useCallback(async (payload) => {
     const createdProject = normalizeAssignedProject(payload?.project || {})
@@ -473,9 +476,10 @@ function ArtisanProfile({
       ...current,
       [createdProject.id]: [],
     }))
+    onNavigate?.(ARTISAN_ROUTES.projects)
     await loadAssignedProjects()
     showNotification('success', payload?.message || 'Solo project created successfully')
-  }, [loadAssignedProjects, showNotification])
+  }, [loadAssignedProjects, onNavigate, showNotification])
 
   const handleCreateSoloMilestone = useCallback(async (payload) => {
     if (!selectedProjectId) return
@@ -513,16 +517,6 @@ function ArtisanProfile({
     }
   }, [loadAssignedProjects, loadProjectMilestones, selectedProjectId, showNotification, userId])
 
-  const menuItems = useMemo(
-    () => [
-      { key: 'overview', label: t('artisan.menu.overview'), subtitle: t('artisan.menu.overviewSubtitle') },
-      { key: 'offers', label: t('artisan.menu.offers'), subtitle: t('artisan.menu.offersSubtitle') },
-      { key: 'projects', label: t('artisan.menu.projects'), subtitle: t('artisan.menu.projectsSubtitle') },
-      { key: 'settings', label: t('artisan.menu.settings'), subtitle: t('artisan.menu.settingsSubtitle') },
-    ],
-    [t],
-  )
-
   const overviewStats = [
     { label: 'Offers', value: offers.length, detail: offerJobFilter ? `Filtered by ${offerJobFilter}` : 'Open now' },
     {
@@ -537,6 +531,27 @@ function ArtisanProfile({
     },
     { label: 'Trade', value: profile?.job || 'Unset', detail: 'Your artisan role' },
   ]
+
+  const billingUsage = useMemo(
+    () => [
+      {
+        label: 'Active Projects',
+        value: assignedProjects.length,
+        max: isPremiumUser ? 20 : 5,
+      },
+      {
+        label: 'Quotes Available',
+        value: offers.length,
+        max: 100,
+      },
+      {
+        label: 'Marketplace Docs',
+        value: marketplaceProducts.length,
+        max: 50,
+      },
+    ],
+    [assignedProjects.length, isPremiumUser, marketplaceProducts.length, offers.length],
+  )
 
   const handleSaveName = async (event) => {
     event.preventDefault()
@@ -858,27 +873,44 @@ function ArtisanProfile({
         {notification.text}
       </div>
 
-      <DashboardLayout
+      <ArtisanLayout
         user={profile}
-        menuItems={menuItems}
-        activeView={activeView}
-        onNavigate={setActiveView}
+        currentPath={currentPath}
+        onNavigate={onNavigate}
         onLogout={onLogout}
         onCancelSubscription={onCancelSubscription}
         cancellingSubscription={cancellingSubscription}
       >
-        {activeView === 'overview' && (
+        {activeView === ARTISAN_ROUTES.dashboard && (
           <div className="artisan-dashboard">
+            <div className="dashboard-overview-head">
+              <div className="section-header">
+                <p className="eyebrow">Dashboard</p>
+                <h3>Overview</h3>
+                <p className="subtitle">Real-time metrics and project status across your workspace.</p>
+              </div>
+              <div className="inline-actions">
+                <button
+                  type="button"
+                  onClick={handleOpenSoloProjectCreator}
+                  title={!isPremiumUser ? t('premium.featureTooltip') : undefined}
+                >
+                  {!isPremiumUser ? <LockIcon className="icon tiny" /> : null}
+                  New Project
+                </button>
+              </div>
+            </div>
+
             <div className="dash-top">
               <input
-                className="dash-search"
+                className="dash-search dashboard-inline-search"
                 type="search"
                 placeholder="Search offers or products..."
                 value={offerSearch}
                 onChange={(event) => setOfferSearch(event.target.value)}
               />
               <div className="dash-actions">
-                <button type="button" className="secondary-btn" onClick={() => setActiveView('offers')}>
+                <button type="button" className="secondary-btn" onClick={() => onNavigate?.(ARTISAN_ROUTES.offers)}>
                   Offers
                 </button>
                 <button
@@ -886,12 +918,12 @@ function ArtisanProfile({
                   className="secondary-btn"
                   onClick={() => {
                     setProjectsDisplayMode('dashboard')
-                    setActiveView('projects')
+                    onNavigate?.(ARTISAN_ROUTES.projects)
                   }}
                 >
                   {t('projects')}
                 </button>
-                <button type="button" className="secondary-btn" onClick={() => setActiveView('marketplace')}>
+                <button type="button" className="secondary-btn" onClick={() => onNavigate?.(ARTISAN_ROUTES.marketplace)}>
                   Marketplace
                 </button>
               </div>
@@ -912,7 +944,7 @@ function ArtisanProfile({
               <section className="card-panel">
                 <div className="panel-header">
                   <h3>Open offers</h3>
-                  <button type="button" className="text-btn" onClick={() => setActiveView('offers')}>
+                  <button type="button" className="text-btn" onClick={() => onNavigate?.(ARTISAN_ROUTES.offers)}>
                     View all
                   </button>
                 </div>
@@ -948,7 +980,7 @@ function ArtisanProfile({
                     className="text-btn"
                     onClick={() => {
                       setProjectsDisplayMode('calendar')
-                      setActiveView('projects')
+                      onNavigate?.(ARTISAN_ROUTES.projects)
                     }}
                   >
                     {t('artisan.openCalendar')}
@@ -980,7 +1012,7 @@ function ArtisanProfile({
               <section className="card-panel">
                 <div className="panel-header">
                   <h3>Marketplace spotlight</h3>
-                  <button type="button" className="text-btn" onClick={() => setActiveView('marketplace')}>
+                  <button type="button" className="text-btn" onClick={() => onNavigate?.(ARTISAN_ROUTES.marketplace)}>
                     Browse
                   </button>
                 </div>
@@ -1004,7 +1036,7 @@ function ArtisanProfile({
           </div>
         )}
 
-        {activeView === 'offers' && (
+        {activeView === ARTISAN_ROUTES.offers && (
           <section className="dashboard-card">
             <div className="section-header">
               <h3>Open offers</h3>
@@ -1072,7 +1104,7 @@ function ArtisanProfile({
           </section>
         )}
 
-        {activeView === 'projects' && (
+        {activeView === ARTISAN_ROUTES.projects && (
           <section className="space-y-4">
             <div className="dashboard-card artisan-projects-toolbar">
               <div className="section-header">
@@ -1226,7 +1258,7 @@ function ArtisanProfile({
           </section>
         )}
 
-        {activeView === 'marketplace' && (
+        {activeView === ARTISAN_ROUTES.marketplace && (
           <section className="dashboard-card marketplace-card">
             <div className="market-top">
               <input
@@ -1283,120 +1315,300 @@ function ArtisanProfile({
           </section>
         )}
 
-        {activeView === 'settings' && (
-          <section className="dashboard-card">
+        {activeView === ARTISAN_ROUTES.invoices && (
+          <section className="space-y-4">
+            <div className="dashboard-card artisan-projects-toolbar">
+              <div className="section-header">
+                <div>
+                  <h3>{t('invoices')}</h3>
+                  <p className="subtitle">Review project purchase invoices without leaving the artisan workspace.</p>
+                </div>
+                <div className="inline-actions">
+                  <button
+                    type="button"
+                    className="secondary-btn"
+                    onClick={() => {
+                      setProjectsDisplayMode('details')
+                      onNavigate?.(ARTISAN_ROUTES.projects)
+                    }}
+                  >
+                    Open project workspace
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-btn"
+                    onClick={() => {
+                      loadAssignedProjects()
+                      if (selectedProjectId) {
+                        loadProjectMilestones(selectedProjectId)
+                        loadArtisanWorkLogs(selectedProjectId)
+                      }
+                    }}
+                    disabled={loadingAssignedProjects || loadingMilestones || loadingWorkLogs}
+                  >
+                    {loadingAssignedProjects || loadingMilestones || loadingWorkLogs ? t('common.loading') : t('common.refresh')}
+                  </button>
+                </div>
+              </div>
+
+              {assignedProjects.length ? (
+                <div className="project-toolbar">
+                  <select value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>
+                    {assignedProjects.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.projectName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
+            </div>
+
+            {loadingAssignedProjects ? (
+              <section className="dashboard-card">
+                <p className="subtitle">Loading invoices...</p>
+              </section>
+            ) : assignedProjects.length && selectedProject ? (
+              <ProjectDetails
+                role="artisan"
+                userId={userId}
+                project={selectedProject}
+                milestones={selectedProjectMilestones}
+                workLogs={artisanWorkLogs}
+                loading={loadingMilestones || loadingWorkLogs}
+                savingTaskId={savingTaskId}
+                creatingMilestone={false}
+                initialTab="invoices"
+                onBack={() => onNavigate?.(ARTISAN_ROUTES.projects)}
+                onTaskChange={handleTaskDraftChange}
+                onSaveTask={handleSaveTask}
+                onCreateMilestone={handleCreateSoloMilestone}
+                onCloseProject={() => handleSoloProjectStatusAction('closed')}
+                onFinishProject={() => handleSoloProjectStatusAction('finished')}
+                onProjectRefresh={loadAssignedProjects}
+              />
+            ) : (
+              <section className="dashboard-card">
+                <p className="subtitle">No assigned projects yet.</p>
+              </section>
+            )}
+          </section>
+        )}
+
+        {activeView === ARTISAN_ROUTES.settings && (
+          <section className="dashboard-card billing-settings-shell">
             <div className="section-header">
-              <h3>Profile settings</h3>
-              <p className="subtitle">Manage your artisan profile and account security.</p>
+              <div>
+                <h3>Billing & Subscription</h3>
+                <p className="subtitle">Manage your workspace plan, profile details, and account security.</p>
+              </div>
             </div>
             {loadingProfile ? <p className="subtitle">Refreshing profile...</p> : null}
 
-            <div className="settings-content">
-              <p><strong>Email:</strong> {profile?.email || '-'}</p>
-              <p><strong>Trade:</strong> {profile?.job || 'Not set'}</p>
-              <p><strong>Artisan ID:</strong> {userId || 'Missing'}</p>
+            <div className="billing-overview-grid">
+              <article className="billing-plan-card">
+                <div className="billing-card-label">Current Plan</div>
+                <h4>{isPremiumUser ? 'Premium Artisan' : 'Standard Artisan'}</h4>
+                <p className="subtitle">
+                  {isPremiumUser
+                    ? 'Your workspace has premium access enabled, including solo projects and advanced project tools.'
+                    : 'Upgrade to unlock solo projects, premium support, and advanced reporting.'}
+                </p>
+                <div className="billing-plan-meta">
+                  <strong>{isPremiumUser ? 'Premium enabled' : 'Standard access'}</strong>
+                  <span>{profile?.subscriptionType || 'Managed securely in checkout'}</span>
+                </div>
+                <div className="billing-plan-actions">
+                  {!isPremiumUser ? (
+                    <button type="button" onClick={() => onRequirePremium?.()}>
+                      Upgrade Plan
+                    </button>
+                  ) : null}
+                  {isPremiumUser ? (
+                    <button
+                      type="button"
+                      className="secondary-btn"
+                      onClick={onCancelSubscription}
+                      disabled={cancellingSubscription}
+                    >
+                      {cancellingSubscription ? 'Cancelling...' : 'Cancel Subscription'}
+                    </button>
+                  ) : null}
+                </div>
+              </article>
+
+              <article className="billing-payment-card">
+                <h4>Payment Method</h4>
+                <div className="billing-payment-note">
+                  <strong>Stripe Checkout</strong>
+                  <span>Payment details stay managed in the secure checkout flow and are not exposed in the dashboard.</span>
+                </div>
+                {!isPremiumUser ? (
+                  <button type="button" className="secondary-btn" onClick={() => onRequirePremium?.()}>
+                    Open Upgrade Flow
+                  </button>
+                ) : (
+                  <span className="chip ghost">Premium managed securely</span>
+                )}
+              </article>
             </div>
-            <div className="report-profile-cta">
-              <div>
-                <strong>Need moderation review?</strong>
-                <p className="subtitle small">Submit a report for this profile if something looks wrong.</p>
+
+            <article className="billing-usage-card">
+              <h4>Current Cycle Usage</h4>
+              <div className="usage-meter-grid">
+                {billingUsage.map((item) => {
+                  const percent = Math.max(6, Math.min(100, Math.round((Number(item.value || 0) / Number(item.max || 1)) * 100)))
+
+                  return (
+                    <div key={item.label} className="usage-meter">
+                      <div className="usage-meter-row">
+                        <span>{item.label}</span>
+                        <strong>
+                          {item.value} / {item.max}
+                        </strong>
+                      </div>
+                      <div className="usage-meter-track">
+                        <div className="usage-meter-fill" style={{ width: `${percent}%` }} />
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
-              <button
-                type="button"
-                className="secondary-btn report-trigger-btn"
-                disabled={!userId}
-                onClick={() => openReportModal('user', userId, profile?.name || profile?.email || 'this profile')}
-              >
-                Report profile
-              </button>
+            </article>
+
+            <div className="settings-forms-grid">
+              <article className="settings-form-card">
+                <div className="section-header">
+                  <div>
+                    <h4>Workspace Profile</h4>
+                    <p className="subtitle">Your account details and moderation tools.</p>
+                  </div>
+                </div>
+                <div className="settings-content">
+                  <p><strong>Email:</strong> {profile?.email || '-'}</p>
+                  <p><strong>Trade:</strong> {profile?.job || 'Not set'}</p>
+                  <p><strong>Artisan ID:</strong> {userId || 'Missing'}</p>
+                </div>
+                <div className="report-profile-cta">
+                  <div>
+                    <strong>Need moderation review?</strong>
+                    <p className="subtitle small">Submit a report for this profile if something looks wrong.</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="secondary-btn report-trigger-btn"
+                    disabled={!userId}
+                    onClick={() => openReportModal('user', userId, profile?.name || profile?.email || 'this profile')}
+                  >
+                    Report profile
+                  </button>
+                </div>
+              </article>
+
+              <article className="settings-form-card">
+                <div className="section-header">
+                  <div>
+                    <h4>Profile Details</h4>
+                    <p className="subtitle">Update your public artisan information.</p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleSaveName} noValidate>
+                  <label>
+                    <span className="label-with-icon">
+                      <UserIcon className="icon tiny" />
+                      Name
+                    </span>
+                    <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Your full name" />
+                  </label>
+                  <button type="submit" disabled={savingName}>
+                    {savingName ? 'Saving...' : 'Save name'}
+                  </button>
+                </form>
+
+                <div className="image-settings-block">
+                  <label>
+                    <span className="label-with-icon">
+                      <UserIcon className="icon tiny" />
+                      Profile image
+                    </span>
+                    <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handleImagePick} />
+                  </label>
+
+                  {profileImage ? <img src={profileImage} alt="Profile preview" className="profile-preview" /> : null}
+
+                  <div className="image-actions">
+                    <button type="button" onClick={handleSaveImage} disabled={savingImage}>
+                      {savingImage ? 'Uploading...' : 'Save image'}
+                    </button>
+                    <button type="button" className="secondary-btn" onClick={() => setProfileImage('')} disabled={savingImage}>
+                      Remove selected
+                    </button>
+                  </div>
+                </div>
+
+                <form onSubmit={handleSaveJob} noValidate>
+                  <label>
+                    <span className="label-with-icon">
+                      <SettingsIcon className="icon tiny" />
+                      Your trade
+                    </span>
+                    <select value={job} onChange={(event) => setJob(event.target.value)}>
+                      <option value="">Select a trade</option>
+                      {JOB_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button type="submit" disabled={savingJob}>
+                    {savingJob ? 'Saving...' : 'Save trade'}
+                  </button>
+                </form>
+              </article>
+
+              <article className="settings-form-card">
+                <div className="section-header">
+                  <div>
+                    <h4>Security</h4>
+                    <p className="subtitle">Keep your artisan account protected.</p>
+                  </div>
+                </div>
+                <form onSubmit={handleChangePassword} noValidate>
+                  <label>
+                    <span className="label-with-icon">
+                      <LockIcon className="icon tiny" />
+                      Current password
+                    </span>
+                    <input
+                      type="password"
+                      value={currentPassword}
+                      onChange={(event) => setCurrentPassword(event.target.value)}
+                      placeholder="Current password"
+                    />
+                  </label>
+                  <label>
+                    <span className="label-with-icon">
+                      <LockIcon className="icon tiny" />
+                      New password
+                    </span>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(event) => setNewPassword(event.target.value)}
+                      placeholder="Minimum 8 characters"
+                    />
+                  </label>
+                  <button type="submit" disabled={savingPassword}>
+                    {savingPassword ? 'Updating...' : 'Change password'}
+                  </button>
+                </form>
+              </article>
             </div>
-
-            <form onSubmit={handleSaveName} noValidate>
-              <label>
-                <span className="label-with-icon">
-                  <UserIcon className="icon tiny" />
-                  Name
-                </span>
-                <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Your full name" />
-              </label>
-              <button type="submit" disabled={savingName}>
-                {savingName ? 'Saving...' : 'Save name'}
-              </button>
-            </form>
-
-            <div className="image-settings-block">
-              <label>
-                <span className="label-with-icon">
-                  <UserIcon className="icon tiny" />
-                  Profile image
-                </span>
-                <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handleImagePick} />
-              </label>
-
-              {profileImage ? <img src={profileImage} alt="Profile preview" className="profile-preview" /> : null}
-
-              <div className="image-actions">
-                <button type="button" onClick={handleSaveImage} disabled={savingImage}>
-                  {savingImage ? 'Uploading...' : 'Save image'}
-                </button>
-                <button type="button" className="secondary-btn" onClick={() => setProfileImage('')} disabled={savingImage}>
-                  Remove selected
-                </button>
-              </div>
-            </div>
-
-            <form onSubmit={handleSaveJob} noValidate>
-              <label>
-                <span className="label-with-icon">
-                  <SettingsIcon className="icon tiny" />
-                  Your trade
-                </span>
-                <select value={job} onChange={(event) => setJob(event.target.value)}>
-                  <option value="">Select a trade</option>
-                  {JOB_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button type="submit" disabled={savingJob}>
-                {savingJob ? 'Saving...' : 'Save trade'}
-              </button>
-            </form>
-
-            <form onSubmit={handleChangePassword} noValidate>
-              <label>
-                <span className="label-with-icon">
-                  <LockIcon className="icon tiny" />
-                  Current password
-                </span>
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(event) => setCurrentPassword(event.target.value)}
-                  placeholder="Current password"
-                />
-              </label>
-              <label>
-                <span className="label-with-icon">
-                  <LockIcon className="icon tiny" />
-                  New password
-                </span>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(event) => setNewPassword(event.target.value)}
-                  placeholder="Minimum 8 characters"
-                />
-              </label>
-              <button type="submit" disabled={savingPassword}>
-                {savingPassword ? 'Updating...' : 'Change password'}
-              </button>
-            </form>
           </section>
         )}
-      </DashboardLayout>
+      </ArtisanLayout>
 
       {previewProduct ? (
         <div className="settings-overlay" role="dialog" aria-modal="true" aria-label="Product details">

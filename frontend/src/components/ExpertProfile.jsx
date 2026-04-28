@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api, { withUserHeaders } from '../api'
-import DashboardLayout from './DashboardLayout'
+import ExpertLayout from '../layouts/ExpertLayout'
 import CreateProjectForm from './CreateProjectForm'
 import { LockIcon } from './Icons'
 import ReportModal from './ReportModal'
 import ProjectDetails from '../pages/ProjectDetails'
+import { EXPERT_ROUTES, resolveExpertRoute } from '../utils/roleRoutes'
 
 function normalizeProject(project) {
   return {
@@ -40,6 +41,8 @@ function normalizeMilestone(milestone) {
 
 function ExpertProfile({
   user,
+  currentPath = EXPERT_ROUTES.dashboard,
+  onNavigate,
   onLogout,
   onRequirePremium,
   onCancelSubscription,
@@ -48,7 +51,6 @@ function ExpertProfile({
   const { t } = useTranslation()
   const userId = user?.id || user?._id || ''
   const isPremiumUser = true
-  const [activeView, setActiveView] = useState('overview')
   const [projects, setProjects] = useState([])
   const [offersByProject, setOffersByProject] = useState({})
   const [applicationsByProject, setApplicationsByProject] = useState({})
@@ -61,6 +63,7 @@ function ExpertProfile({
   const [selectedProjectId, setSelectedProjectId] = useState('')
   const [notification, setNotification] = useState({ type: '', text: '' })
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
+  const activeView = useMemo(() => resolveExpertRoute(currentPath), [currentPath])
 
   const showNotification = useCallback((type, text) => {
     setNotification({ type, text })
@@ -167,23 +170,23 @@ function ExpertProfile({
 
   const openCreateView = useCallback(() => {
     if (isPremiumUser) {
-      setActiveView('create')
+      onNavigate?.(EXPERT_ROUTES.create)
       return
     }
 
     onRequirePremium?.()
     showNotification('error', t('premium.projectCreationLocked'))
-  }, [isPremiumUser, onRequirePremium, showNotification, t])
+  }, [isPremiumUser, onNavigate, onRequirePremium, showNotification, t])
 
   const handleNavigate = useCallback((nextView) => {
-    if (nextView === 'create' && !isPremiumUser) {
+    if (nextView === EXPERT_ROUTES.create && !isPremiumUser) {
       onRequirePremium?.()
       showNotification('error', t('premium.projectCreationLocked'))
       return
     }
 
-    setActiveView(nextView)
-  }, [isPremiumUser, onRequirePremium, showNotification, t])
+    onNavigate?.(nextView)
+  }, [isPremiumUser, onNavigate, onRequirePremium, showNotification, t])
 
   const selectedMilestones = milestonesByProject[selectedProjectId] || []
 
@@ -199,7 +202,7 @@ function ExpertProfile({
       [createdProject.id]: [],
     }))
     setSelectedProjectId(createdProject.id)
-    setActiveView('projects')
+    onNavigate?.(EXPERT_ROUTES.projects)
     showNotification('success', 'Project, chantier, and offer created successfully')
   }
 
@@ -280,16 +283,16 @@ function ExpertProfile({
         {notification.text}
       </div>
 
-      <DashboardLayout
+      <ExpertLayout
         user={user}
+        currentPath={currentPath}
         menuItems={menuItems}
-        activeView={activeView}
         onNavigate={handleNavigate}
         onLogout={onLogout}
         onCancelSubscription={onCancelSubscription}
         cancellingSubscription={cancellingSubscription}
       >
-        {activeView === 'overview' && (
+        {activeView === EXPERT_ROUTES.dashboard && (
           <section className="expert-dash-card">
             <div className="expert-dash-hero">
               <div>
@@ -301,7 +304,7 @@ function ExpertProfile({
                     {!isPremiumUser ? <LockIcon className="icon tiny" /> : null}
                     New project
                   </button>
-                  <button type="button" className="secondary-btn" onClick={() => setActiveView('projects')}>
+                  <button type="button" className="secondary-btn" onClick={() => onNavigate?.(EXPERT_ROUTES.projects)}>
                     Review pipeline
                   </button>
                 </div>
@@ -342,7 +345,7 @@ function ExpertProfile({
                       </div>
                       <button type="button" className="mini-btn secondary-btn" onClick={() => {
                         setSelectedProjectId(project.id)
-                        setActiveView('projects')
+                        onNavigate?.(EXPERT_ROUTES.projects)
                       }}>
                         Open
                       </button>
@@ -380,7 +383,7 @@ function ExpertProfile({
           </section>
         )}
 
-        {activeView === 'create' && (
+        {activeView === EXPERT_ROUTES.create && (
           isPremiumUser ? (
             <section className="dashboard-card">
               <div className="section-header">
@@ -418,7 +421,7 @@ function ExpertProfile({
           )
         )}
 
-        {activeView === 'projects' && (
+        {activeView === EXPERT_ROUTES.projects && (
           <section className="dashboard-card">
             <div className="section-header">
               <h3>{t('projects')}</h3>
@@ -450,7 +453,7 @@ function ExpertProfile({
                       loading={loadingMilestones}
                       creatingMilestone={creatingMilestone}
                       projectActionLoading={projectActionLoading}
-                      onBack={() => setActiveView('overview')}
+                      onBack={() => onNavigate?.(EXPERT_ROUTES.dashboard)}
                       onCreateMilestone={handleCreateMilestone}
                       onStartProject={() => handleProjectStatusAction('start')}
                       onCloseProject={() => handleProjectStatusAction('closed')}
@@ -552,7 +555,107 @@ function ExpertProfile({
           </section>
         )}
 
-        {activeView === 'settings' && (
+        {activeView === EXPERT_ROUTES.quotes && (
+          <section className="dashboard-card">
+            <div className="section-header">
+              <h3>{t('quotes')}</h3>
+              <p className="subtitle">Validate quote requests and move approved purchases forward by project.</p>
+            </div>
+
+            {loadingProjects ? (
+              <p className="subtitle">Loading quotes...</p>
+            ) : projects.length ? (
+              <div className="space-y-6">
+                <div className="project-toolbar">
+                  <select value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>
+                    {projects.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.title}
+                      </option>
+                    ))}
+                  </select>
+                  <button type="button" className="secondary-btn" onClick={() => onNavigate?.(EXPERT_ROUTES.projects)}>
+                    Open full project board
+                  </button>
+                </div>
+
+                {selectedProject ? (
+                  <ProjectDetails
+                    role="expert"
+                    userId={userId}
+                    project={selectedProject}
+                    milestones={selectedMilestones}
+                    workLogs={[]}
+                    loading={loadingMilestones}
+                    creatingMilestone={creatingMilestone}
+                    projectActionLoading={projectActionLoading}
+                    initialTab="quotes"
+                    onBack={() => onNavigate?.(EXPERT_ROUTES.projects)}
+                    onCreateMilestone={handleCreateMilestone}
+                    onStartProject={() => handleProjectStatusAction('start')}
+                    onCloseProject={() => handleProjectStatusAction('closed')}
+                    onFinishProject={() => handleProjectStatusAction('finished')}
+                    onProjectRefresh={() => Promise.all([loadProjects(), loadProjectDetails(selectedProjectId)])}
+                  />
+                ) : null}
+              </div>
+            ) : (
+              <p className="subtitle">No projects yet. Create one to start reviewing quotes.</p>
+            )}
+          </section>
+        )}
+
+        {activeView === EXPERT_ROUTES.invoices && (
+          <section className="dashboard-card">
+            <div className="section-header">
+              <h3>{t('invoices')}</h3>
+              <p className="subtitle">Track generated invoices for approved project purchases.</p>
+            </div>
+
+            {loadingProjects ? (
+              <p className="subtitle">Loading invoices...</p>
+            ) : projects.length ? (
+              <div className="space-y-6">
+                <div className="project-toolbar">
+                  <select value={selectedProjectId} onChange={(event) => setSelectedProjectId(event.target.value)}>
+                    {projects.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.title}
+                      </option>
+                    ))}
+                  </select>
+                  <button type="button" className="secondary-btn" onClick={() => onNavigate?.(EXPERT_ROUTES.projects)}>
+                    Open full project board
+                  </button>
+                </div>
+
+                {selectedProject ? (
+                  <ProjectDetails
+                    role="expert"
+                    userId={userId}
+                    project={selectedProject}
+                    milestones={selectedMilestones}
+                    workLogs={[]}
+                    loading={loadingMilestones}
+                    creatingMilestone={creatingMilestone}
+                    projectActionLoading={projectActionLoading}
+                    initialTab="invoices"
+                    onBack={() => onNavigate?.(EXPERT_ROUTES.projects)}
+                    onCreateMilestone={handleCreateMilestone}
+                    onStartProject={() => handleProjectStatusAction('start')}
+                    onCloseProject={() => handleProjectStatusAction('closed')}
+                    onFinishProject={() => handleProjectStatusAction('finished')}
+                    onProjectRefresh={() => Promise.all([loadProjects(), loadProjectDetails(selectedProjectId)])}
+                  />
+                ) : null}
+              </div>
+            ) : (
+              <p className="subtitle">No projects yet. Create one to start generating invoices.</p>
+            )}
+          </section>
+        )}
+
+        {activeView === EXPERT_ROUTES.settings && (
           <section className="dashboard-card">
             <div className="section-header">
               <h3>Expert account</h3>
@@ -580,7 +683,7 @@ function ExpertProfile({
             </div>
           </section>
         )}
-      </DashboardLayout>
+      </ExpertLayout>
 
       <ReportModal
         isOpen={isReportModalOpen}

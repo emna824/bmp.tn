@@ -1,8 +1,8 @@
-import { BmpLogo, CloseIcon } from './Icons'
+import { BmpLogo } from './Icons'
 
-function Sidebar({ items, activeView, isOpen, onNavigate, onClose }) {
+function Sidebar({ items, activeView, onNavigate }) {
   return (
-    <aside className={`admin-sidebar ${isOpen ? 'open' : ''}`}>
+    <aside className="admin-sidebar">
       <div className="admin-sidebar-head">
         <div className="admin-brand">
           <BmpLogo className="admin-brand-logo" />
@@ -11,14 +11,6 @@ function Sidebar({ items, activeView, isOpen, onNavigate, onClose }) {
             <p>Admin moderation</p>
           </div>
         </div>
-        <button
-          type="button"
-          className="admin-sidebar-close"
-          onClick={onClose}
-          aria-label="Close sidebar"
-        >
-          <CloseIcon className="icon" />
-        </button>
       </div>
 
       <nav className="admin-sidebar-nav" aria-label="Admin sections">

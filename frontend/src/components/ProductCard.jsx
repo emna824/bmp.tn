@@ -62,6 +62,16 @@ function ProductCard({
           ) : null}
         </div>
         <div className="market-card-actions">
+          {onDownload ? (
+            <button
+              type="button"
+              className="secondary-btn mini-btn"
+              disabled={downloading}
+              onClick={onDownload}
+            >
+              {downloading ? 'Downloading...' : 'Download PDF'}
+            </button>
+          ) : null}
           {onPayNow ? (
             <button
               type="button"
@@ -72,9 +82,11 @@ function ProductCard({
               {paying ? 'Redirecting...' : 'Pay now'}
             </button>
           ) : null}
-          <button type="button" className="secondary-btn mini-btn report-trigger-btn" onClick={onOpenReport}>
-            Report
-          </button>
+          {onOpenReport ? (
+            <button type="button" className="secondary-btn mini-btn report-trigger-btn" onClick={onOpenReport}>
+              Report
+            </button>
+          ) : null}
           <button type="button" className="secondary-btn mini-btn" onClick={onViewDetails}>
             View details
           </button>

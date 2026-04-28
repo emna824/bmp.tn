@@ -1,10 +1,27 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import LanguageSwitcher from './LanguageSwitcher'
-import SubscriptionStatusBadge from './SubscriptionStatusBadge'
 import ThemeToggle from './ThemeToggle'
-import { BmpLogo, LogoutIcon, SettingsIcon } from './Icons'
 import NotificationBell from './NotificationBell'
+import { BrandMark, LogoutIcon, SearchIcon, SettingsIcon } from './Icons'
+
+function getUserPlanLabel(user, t) {
+  if (user?.role === 'artisan') {
+    return user?.isPremium
+      ? t('premium.premiumArtisanLabel', { defaultValue: 'Premium Artisan Plan' })
+      : t('premium.standardArtisanLabel', { defaultValue: 'Standard Artisan Plan' })
+  }
+
+  if (user?.role === 'expert') {
+    return t('expert.workspaceLabel', { defaultValue: 'Expert Workspace' })
+  }
+
+  if (user?.role === 'manufacturer') {
+    return t('manufacturer.workspaceLabel', { defaultValue: 'Manufacturer Workspace' })
+  }
+
+  return t('dashboardUi.roleFallback', { defaultValue: 'Workspace' })
+}
 
 function DashboardLayout({
   user,
@@ -14,10 +31,12 @@ function DashboardLayout({
   onLogout,
   onCancelSubscription,
   cancellingSubscription = false,
+  settingsTarget = '',
   children,
 }) {
   const { t } = useTranslation()
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const menuRef = useRef(null)
 
   const userInitials = useMemo(() => {
     const raw = user?.name || t('common.guest')
@@ -26,42 +45,71 @@ function DashboardLayout({
     return letters || 'U'
   }, [t, user?.name])
 
+  const userPlanLabel = useMemo(() => getUserPlanLabel(user, t), [t, user])
+
+  useEffect(() => {
+    if (!isUserMenuOpen) return undefined
+
+    const handlePointerDown = (event) => {
+      if (!menuRef.current?.contains(event.target)) {
+        setIsUserMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    return () => document.removeEventListener('mousedown', handlePointerDown)
+  }, [isUserMenuOpen])
+
   const handleNavigate = (key) => {
-    onNavigate(key)
+    onNavigate?.(key)
     setIsUserMenuOpen(false)
   }
 
   const handleLogout = () => {
     setIsUserMenuOpen(false)
-    onLogout()
+    onLogout?.()
   }
 
   const handleSettings = () => {
-    handleNavigate('settings')
+    const fallbackTarget = menuItems.find((item) => item.key === settingsTarget)?.key || settingsTarget || activeView
+    handleNavigate(fallbackTarget)
   }
 
   return (
     <div className="dashboard-shell">
       <aside className="dashboard-sidebar">
         <div className="sidebar-brand">
-          <BmpLogo className="sidebar-brand-icon" />
-          <div>
-            <strong>BMP.tn</strong>
-            <p>{t('dashboardUi.constructionPlatform')}</p>
+          <BrandMark className="sidebar-brand-mark" />
+          <div className="sidebar-brand-copy">
+            <strong>BMP</strong>
+            <p>Industrial Elegance</p>
           </div>
         </div>
-        <nav className="sidebar-nav" aria-label={t('nav.dashboardSections')}>
-          {menuItems.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              className={`sidebar-item ${activeView === item.key ? 'active' : ''}`}
-              onClick={() => handleNavigate(item.key)}
-            >
-              <span className="sidebar-item-label">{item.label}</span>
-            </button>
-          ))}
+
+        <nav className="sidebar-nav" aria-label={t('nav.dashboardSections', { defaultValue: 'Dashboard sections' })}>
+          {menuItems.map((item) => {
+            const Icon = item.icon
+            const isActive = activeView === item.key
+
+            return (
+              <button
+                key={item.key}
+                type="button"
+                className={`sidebar-item ${isActive ? 'active' : ''}`}
+                onClick={() => handleNavigate(item.key)}
+              >
+                <span className="sidebar-item-inner">
+                  <span className="sidebar-item-icon">{Icon ? <Icon className="icon" /> : null}</span>
+                  <span className="sidebar-item-copy">
+                    <span>{item.label}</span>
+                    {item.subtitle ? <small>{item.subtitle}</small> : null}
+                  </span>
+                </span>
+              </button>
+            )
+          })}
         </nav>
+
         <div className="sidebar-footer">
           <button type="button" className="sidebar-logout" onClick={handleLogout}>
             <LogoutIcon className="icon tiny" />
@@ -69,14 +117,31 @@ function DashboardLayout({
           </button>
         </div>
       </aside>
+
       <div className="dashboard-main">
         <header className="dashboard-header">
-          <div className="header-left" />
+          <div className="header-left">
+            <label className="dashboard-search">
+              <SearchIcon className="icon" />
+              <input
+                type="search"
+                className="dashboard-search-input"
+                placeholder={t('dashboardUi.searchPlaceholder', {
+                  defaultValue: 'Search projects, quotes, invoices...',
+                })}
+                aria-label={t('dashboardUi.searchPlaceholder', {
+                  defaultValue: 'Search projects, quotes, invoices...',
+                })}
+              />
+            </label>
+          </div>
+
           <div className="header-actions">
-            <LanguageSwitcher />
             <ThemeToggle />
+            <LanguageSwitcher />
             <NotificationBell user={user} />
-            <div className={`header-user ${isUserMenuOpen ? 'open' : ''}`}>
+
+            <div ref={menuRef} className={`header-user ${isUserMenuOpen ? 'open' : ''}`}>
               <button
                 type="button"
                 className="header-user-btn"
@@ -87,20 +152,23 @@ function DashboardLayout({
                 <div className="header-avatar">
                   {user?.profileImage ? <img src={user.profileImage} alt="Profile" /> : <span>{userInitials}</span>}
                 </div>
+
                 <div className="header-user-meta">
                   <strong>{user?.name || t('common.guest')}</strong>
-                  <small>{(user?.role || t('dashboardUi.roleFallback')).toUpperCase()}</small>
-                  <SubscriptionStatusBadge role={user?.role} isPremium={user?.isPremium} />
+                  <small>{userPlanLabel}</small>
                 </div>
+
                 <span className="header-caret" aria-hidden="true">
-                  {isUserMenuOpen ? '▴' : '▾'}
+                  {isUserMenuOpen ? '^' : 'v'}
                 </span>
               </button>
+
               <div className="header-user-menu" role="menu">
                 <button type="button" onClick={handleSettings} className="header-menu-item" role="menuitem">
                   <SettingsIcon className="icon tiny" />
                   {t('common.settings')}
                 </button>
+
                 {user?.role === 'artisan' && user?.isPremium ? (
                   <button
                     type="button"
@@ -115,6 +183,7 @@ function DashboardLayout({
                       : t('premium.cancelButton', { defaultValue: 'Cancel subscription' })}
                   </button>
                 ) : null}
+
                 <button type="button" onClick={handleLogout} className="header-menu-item" role="menuitem">
                   <LogoutIcon className="icon tiny" />
                   {t('logout')}
@@ -123,6 +192,7 @@ function DashboardLayout({
             </div>
           </div>
         </header>
+
         <div className="dashboard-main-content">{children}</div>
       </div>
     </div>

@@ -33,14 +33,26 @@ function ReportCard({ report, isBusy, onAccept, onReject }) {
           </div>
           <div>
             <span>Target</span>
-            <strong>
-              {report.target?.name ||
-                report.target?.email ||
-                report.target?.documentName ||
-                `#${report.targetId}`}
-            </strong>
+            <strong>{report.targetLabel || 'Reported target'}</strong>
           </div>
         </div>
+
+        {report.targetType === 'product' ? (
+          <div className="admin-card-section">
+            <p className="admin-card-label">Product details</p>
+            <p>{report.target?.description || 'No product description is available for this report.'}</p>
+            <div className="admin-meta-grid">
+              <div>
+                <span>Price</span>
+                <strong>{report.target?.price !== null && report.target?.price !== undefined ? `${Number(report.target.price).toFixed(2)} TND` : 'Not available'}</strong>
+              </div>
+              <div>
+                <span>Document</span>
+                <strong>{report.target?.documentName || 'No document linked'}</strong>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="admin-card-actions">

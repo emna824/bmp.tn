@@ -2,6 +2,8 @@ import ManufacturerDashboard from '../pages/manufacturer/ManufacturerDashboard'
 
 function ManufacturerProfile({
   user,
+  currentPath,
+  onNavigate,
   onLogout,
   onProfileUpdate,
   onCancelSubscription,
@@ -10,6 +12,8 @@ function ManufacturerProfile({
   return (
     <ManufacturerDashboard
       user={user}
+      currentPath={currentPath}
+      onNavigate={onNavigate}
       onLogout={onLogout}
       onProfileUpdate={onProfileUpdate}
       onCancelSubscription={onCancelSubscription}

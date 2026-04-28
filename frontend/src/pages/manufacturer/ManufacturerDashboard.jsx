@@ -1,20 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import api from '../../api'
-import Sidebar from '../../components/manufacturer/Sidebar'
-import Topbar from '../../components/manufacturer/Topbar'
+import ManufacturerLayout from '../../layouts/ManufacturerLayout'
 import ProductCard from '../../components/manufacturer/ProductCard'
 import AddProductPage from './AddProductPage'
 import EditProductPage from './EditProductPage'
+import OrdersPage from './OrdersPage'
 import ProductsPage from './ProductsPage'
 import ProfilePage from './ProfilePage'
 import { formatProductPrice } from '../../utils/adminDashboard'
-
-const NAV_ITEMS = [
-  { key: 'dashboard', label: 'Dashboard' },
-  { key: 'products', label: 'My Products' },
-  { key: 'add', label: 'Add Product' },
-  { key: 'profile', label: 'Profile' },
-]
+import {
+  extractManufacturerEditProductId,
+  getManufacturerNavRoute,
+  MANUFACTURER_ROUTES,
+  resolveManufacturerRoute,
+} from '../../utils/roleRoutes'
 
 function normalizeProduct(product = {}) {
   return {
@@ -60,13 +59,14 @@ async function fetchManufacturerProducts(manufacturerId) {
 
 function ManufacturerDashboard({
   user,
+  currentPath = MANUFACTURER_ROUTES.dashboard,
+  onNavigate,
   onLogout,
   onProfileUpdate,
   onCancelSubscription,
   cancellingSubscription = false,
 }) {
   const manufacturerId = user?.id || user?._id || ''
-  const [activeView, setActiveView] = useState('dashboard')
   const [products, setProducts] = useState([])
   const [profile, setProfile] = useState({
     ...user,
@@ -78,6 +78,8 @@ function ManufacturerDashboard({
   const [savingProfile, setSavingProfile] = useState(false)
   const [editingProductId, setEditingProductId] = useState('')
   const [notification, setNotification] = useState({ show: false, type: '', text: '' })
+  const activeView = useMemo(() => resolveManufacturerRoute(currentPath), [currentPath])
+  const activeNavPath = useMemo(() => getManufacturerNavRoute(currentPath), [currentPath])
 
   const showNotification = useCallback((type, text) => {
     setNotification({ show: true, type, text })
@@ -135,6 +137,19 @@ function ManufacturerDashboard({
     }))
   }, [user])
 
+  useEffect(() => {
+    const routeProductId = extractManufacturerEditProductId(currentPath)
+
+    if (routeProductId) {
+      setEditingProductId(routeProductId)
+      return
+    }
+
+    if (activeView !== MANUFACTURER_ROUTES.addProduct) {
+      setEditingProductId('')
+    }
+  }, [activeView, currentPath])
+
   const handleCreateProduct = async (payload) => {
     setSubmittingProduct(true)
     try {
@@ -172,7 +187,7 @@ function ManufacturerDashboard({
       }
 
       showNotification('success', response.data?.message || 'Product added successfully')
-      setActiveView('products')
+      onNavigate?.(MANUFACTURER_ROUTES.products)
     } catch (error) {
       showNotification('error', error.response?.data?.message || 'Failed to add product')
     } finally {
@@ -203,8 +218,7 @@ function ManufacturerDashboard({
         current.map((product) => (product.id === editingProductId ? updatedProduct : product)),
       )
       showNotification('success', response.data?.message || 'Product updated successfully')
-      setEditingProductId('')
-      setActiveView('products')
+      onNavigate?.(MANUFACTURER_ROUTES.products)
     } catch (error) {
       showNotification(
         'error',
@@ -275,7 +289,6 @@ function ManufacturerDashboard({
     () => products.find((product) => product.id === editingProductId) || null,
     [products, editingProductId],
   )
-
   const quickStats = [
     {
       label: 'Total products',
@@ -302,7 +315,7 @@ function ManufacturerDashboard({
   ]
 
   const renderContent = () => {
-    if (activeView === 'products') {
+    if (activeView === MANUFACTURER_ROUTES.products) {
       return (
         <ProductsPage
           products={products}
@@ -310,26 +323,26 @@ function ManufacturerDashboard({
           deletingProductId={deletingProductId}
           onEdit={(product) => {
             setEditingProductId(product.id)
-            setActiveView('edit')
+            onNavigate?.(`/manufacturer/products/${product.id}/edit`)
           }}
           onDelete={handleDeleteProduct}
-          onAddProduct={() => setActiveView('add')}
+          onAddProduct={() => onNavigate?.(MANUFACTURER_ROUTES.addProduct)}
         />
       )
     }
 
-    if (activeView === 'add') {
+    if (activeView === MANUFACTURER_ROUTES.addProduct) {
       return (
         <AddProductPage
           submitting={submittingProduct}
           onSubmit={handleCreateProduct}
-          onCancel={() => setActiveView('products')}
+          onCancel={() => onNavigate?.(MANUFACTURER_ROUTES.products)}
           userId={manufacturerId}
         />
       )
     }
 
-    if (activeView === 'edit') {
+    if (activeView === 'manufacturer-edit-product') {
       return (
         <EditProductPage
           product={selectedProduct}
@@ -337,14 +350,18 @@ function ManufacturerDashboard({
           onSubmit={handleUpdateProduct}
           onCancel={() => {
             setEditingProductId('')
-            setActiveView('products')
+            onNavigate?.(MANUFACTURER_ROUTES.products)
           }}
           userId={manufacturerId}
         />
       )
     }
 
-    if (activeView === 'profile') {
+    if (activeView === MANUFACTURER_ROUTES.orders) {
+      return <OrdersPage products={products} />
+    }
+
+    if (activeView === MANUFACTURER_ROUTES.profile) {
       return <ProfilePage profile={profile} saving={savingProfile} onSave={handleSaveProfile} />
     }
 
@@ -374,7 +391,7 @@ function ManufacturerDashboard({
               <p className="manufacturer-page-eyebrow">Latest Products</p>
               <h3>Recently added items</h3>
             </div>
-            <button type="button" className="secondary-btn" onClick={() => setActiveView('products')}>
+            <button type="button" className="secondary-btn" onClick={() => onNavigate?.(MANUFACTURER_ROUTES.products)}>
               View all products
             </button>
           </div>
@@ -390,7 +407,7 @@ function ManufacturerDashboard({
                   deleting={deletingProductId === product.id}
                   onEdit={() => {
                     setEditingProductId(product.id)
-                    setActiveView('edit')
+                    onNavigate?.(`/manufacturer/products/${product.id}/edit`)
                   }}
                   onDelete={() => handleDeleteProduct(product)}
                 />
@@ -405,7 +422,7 @@ function ManufacturerDashboard({
   }
 
   return (
-    <div className="manufacturer-shell">
+    <div className="manufacturer-dashboard">
       <div
         className={`notification ${notification.show ? 'show' : ''} ${notification.type || ''}`}
         role="status"
@@ -414,18 +431,20 @@ function ManufacturerDashboard({
         {notification.text}
       </div>
 
-      <Sidebar items={NAV_ITEMS} activeView={activeView} onNavigate={setActiveView} />
-
-      <div className="manufacturer-shell-main">
-        <Topbar
-          manufacturerName={profile?.name || user?.name}
-          isPremium={profile?.isPremium ?? user?.isPremium}
-          onCancelSubscription={onCancelSubscription}
-          cancellingSubscription={cancellingSubscription}
-          onLogout={onLogout}
-        />
-        <main className="manufacturer-shell-content">{renderContent()}</main>
-      </div>
+      <ManufacturerLayout
+        user={{
+          ...profile,
+          role: profile?.role || user?.role || 'manufacturer',
+          name: profile?.name || user?.name || profile?.companyName || 'Manufacturer',
+        }}
+        activePath={activeNavPath}
+        onNavigate={onNavigate}
+        onCancelSubscription={onCancelSubscription}
+        cancellingSubscription={cancellingSubscription}
+        onLogout={onLogout}
+      >
+        {renderContent()}
+      </ManufacturerLayout>
     </div>
   )
 }

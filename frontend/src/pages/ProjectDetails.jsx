@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { createElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api, { withUserHeaders } from '../api'
+import { InfoIcon, InvoiceIcon, MarketplaceIcon, ProjectIcon, QuoteIcon, SearchIcon } from '../components/Icons'
 import MilestoneCard from '../components/MilestoneCard'
 import ReportModal from '../components/ReportModal'
 import StatusBadge, { formatDisplayDate } from '../components/StatusBadge'
@@ -78,11 +79,12 @@ function ProjectDetails(props) {
     onCloseProject,
     onFinishProject,
     onProjectRefresh,
+    initialTab = 'overview',
   } = props
 
   const { t } = useTranslation()
   const projectId = getId(project)
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState(initialTab)
   const [marketplaceProducts, setMarketplaceProducts] = useState([])
   const [quotes, setQuotes] = useState([])
   const [invoices, setInvoices] = useState([])
@@ -99,6 +101,7 @@ function ProjectDetails(props) {
   const [feedback, setFeedback] = useState({ type: '', text: '' })
   const [invoiceFilters, setInvoiceFilters] = useState({ dateFrom: '', dateTo: '', status: '', sort: 'newest' })
   const [milestoneForm, setMilestoneForm] = useState({ title: '', description: '', artisanId: '', startDate: '', endDate: '' })
+  const [marketplaceSearch, setMarketplaceSearch] = useState('')
   const projectType = String(project?.type || 'expert')
   const projectOwnerId = getId(project?.ownerId) || getId(project?.expertId)
   const isSoloProject = projectType === 'solo'
@@ -108,11 +111,11 @@ function ProjectDetails(props) {
   const marketplaceLocked = ['finished', 'closed'].includes(String(project?.status || ''))
 
   useEffect(() => {
-    setActiveTab('overview')
+    setActiveTab(initialTab)
     setQuoteProduct(null)
     setQuoteQuantity(1)
     setFeedback({ type: '', text: '' })
-  }, [projectId])
+  }, [initialTab, projectId])
 
   useEffect(() => {
     if (!feedback.text) return undefined
@@ -201,6 +204,21 @@ function ProjectDetails(props) {
     invoices.forEach((invoice) => ids.add(String(getId(invoice?.quoteId))))
     return ids
   }, [invoices])
+
+  const filteredProjectMarketplaceProducts = useMemo(() => {
+    const searchTerm = marketplaceSearch.trim().toLowerCase()
+
+    if (!searchTerm) {
+      return marketplaceProducts
+    }
+
+    return marketplaceProducts.filter((product) =>
+      [product.name, product.description, product.manufacturer?.name]
+        .some((value) => String(value || '').toLowerCase().includes(searchTerm)),
+    )
+  }, [marketplaceProducts, marketplaceSearch])
+
+  const previewQuotes = useMemo(() => quotes.slice(0, 5), [quotes])
 
   const filteredInvoices = useMemo(() => {
     const nextInvoices = invoices.filter((invoice) => {
@@ -309,20 +327,29 @@ function ProjectDetails(props) {
 
   if (!project) {
     return (
-      <section className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
+      <section className="project-details-shell rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
         <p className="text-sm text-slate-500 dark:text-slate-300">{t('project.detailsEmpty')}</p>
       </section>
     )
   }
 
   return (
-    <section className="space-y-6 transition-colors duration-300">
-      <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
+    <section className="project-details-shell space-y-6 transition-colors duration-300">
+      <div className="project-details-panel rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
+        <div className="project-breadcrumbs">
+          <button type="button" onClick={onBack} className="project-breadcrumb-back">
+            {t('common.back')}
+          </button>
+          <span className="project-breadcrumb-link">
+            <ProjectIcon className="icon tiny" />
+            {t('projects')}
+          </span>
+          <span className="project-breadcrumb-separator">/</span>
+          <span className="project-breadcrumb-current">{project.projectName || project.title}</span>
+        </div>
+
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <button type="button" onClick={onBack} className="mb-4 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-all duration-300 hover:border-orange-200 hover:bg-orange-50 dark:border-slate-700 dark:text-slate-300 dark:hover:border-orange-500/40 dark:hover:bg-orange-500/10">
-              {t('common.back')}
-            </button>
             <div className="flex flex-wrap items-center gap-3">
               <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">{project.projectName || project.title}</h2>
               <StatusBadge status={project.status} />
@@ -355,15 +382,25 @@ function ProjectDetails(props) {
           <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800/80"><p className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">{t('common.milestones')}</p><p className="mt-1 font-medium text-slate-900 dark:text-white">{milestones.length}</p></div>
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-4 border-b border-slate-200 pb-2 dark:border-slate-700">
+        <div className="project-detail-tabs mt-6 flex flex-wrap gap-4 border-b border-slate-200 pb-2 dark:border-slate-700">
           {[
-            ['overview', 'Overview'],
-            ['marketplace', 'Marketplace'],
-            ['quotes', t('quotes')],
-            ['invoices', t('invoices')],
-          ].map(([key, label]) => (
-            <button key={key} type="button" onClick={() => setActiveTab(key)} className={`border-b-2 px-1 pb-3 text-sm font-semibold transition-all duration-300 ${activeTab === key ? 'border-orange-500 text-orange-600 dark:text-orange-300' : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white'}`}>
-              {label}
+            { key: 'overview', label: 'Overview', icon: InfoIcon },
+            { key: 'marketplace', label: 'Marketplace', icon: MarketplaceIcon },
+            { key: 'quotes', label: t('quotes'), icon: QuoteIcon },
+            { key: 'invoices', label: t('invoices'), icon: InvoiceIcon },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key)}
+              className={`project-detail-tab border-b-2 px-1 pb-3 text-sm font-semibold transition-all duration-300 ${
+                activeTab === tab.key
+                  ? 'border-orange-500 text-orange-600 dark:text-orange-300'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white'
+              }`}
+            >
+              {createElement(tab.icon, { className: 'icon tiny' })}
+              <span>{tab.label}</span>
             </button>
           ))}
         </div>
@@ -378,7 +415,7 @@ function ProjectDetails(props) {
       {activeTab === 'overview' ? (
         <>
           {canCreateMilestones ? (
-            <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
+            <div className="project-section-panel rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
               <div className="mb-4"><h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('project.createMilestone')}</h3><p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{isSoloProject ? t('project.createSoloMilestoneDescription', { defaultValue: 'Create personal tasks and milestones for your solo project.' }) : t('project.createMilestoneDescription')}</p></div>
               <form className="grid gap-4 md:grid-cols-2" onSubmit={submitMilestone}>
                 <input type="text" value={milestoneForm.title} onChange={(event) => setMilestoneForm((current) => ({ ...current, title: event.target.value }))} placeholder={t('project.milestoneTitle')} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition-all duration-300 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-orange-400 dark:focus:ring-orange-500/20" />
@@ -400,7 +437,7 @@ function ProjectDetails(props) {
             </div>
           ) : null}
 
-          <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
+          <div className="project-section-panel rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
             <div className="mb-4"><h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('common.milestones')}</h3><p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{role === 'expert' ? t('project.reviewTasks') : t('project.trackTasks')}</p></div>
             {loading ? (
               <p className="text-sm text-slate-500 dark:text-slate-300">{t('project.loadingMilestones')}</p>
@@ -430,8 +467,23 @@ function ProjectDetails(props) {
       ) : null}
 
       {activeTab === 'marketplace' ? (
-        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
-          <div className="mb-4"><h3 className="text-lg font-semibold text-slate-900 dark:text-white">Marketplace</h3><p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Browse products from manufacturers and request quotes inside this project.</p></div>
+        <div className="project-section-panel rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
+          <div className="project-marketplace-toolbar mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Project Materials</h3>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Browse products from manufacturers and request quotes inside this project.</p>
+            </div>
+            <label className="project-marketplace-search">
+              <SearchIcon className="icon" />
+              <input
+                type="search"
+                value={marketplaceSearch}
+                onChange={(event) => setMarketplaceSearch(event.target.value)}
+                placeholder="Search materials..."
+                aria-label="Search materials"
+              />
+            </label>
+          </div>
           {marketplaceLocked ? (
             <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
               Quotes are disabled because this project is {String(project.status || '').replace(/_/g, ' ')}.
@@ -439,9 +491,9 @@ function ProjectDetails(props) {
           ) : null}
           {loadingMarketplace ? (
             <p className="text-sm text-slate-500 dark:text-slate-300">{t('common.loading')}</p>
-          ) : marketplaceProducts.length ? (
+          ) : filteredProjectMarketplaceProducts.length ? (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {marketplaceProducts.map((product) => {
+              {filteredProjectMarketplaceProducts.map((product) => {
                 const outOfStock = Number(product.stock) <= 0
                 return (
                   <article key={product.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-md transition-all duration-300 hover:shadow-lg dark:border-slate-700 dark:bg-slate-800/80 dark:shadow-slate-950/20">
@@ -463,11 +515,43 @@ function ProjectDetails(props) {
               })}
             </div>
           ) : <p className="text-sm text-slate-500 dark:text-slate-300">No products are available yet.</p>}
+
+          {previewQuotes.length ? (
+            <div className="project-quote-preview mt-10">
+              <div className="mb-4">
+                <h4 className="text-lg font-semibold text-slate-900 dark:text-white">Recent Quotes (Preview)</h4>
+              </div>
+              <div className="table-wrap">
+                <table className="artisan-table condensed">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Supplier</th>
+                      <th>Date</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {previewQuotes.map((quote) => (
+                      <tr key={quote.id}>
+                        <td>{String(quote.id || '').slice(-8) || '-'}</td>
+                        <td>{quote?.manufacturerId?.name || 'Manufacturer'}</td>
+                        <td>{formatDisplayDate(quote.createdAt)}</td>
+                        <td>
+                          <span className={`status-pill status-${quote.status}`}>{quote.status}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
       {activeTab === 'quotes' ? (
-        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
+        <div className="project-section-panel rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
           <div className="mb-4"><h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('quotes')}</h3><p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{role === 'expert' ? 'Review and validate quote requests for this project.' : isSoloProject ? 'Request materials, review accepted quotes, and confirm purchases inside your solo project.' : 'Track your requested quotes and confirm accepted purchases.'}</p></div>
           {loadingQuotes ? (
             <p className="text-sm text-slate-500 dark:text-slate-300">{t('common.loading')}</p>
@@ -507,7 +591,7 @@ function ProjectDetails(props) {
       ) : null}
 
       {activeTab === 'invoices' ? (
-        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
+        <div className="project-section-panel rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
           <div className="mb-4"><h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('invoices')}</h3><p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Archive and review purchase invoices inside this project.</p></div>
           <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <input type="date" value={invoiceFilters.dateFrom} onChange={(event) => setInvoiceFilters((current) => ({ ...current, dateFrom: event.target.value }))} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition-all duration-300 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-orange-400 dark:focus:ring-orange-500/20" />

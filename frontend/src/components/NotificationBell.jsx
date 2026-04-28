@@ -110,7 +110,16 @@ function NotificationBell({ user }) {
   }
 
   if (!isArtisan || !artisanId) {
-    return null
+    return (
+      <button
+        type="button"
+        className="header-icon-btn notification-trigger"
+        aria-label="Notifications"
+        title="Notifications"
+      >
+        <BellIcon className="icon" />
+      </button>
+    )
   }
 
   return (
