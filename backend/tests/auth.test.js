@@ -70,7 +70,7 @@ describe('POST /api/auth/login', () => {
     assertUserNotBanned.mockResolvedValue({ ok: true, user: mockUser });
   });
 
-  it('returns 200 and a token for a valid login', async () => {
+  it('returns 200 with the logged-in user for a valid login', async () => {
     User.findOne.mockResolvedValue(mockUser);
     bcrypt.compare.mockResolvedValue(true);
 
@@ -82,7 +82,12 @@ describe('POST /api/auth/login', () => {
     expect(response.status).toBe(200);
     expect(User.findOne).toHaveBeenCalledWith({ email: mockUser.email });
     expect(bcrypt.compare).toHaveBeenCalledWith('password123', mockUser.password);
-    expect(response.body).toHaveProperty('token');
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        message: 'Login successful',
+        user: expect.any(Object),
+      })
+    );
   });
 
   it('returns 401 for an invalid password', async () => {
@@ -102,7 +107,7 @@ describe('POST /api/auth/login', () => {
     );
   });
 
-  it('returns 404 when the user does not exist', async () => {
+  it('returns 401 when the user does not exist', async () => {
     User.findOne.mockResolvedValue(null);
 
     const response = await request(app).post('/api/auth/login').send({
@@ -110,7 +115,7 @@ describe('POST /api/auth/login', () => {
       password: 'password123',
     });
 
-    expect(response.status).toBe(404);
+    expect(response.status).toBe(401);
     expect(response.body).toEqual(
       expect.objectContaining({
         message: expect.any(String),
