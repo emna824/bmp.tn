@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const fs = require('fs');
 const Message = require('../models/message');
 const Project = require('../models/project');
 
@@ -75,6 +76,60 @@ async function populateMessage(messageId) {
   return Message.findById(messageId).populate(MESSAGE_POPULATE);
 }
 
+function resolveMessageReceiver(project, user, receiverId = '') {
+  const assignedArtisanIds = listAssignedArtisanIds(project);
+
+  if (user.role === 'artisan') {
+    if (!project.expertId) {
+      return { error: { status: 400, message: 'This project has no expert chat recipient yet' } };
+    }
+
+    return { receiverId: project.expertId };
+  }
+
+  if (user.role === 'expert') {
+    const normalizedReceiverId = String(receiverId || '').trim();
+
+    if (normalizedReceiverId) {
+      if (!isValidObjectId(normalizedReceiverId)) {
+        return { error: { status: 400, message: 'receiverId must be a valid user id' } };
+      }
+
+      if (!assignedArtisanIds.includes(normalizedReceiverId)) {
+        return {
+          error: { status: 400, message: 'receiverId must belong to an assigned artisan on this project' },
+        };
+      }
+
+      return { receiverId: normalizedReceiverId };
+    }
+
+    if (assignedArtisanIds.length === 1) {
+      return { receiverId: assignedArtisanIds[0] };
+    }
+
+    if (!assignedArtisanIds.length) {
+      return {
+        error: { status: 400, message: 'No assigned artisan is available for this project chat yet' },
+      };
+    }
+
+    return { receiverId: null };
+  }
+
+  return { error: { status: 403, message: 'Only artisans and experts can send project messages' } };
+}
+
+function buildAudioUrl(req, filename) {
+  return `${req.protocol}://${req.get('host')}/uploads/messages/audio/${filename}`;
+}
+
+function deleteUploadedFile(file) {
+  if (!file?.path) return;
+
+  fs.promises.unlink(file.path).catch(() => {});
+}
+
 exports.listProjectMessages = async (req, res) => {
   try {
     const { projectId } = req.params;
@@ -129,41 +184,15 @@ exports.createMessage = async (req, res) => {
       return res.status(access.error.status).json({ message: access.error.message });
     }
 
-    const assignedArtisanIds = listAssignedArtisanIds(access.project);
-    let nextReceiverId = null;
-
-    if (req.user.role === 'artisan') {
-      if (!access.project.expertId) {
-        return res.status(400).json({ message: 'This project has no expert chat recipient yet' });
-      }
-
-      nextReceiverId = access.project.expertId;
-    } else if (req.user.role === 'expert') {
-      const normalizedReceiverId = String(receiverId || '').trim();
-
-      if (normalizedReceiverId) {
-        if (!isValidObjectId(normalizedReceiverId)) {
-          return res.status(400).json({ message: 'receiverId must be a valid user id' });
-        }
-
-        if (!assignedArtisanIds.includes(normalizedReceiverId)) {
-          return res.status(400).json({ message: 'receiverId must belong to an assigned artisan on this project' });
-        }
-
-        nextReceiverId = normalizedReceiverId;
-      } else if (assignedArtisanIds.length === 1) {
-        nextReceiverId = assignedArtisanIds[0];
-      } else if (!assignedArtisanIds.length) {
-        return res.status(400).json({ message: 'No assigned artisan is available for this project chat yet' });
-      }
-    } else {
-      return res.status(403).json({ message: 'Only artisans and experts can send project messages' });
+    const receiver = resolveMessageReceiver(access.project, req.user, receiverId);
+    if (receiver.error) {
+      return res.status(receiver.error.status).json({ message: receiver.error.message });
     }
 
     const createdMessage = await Message.create({
       projectId,
       senderId: req.user._id,
-      receiverId: nextReceiverId || null,
+      receiverId: receiver.receiverId || null,
       content: trimmedContent,
     });
 
@@ -175,5 +204,56 @@ exports.createMessage = async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({ message: error.message || 'Failed to send project message' });
+  }
+};
+
+exports.createAudioMessage = async (req, res) => {
+  try {
+    const { projectId, receiverId, content } = req.body;
+    const trimmedContent = String(content || '').trim();
+
+    if (!req.user) {
+      deleteUploadedFile(req.file);
+      return res.status(401).json({ message: 'Authenticated user is required' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'Audio file is required' });
+    }
+
+    if (!isValidObjectId(projectId)) {
+      deleteUploadedFile(req.file);
+      return res.status(400).json({ message: 'A valid projectId is required' });
+    }
+
+    const access = await loadAccessibleProject(projectId, req.user);
+    if (access.error) {
+      deleteUploadedFile(req.file);
+      return res.status(access.error.status).json({ message: access.error.message });
+    }
+
+    const receiver = resolveMessageReceiver(access.project, req.user, receiverId);
+    if (receiver.error) {
+      deleteUploadedFile(req.file);
+      return res.status(receiver.error.status).json({ message: receiver.error.message });
+    }
+
+    const createdMessage = await Message.create({
+      projectId,
+      senderId: req.user._id,
+      receiverId: receiver.receiverId || null,
+      content: trimmedContent,
+      audioUrl: buildAudioUrl(req, req.file.filename),
+    });
+
+    const message = await populateMessage(createdMessage._id);
+
+    return res.status(201).json({
+      message: 'Voice message sent successfully',
+      chatMessage: message,
+    });
+  } catch (error) {
+    deleteUploadedFile(req.file);
+    return res.status(500).json({ message: error.message || 'Failed to send voice message' });
   }
 };

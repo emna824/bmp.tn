@@ -207,6 +207,73 @@ export function QuoteIcon(props) {
   )
 }
 
+export function ChatIcon(props) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M7 10h10" />
+      <path d="M7 14h6" />
+      <path d="M5 4h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-5l-4 4v-4H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
+    </BaseIcon>
+  )
+}
+
+export function BotIcon(props) {
+  return (
+    <BaseIcon {...props}>
+      <rect x="5" y="8" width="14" height="10" rx="4" />
+      <path d="M12 4v4" />
+      <path d="M8.5 13h.01" />
+      <path d="M15.5 13h.01" />
+      <path d="M9.5 17c1.5 1 3.5 1 5 0" />
+    </BaseIcon>
+  )
+}
+
+export function SendIcon(props) {
+  return (
+    <BaseIcon {...props}>
+      <path d="m4 11 15-7-7 15-2-6-6-2Z" />
+      <path d="m10 13 4-4" />
+    </BaseIcon>
+  )
+}
+
+export function MicIcon(props) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M12 3a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z" />
+      <path d="M19 10v1a7 7 0 0 1-14 0v-1" />
+      <path d="M12 18v3" />
+      <path d="M8 21h8" />
+    </BaseIcon>
+  )
+}
+
+export function StopIcon(props) {
+  return (
+    <BaseIcon {...props}>
+      <rect x="7" y="7" width="10" height="10" rx="2" />
+    </BaseIcon>
+  )
+}
+
+export function PlayIcon(props) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M8 5v14l11-7-11-7Z" />
+    </BaseIcon>
+  )
+}
+
+export function PauseIcon(props) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M9 5v14" />
+      <path d="M15 5v14" />
+    </BaseIcon>
+  )
+}
+
 export function InfoIcon(props) {
   return (
     <BaseIcon {...props}>

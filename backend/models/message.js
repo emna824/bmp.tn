@@ -22,9 +22,14 @@ const messageSchema = new mongoose.Schema(
     },
     content: {
       type: String,
-      required: true,
+      default: '',
       trim: true,
       maxlength: 4000,
+    },
+    audioUrl: {
+      type: String,
+      default: '',
+      trim: true,
     },
   },
   { timestamps: true }

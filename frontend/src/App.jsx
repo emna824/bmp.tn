@@ -5,6 +5,7 @@ import ArtisanProfile from './components/ArtisanProfile'
 import ExpertProfile from './components/ExpertProfile'
 import ManufacturerProfile from './components/ManufacturerProfile'
 import PremiumModal from './components/PremiumModal'
+import PremiumAssistant from './components/PremiumAssistant'
 import LandingPage from './components/landing/LandingPage'
 import AdminDashboard from './pages/AdminDashboard'
 import SelectTradePage from './pages/SelectTradePage'
@@ -341,6 +342,15 @@ function App() {
       ) : null}
 
       {content}
+
+      {user?.role && !(user.role === 'artisan' && !user.trade) ? (
+        <PremiumAssistant
+          user={user}
+          currentPath={currentPath}
+          onNavigate={navigateToPath}
+          onRequirePremium={handleOpenPremiumModal}
+        />
+      ) : null}
 
       <PremiumModal
         isOpen={Boolean(showPremiumModal && user?.role === 'artisan' && !user.isPremium)}
