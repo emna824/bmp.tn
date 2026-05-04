@@ -3,6 +3,7 @@ const Project = require('../models/project');
 const Product = require('../models/product');
 const Quote = require('../models/quote');
 const Invoice = require('../models/invoice');
+const { logAction } = require('../utils/logAction');
 
 const INVOICE_POPULATE = [
   { path: 'projectId', select: 'projectName status startDate endDate totalSpent job' },
@@ -180,6 +181,13 @@ exports.createInvoice = async (req, res) => {
     });
 
     const invoice = await populateInvoice(createdInvoice._id);
+    logAction({
+      userId: req.user._id,
+      action: 'invoice_created',
+      entityType: 'invoice',
+      entityId: createdInvoice._id,
+      description: `Invoice generated for quote ${quote._id}`,
+    });
 
     return res.status(201).json({
       message: 'Invoice generated successfully',

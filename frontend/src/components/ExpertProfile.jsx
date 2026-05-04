@@ -5,6 +5,7 @@ import ExpertLayout from '../layouts/ExpertLayout'
 import CreateProjectForm from './CreateProjectForm'
 import { LockIcon } from './Icons'
 import ReportModal from './ReportModal'
+import RoleStatsCharts from './charts/RoleStatsCharts'
 import ProjectDetails from '../pages/ProjectDetails'
 import { EXPERT_ROUTES, resolveExpertRoute } from '../utils/roleRoutes'
 
@@ -327,6 +328,8 @@ function ExpertProfile({
                 </div>
               </div>
             </div>
+
+            <RoleStatsCharts role="expert" userId={userId} title="Expert analytics" />
 
             <div className="expert-panels two">
               <div className="expert-panel">

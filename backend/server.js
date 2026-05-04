@@ -25,6 +25,8 @@ const aiRoutes = require('./routes/aiRoutes');
 const quoteRoutes = require('./routes/quoteRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const messageRoutes = require('./routes/messageRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const statsRoutes = require('./routes/statsRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -78,6 +80,8 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/quotes', quoteRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/stats', statsRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);

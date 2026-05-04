@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import api from '../../api'
 import ManufacturerLayout from '../../layouts/ManufacturerLayout'
 import ProductCard from '../../components/manufacturer/ProductCard'
+import RoleStatsCharts from '../../components/charts/RoleStatsCharts'
 import AddProductPage from './AddProductPage'
 import EditProductPage from './EditProductPage'
 import OrdersPage from './OrdersPage'
@@ -384,6 +385,8 @@ function ManufacturerDashboard({
             </article>
           ))}
         </div>
+
+        <RoleStatsCharts role="manufacturer" userId={manufacturerId} title="Manufacturer analytics" />
 
         <div className="manufacturer-page-panel">
           <div className="manufacturer-section-head">

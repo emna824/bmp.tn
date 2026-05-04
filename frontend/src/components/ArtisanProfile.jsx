@@ -6,6 +6,7 @@ import { LockIcon, SettingsIcon, UserIcon } from './Icons'
 import ArtisanLayout from '../layouts/ArtisanLayout'
 import ProductCard from './ProductCard'
 import ReportModal from './ReportModal'
+import RoleStatsCharts from './charts/RoleStatsCharts'
 import ArtisanDashboard from '../pages/ArtisanDashboard'
 import CalendarPage from '../pages/CalendarPage'
 import ProjectDetails from '../pages/ProjectDetails'
@@ -466,6 +467,31 @@ function ArtisanProfile({
     onNavigate?.(ARTISAN_ROUTES.projects)
     setProjectsDisplayMode('create')
   }, [isPremiumUser, onNavigate, onRequirePremium, showNotification, t])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const handleAssistantAction = (event) => {
+      const action = event.detail?.action
+
+      if (action === 'artisan-open-calendar') {
+        if (!isPremiumUser) {
+          handlePremiumCalendarAccess()
+          return
+        }
+
+        onNavigate?.(ARTISAN_ROUTES.projects)
+        setProjectsDisplayMode('calendar')
+      }
+
+      if (action === 'artisan-open-create-project') {
+        handleOpenSoloProjectCreator()
+      }
+    }
+
+    window.addEventListener('bmp-assistant-action', handleAssistantAction)
+    return () => window.removeEventListener('bmp-assistant-action', handleAssistantAction)
+  }, [handleOpenSoloProjectCreator, handlePremiumCalendarAccess, isPremiumUser, onNavigate])
 
   const handleSoloProjectCreated = useCallback(async (payload) => {
     const createdProject = normalizeAssignedProject(payload?.project || {})
@@ -939,6 +965,8 @@ function ArtisanProfile({
                 </div>
               ))}
             </div>
+
+            <RoleStatsCharts role="artisan" userId={userId} title="Artisan analytics" />
 
             <div className="cards-grid">
               <section className="card-panel">

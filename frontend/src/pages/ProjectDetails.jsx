@@ -1,8 +1,9 @@
 import { createElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api, { withUserHeaders } from '../api'
-import { InfoIcon, InvoiceIcon, MarketplaceIcon, ProjectIcon, QuoteIcon, SearchIcon } from '../components/Icons'
+import { ChatIcon, InfoIcon, InvoiceIcon, MarketplaceIcon, ProjectIcon, QuoteIcon, SearchIcon } from '../components/Icons'
 import MilestoneCard from '../components/MilestoneCard'
+import ProjectChatPanel from '../components/ProjectChatPanel'
 import ReportModal from '../components/ReportModal'
 import StatusBadge, { formatDisplayDate } from '../components/StatusBadge'
 import TaskCard from '../components/TaskCard'
@@ -137,7 +138,21 @@ function ProjectDetails(props) {
     const artisans = new Map()
     ;(project?.assignedArtisans || []).forEach((artisan) => {
       const artisanId = getId(artisan)
-      if (artisanId && artisan?.name) artisans.set(artisanId, artisan)
+      if (!artisanId) return
+
+      if (artisan && typeof artisan === 'object') {
+        artisans.set(artisanId, {
+          ...artisan,
+          _id: artisanId,
+          name: artisan.name || artisan.email || `Artisan ${artisanId.slice(-4)}`,
+        })
+        return
+      }
+
+      artisans.set(artisanId, {
+        _id: artisanId,
+        name: `Artisan ${artisanId.slice(-4)}`,
+      })
     })
     milestones.forEach((milestone) => {
       const artisan = milestone?.artisanId
@@ -388,6 +403,7 @@ function ProjectDetails(props) {
             { key: 'marketplace', label: 'Marketplace', icon: MarketplaceIcon },
             { key: 'quotes', label: t('quotes'), icon: QuoteIcon },
             { key: 'invoices', label: t('invoices'), icon: InvoiceIcon },
+            { key: 'chat', label: 'Chat', icon: ChatIcon },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -621,6 +637,16 @@ function ProjectDetails(props) {
             </div>
           ) : <p className="text-sm text-slate-500 dark:text-slate-300">No invoices have been generated for this project yet.</p>}
         </div>
+      ) : null}
+
+      {activeTab === 'chat' ? (
+        <ProjectChatPanel
+          projectId={projectId}
+          project={project}
+          role={role}
+          userId={userId}
+          assignedArtisans={assignedArtisans}
+        />
       ) : null}
 
       {quoteProduct ? (

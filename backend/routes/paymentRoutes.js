@@ -5,6 +5,7 @@ const User = require('../models/user');
 const Notification = require('../models/notification');
 const loadRequestUser = require('../middleware/loadRequestUser');
 const { serializeUser } = require('../controllers/userController');
+const { logAction } = require('../utils/logAction');
 
 const router = express.Router();
 
@@ -444,6 +445,13 @@ router.post('/confirm-premium', loadRequestUser, async (req, res) => {
         await premiumUser.save();
 
         const notifications = await unreadCount(premiumUser._id);
+        logAction({
+            userId: premiumUser._id,
+            action: 'subscription_payment',
+            entityType: 'user',
+            entityId: premiumUser._id,
+            description: `Premium ${premiumUser.subscriptionType} subscription activated`,
+        });
 
         return res.status(200).json({
             message: 'Premium subscription activated successfully',

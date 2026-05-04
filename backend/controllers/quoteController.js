@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Project = require('../models/project');
 const Product = require('../models/product');
 const Quote = require('../models/quote');
+const { logAction } = require('../utils/logAction');
 
 const QUOTE_POPULATE = [
   { path: 'projectId', select: 'projectName status startDate endDate totalSpent job' },
@@ -115,6 +116,13 @@ exports.createQuote = async (req, res) => {
     });
 
     const quote = await populateQuote(createdQuote._id);
+    logAction({
+      userId: req.user._id,
+      action: 'quote_requested',
+      entityType: 'quote',
+      entityId: createdQuote._id,
+      description: `Quote requested for project ${projectId}`,
+    });
 
     return res.status(201).json({
       message: 'Quote requested successfully',
@@ -202,6 +210,15 @@ exports.updateQuoteStatus = async (req, res) => {
     await quote.save();
 
     const populatedQuote = await populateQuote(quote._id);
+    if (nextStatus === 'accepted') {
+      logAction({
+        userId: req.user._id,
+        action: 'quote_accepted',
+        entityType: 'quote',
+        entityId: quote._id,
+        description: `Quote accepted for project ${quote.projectId}`,
+      });
+    }
 
     return res.status(200).json({
       message: `Quote ${nextStatus} successfully`,

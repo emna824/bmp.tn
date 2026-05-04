@@ -9,6 +9,7 @@ const { TRADES } = require('../constants/trades');
 const loadRequestUser = require('../middleware/loadRequestUser');
 const checkAdminRole = require('../middleware/checkAdminRole');
 const { assertUserNotBanned } = require('../utils/banUtils');
+const { logAction } = require('../utils/logAction');
 const { addOrUpdateArtisanTrade, serializeUser } = require('../controllers/userController');
 const passwordResetStore = new Map();
 const VERIFICATION_CODE_TTL_MS = 10 * 60 * 1000;
@@ -190,6 +191,13 @@ router.post('/login', async (req, res) => {
         }
 
         const notifications = await unreadCount(user._id);
+        logAction({
+            userId: user._id,
+            action: 'login',
+            entityType: 'user',
+            entityId: user._id,
+            description: `${user.role} logged in with email/password`,
+        });
 
         return res.status(200).json({
             message: 'Login successful',
@@ -255,6 +263,13 @@ router.post('/google-login', async (req, res) => {
         }
 
         const notifications = await unreadCount(user._id);
+        logAction({
+            userId: user._id,
+            action: 'login',
+            entityType: 'user',
+            entityId: user._id,
+            description: `${user.role} logged in with Google`,
+        });
 
         return res.status(200).json({
             message: 'Google login successful',

@@ -18,52 +18,77 @@ function ArtisanDashboard({
   onSaveTask,
 }) {
   const { t } = useTranslation()
+  const quickMetrics = [
+    {
+      label: t('artisan.assignedProjects'),
+      value: projects.length,
+    },
+    {
+      label: t('artisan.dailyTasks'),
+      value: tasks.length,
+    },
+    {
+      label: t('common.plan', { defaultValue: 'Plan' }),
+      value: isPremium ? 'Premium' : 'Standard',
+    },
+  ]
 
   return (
-    <section className="space-y-6 transition-colors duration-300">
-      <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-500">{t('artisan.execution')}</p>
-            <h2 className="mt-2 text-3xl font-semibold text-slate-900 dark:text-white">{t('artisan.myProjects')}</h2>
-            <p className="mt-2 max-w-2xl text-sm text-slate-500 dark:text-slate-300">{t('artisan.myProjectsDescription')}</p>
+    <section className="artisan-execution-dashboard">
+      <div className="artisan-execution-hero">
+        <div className="artisan-execution-layout">
+          <div className="artisan-hero-copy">
+            <p className="artisan-hero-eyebrow">{t('artisan.execution')}</p>
+            <h2>{t('artisan.myProjects')}</h2>
+            <p>{t('artisan.myProjectsDescription')}</p>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="artisan-hero-actions">
             <button
               type="button"
               onClick={onCreateProject}
               title={!isPremium ? t('premium.featureTooltip') : undefined}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:border-orange-200 hover:bg-orange-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:border-orange-500/40 dark:hover:bg-orange-500/10"
+              className="artisan-hero-btn artisan-hero-btn-secondary"
             >
-              {!isPremium ? <LockIcon className="h-4 w-4" /> : null}
+              {!isPremium ? <LockIcon className="icon tiny" /> : null}
               {t('artisan.createMyProject', { defaultValue: 'Create My Project' })}
             </button>
             <button
               type="button"
               onClick={onOpenCalendar}
               title={!isPremium ? t('premium.featureTooltip') : undefined}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200/60 transition-all duration-300 hover:scale-[1.02] hover:brightness-105 dark:shadow-orange-950/25"
+              className="artisan-hero-btn artisan-hero-btn-primary"
             >
-              {!isPremium ? <LockIcon className="h-4 w-4" /> : null}
+              {!isPremium ? <LockIcon className="icon tiny" /> : null}
               {t('artisan.openCalendar')}
             </button>
           </div>
         </div>
+        <div className="artisan-hero-metrics" aria-label={t('artisan.workspaceDashboard')}>
+          {quickMetrics.map((metric) => (
+            <div key={metric.label} className="artisan-hero-metric">
+              <span>{metric.label}</span>
+              <strong>{metric.value}</strong>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.7fr_1fr]">
-        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('artisan.assignedProjects')}</h3>
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+      <div className="artisan-workspace-grid">
+        <div className="artisan-workspace-panel artisan-workspace-panel-projects">
+          <div className="artisan-workspace-panel-head">
+            <div>
+              <h3>{t('artisan.assignedProjects')}</h3>
+              <p>{t('artisan.myProjectsDescription')}</p>
+            </div>
+            <span className="artisan-workspace-count">
               {t('artisan.totalCount', { count: projects.length })}
             </span>
           </div>
 
           {loading ? (
-            <p className="text-sm text-slate-500 dark:text-slate-300">{t('artisan.loadingProjects')}</p>
+            <p className="artisan-workspace-empty">{t('artisan.loadingProjects')}</p>
           ) : projects.length ? (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="artisan-workspace-project-grid">
               {projects.map((project) => (
                 <ProjectCard
                   key={project.id}
@@ -78,17 +103,22 @@ function ArtisanDashboard({
               ))}
             </div>
           ) : (
-            <p className="text-sm text-slate-500 dark:text-slate-300">{t('artisan.noAssignedProjects')}</p>
+            <p className="artisan-workspace-empty">{t('artisan.noAssignedProjects')}</p>
           )}
         </div>
 
-        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('artisan.dailyTasks')}</h3>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{t('artisan.dailyTasksDescription')}</p>
+        <div className="artisan-workspace-panel artisan-workspace-panel-tasks">
+          <div className="artisan-workspace-panel-head">
+            <div>
+              <h3>{t('artisan.dailyTasks')}</h3>
+              <p>{t('artisan.dailyTasksDescription')}</p>
+            </div>
+            <span className="artisan-workspace-count">
+              {t('artisan.totalCount', { count: tasks.length })}
+            </span>
           </div>
 
-          <div className="space-y-3">
+          <div className="artisan-task-stack">
             {tasks.length ? (
               tasks.slice(0, 3).map((task) => (
                 <TaskCard
@@ -101,7 +131,7 @@ function ArtisanDashboard({
                 />
               ))
             ) : (
-              <div className="rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-500 transition-colors duration-300 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
+              <div className="artisan-workspace-empty">
                 {t('artisan.selectProjectForTasks')}
               </div>
             )}

@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import api from '../api'
 import Sidebar from '../components/Sidebar'
 import Topbar from '../components/Topbar'
-import { HomeIcon, MarketplaceIcon, ShieldIcon, UserIcon } from '../components/Icons'
+import { HomeIcon, InvoiceIcon, MarketplaceIcon, ShieldIcon, UserIcon } from '../components/Icons'
+import RoleStatsCharts from '../components/charts/RoleStatsCharts'
+import AdminLogs from './AdminLogs'
 import ProductsPage from './ProductsPage'
 import ReportsPage from './ReportsPage'
 import UsersPage from './UsersPage'
@@ -32,6 +34,12 @@ const NAV_ITEMS = [
     label: 'Products',
     description: 'Remove risky listings',
     icon: MarketplaceIcon,
+  },
+  {
+    key: 'logs',
+    label: 'Logs',
+    description: 'Audit system activity',
+    icon: InvoiceIcon,
   },
 ]
 
@@ -109,6 +117,10 @@ function AdminDashboard({ user, onLogout }) {
       return <ProductsPage user={user} />
     }
 
+    if (activeView === 'logs') {
+      return <AdminLogs user={user} />
+    }
+
     return (
       <section className="admin-page-stack">
         <div className="admin-hero-panel">
@@ -156,6 +168,8 @@ function AdminDashboard({ user, onLogout }) {
             <p>Total products currently visible in the catalog.</p>
           </article>
         </div>
+
+        <RoleStatsCharts role="admin" userId={user?.id || user?._id} title="Admin analytics" />
 
         <div className="admin-info-grid">
           <article className="admin-panel">

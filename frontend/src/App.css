@@ -3637,6 +3637,12 @@ button:disabled {
   background: #f7fbff;
 }
 
+.admin-filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .admin-banner {
   padding: 14px 16px;
   border-radius: 16px;
@@ -3760,6 +3766,98 @@ button:disabled {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #3a6088;
+}
+
+.admin-table-panel {
+  padding: 0;
+  overflow: hidden;
+}
+
+.admin-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.admin-log-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+
+.admin-log-table th,
+.admin-log-table td {
+  padding: 16px 18px;
+  border-bottom: 1px solid #dce8f6;
+  text-align: left;
+  vertical-align: top;
+}
+
+.admin-log-table th {
+  background: #f3f8ff;
+  color: #3a6088;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-log-table tbody tr {
+  transition:
+    background-color 180ms ease,
+    transform 180ms ease;
+}
+
+.admin-log-table tbody tr:hover {
+  background: rgba(31, 112, 209, 0.06);
+}
+
+.admin-log-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.admin-log-user,
+.admin-log-entity {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-log-user strong,
+.admin-log-entity strong {
+  color: #132943;
+  font-size: 0.95rem;
+}
+
+.admin-log-user span,
+.admin-log-entity span {
+  color: #607995;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.admin-log-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: #eef3ff;
+  color: #2c5ea0;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.admin-pagination span {
+  color: #58708b;
+  font-weight: 700;
 }
 
 .admin-meta-grid {
@@ -3998,6 +4096,20 @@ button:disabled {
 
   .admin-meta-grid {
     grid-template-columns: 1fr;
+  }
+
+  .admin-filter-actions,
+  .admin-pagination {
+    width: 100%;
+  }
+
+  .admin-filter-actions .admin-action-btn,
+  .admin-pagination .admin-action-btn {
+    flex: 1;
+  }
+
+  .admin-pagination {
+    justify-content: stretch;
   }
 }
 
@@ -4696,7 +4808,10 @@ html.dark .admin-stat-card p,
 html.dark .admin-card p,
 html.dark .admin-card-label,
 html.dark .admin-meta-grid span,
-html.dark .admin-inline-note {
+html.dark .admin-inline-note,
+html.dark .admin-log-user span,
+html.dark .admin-log-entity span,
+html.dark .admin-pagination span {
   color: #cbd5e1;
 }
 
@@ -4795,6 +4910,30 @@ html.dark .market-card-body,
 html.dark .admin-meta-grid > div {
   background: rgba(15, 23, 42, 0.72);
   border-color: rgba(148, 163, 184, 0.14);
+}
+
+html.dark .admin-log-table th {
+  background: rgba(15, 23, 42, 0.76);
+  color: #cbd5e1;
+}
+
+html.dark .admin-log-table td,
+html.dark .admin-log-table th {
+  border-color: rgba(148, 163, 184, 0.16);
+}
+
+html.dark .admin-log-table tbody tr:hover {
+  background: rgba(96, 165, 250, 0.1);
+}
+
+html.dark .admin-log-user strong,
+html.dark .admin-log-entity strong {
+  color: #f8fafc;
+}
+
+html.dark .admin-log-action {
+  background: rgba(96, 165, 250, 0.16);
+  color: #bfdbfe;
 }
 
 html.dark .header-user-menu,
@@ -6852,6 +6991,610 @@ html.dark .profile-preview {
   :where(html:not(.dark)) .dash-top,
   :where(html:not(.dark)) .project-marketplace-toolbar,
   :where(html:not(.dark)) .dashboard-overview-head {
+    align-items: stretch;
+  }
+}
+
+/* Artisan dashboard redesign */
+.artisan-execution-dashboard {
+  display: grid;
+  gap: 24px;
+}
+
+.artisan-execution-hero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: 24px;
+  border-radius: 24px;
+  padding: 28px;
+}
+
+.artisan-execution-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 180px;
+  height: 180px;
+  border-radius: 999px;
+  pointer-events: none;
+  opacity: 0.75;
+  filter: blur(36px);
+}
+
+.artisan-execution-layout {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.artisan-hero-copy {
+  display: grid;
+  gap: 10px;
+  max-width: 680px;
+}
+
+.artisan-hero-copy h2 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.1rem);
+  line-height: 1;
+}
+
+.artisan-hero-copy p:last-child {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.7;
+}
+
+.artisan-hero-eyebrow {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.artisan-hero-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.artisan-hero-btn,
+.artisan-project-card-btn,
+.artisan-task-save-btn {
+  margin-top: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  border-radius: 14px;
+  padding: 0 18px;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.artisan-hero-btn-secondary,
+.artisan-project-card-btn-secondary {
+  box-shadow: none;
+}
+
+.artisan-hero-metrics {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.artisan-hero-metric {
+  display: grid;
+  gap: 6px;
+  padding: 16px 18px;
+  border-radius: 18px;
+}
+
+.artisan-hero-metric span {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.artisan-hero-metric strong {
+  font-size: 1.35rem;
+  line-height: 1.1;
+}
+
+.artisan-workspace-grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1.7fr) minmax(320px, 1fr);
+}
+
+.artisan-workspace-panel {
+  display: grid;
+  gap: 18px;
+  border-radius: 24px;
+  padding: 24px;
+}
+
+.artisan-workspace-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.artisan-workspace-panel-head h3 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.artisan-workspace-panel-head p {
+  margin: 6px 0 0;
+  max-width: 46ch;
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+
+.artisan-workspace-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 84px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.artisan-workspace-project-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.artisan-workspace-empty {
+  border: 1px dashed;
+  border-radius: 20px;
+  padding: 24px 20px;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.artisan-workspace-project-card {
+  display: grid;
+  gap: 18px;
+  border-radius: 22px;
+  border: 1px solid;
+  padding: 18px;
+  transition:
+    transform 300ms ease,
+    box-shadow 300ms ease,
+    border-color 300ms ease,
+    background-color 300ms ease;
+}
+
+.artisan-workspace-project-card:hover,
+.artisan-task-card:hover {
+  transform: translateY(-2px);
+}
+
+.artisan-project-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.artisan-project-card-copy {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.artisan-project-card-copy h3 {
+  margin: 0;
+  font-size: 1.08rem;
+  line-height: 1.25;
+}
+
+.artisan-project-card-copy p {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.artisan-project-card-meta-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.artisan-project-card-meta {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 16px;
+}
+
+.artisan-project-card-meta span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.artisan-project-card-meta strong {
+  font-size: 0.92rem;
+}
+
+.artisan-project-progress {
+  display: grid;
+  gap: 8px;
+}
+
+.artisan-project-progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.artisan-project-progress-track {
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.artisan-project-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 300ms ease;
+}
+
+.artisan-project-card-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.artisan-task-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.artisan-task-card {
+  display: block;
+  border-radius: 22px;
+  border: 1px solid;
+  padding: 18px;
+  transition:
+    transform 300ms ease,
+    box-shadow 300ms ease,
+    border-color 300ms ease,
+    background-color 300ms ease;
+}
+
+.artisan-task-card-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.artisan-task-checkbox {
+  margin-top: 4px;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.artisan-task-card-main {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 14px;
+}
+
+.artisan-task-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.artisan-task-title-block {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.artisan-task-title-block h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.artisan-task-title-block p {
+  margin: 0;
+  font-size: 0.86rem;
+}
+
+.artisan-task-category {
+  margin-top: 6px;
+}
+
+.artisan-task-editor {
+  width: 100%;
+  min-height: 94px;
+  resize: vertical;
+  border-radius: 18px;
+  padding: 14px 15px;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  outline: none;
+}
+
+.artisan-task-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+html.dark .artisan-execution-hero {
+  border: 1px solid var(--bmp-border);
+  background:
+    radial-gradient(circle at top right, rgba(255, 138, 0, 0.16), transparent 34%),
+    linear-gradient(180deg, rgba(27, 17, 10, 0.86) 0%, rgba(14, 10, 8, 0.82) 100%);
+  box-shadow:
+    0 18px 44px rgba(255, 138, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+html.dark .artisan-execution-hero::before {
+  background: rgba(255, 138, 0, 0.22);
+}
+
+html.dark .artisan-hero-copy h2,
+html.dark .artisan-hero-metric strong,
+html.dark .artisan-workspace-panel-head h3,
+html.dark .artisan-project-card-copy h3,
+html.dark .artisan-project-card-meta strong,
+html.dark .artisan-task-title-block h4 {
+  color: #ffffff;
+}
+
+html.dark .artisan-hero-copy p:last-child,
+html.dark .artisan-workspace-panel-head p,
+html.dark .artisan-project-card-copy p,
+html.dark .artisan-task-title-block p,
+html.dark .artisan-workspace-empty {
+  color: var(--bmp-text-muted);
+}
+
+html.dark .artisan-hero-eyebrow,
+html.dark .artisan-hero-metric span,
+html.dark .artisan-project-card-meta span,
+html.dark .artisan-project-progress-head {
+  color: var(--bmp-accent-soft);
+}
+
+html.dark .artisan-hero-btn-secondary,
+html.dark .artisan-project-card-btn-secondary {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: var(--bmp-text) !important;
+}
+
+html.dark .artisan-hero-btn-primary,
+html.dark .artisan-project-card-btn-primary,
+html.dark .artisan-task-save-btn {
+  background: linear-gradient(135deg, var(--bmp-accent-soft) 0%, var(--bmp-accent) 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 24px rgba(255, 138, 0, 0.2);
+}
+
+html.dark .artisan-hero-metric,
+html.dark .artisan-workspace-panel,
+html.dark .artisan-workspace-project-card,
+html.dark .artisan-task-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 10px 30px rgba(255, 138, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+html.dark .artisan-workspace-count {
+  background: rgba(255, 183, 127, 0.12);
+  border: 1px solid rgba(255, 183, 127, 0.14);
+  color: var(--bmp-accent-soft);
+}
+
+html.dark .artisan-workspace-empty {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+html.dark .artisan-workspace-project-card.selected {
+  border-color: rgba(255, 138, 0, 0.42);
+  background: linear-gradient(180deg, rgba(255, 183, 127, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%);
+  box-shadow:
+    0 14px 34px rgba(255, 138, 0, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+html.dark .artisan-project-card-meta {
+  background: rgba(21, 12, 6, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+html.dark .artisan-project-progress-track {
+  background: rgba(63, 50, 41, 0.86);
+}
+
+html.dark .artisan-project-progress-fill {
+  background: linear-gradient(90deg, var(--bmp-info) 0%, var(--bmp-accent-soft) 48%, var(--bmp-accent) 100%);
+}
+
+html.dark .artisan-task-checkbox {
+  accent-color: var(--bmp-accent);
+}
+
+html.dark .artisan-task-editor {
+  background: rgba(21, 12, 6, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--bmp-text);
+}
+
+html.dark .artisan-task-editor::placeholder {
+  color: rgba(221, 193, 174, 0.6);
+}
+
+html.dark .artisan-task-editor:focus {
+  border-color: rgba(255, 138, 0, 0.4);
+  box-shadow: 0 0 0 4px rgba(255, 138, 0, 0.08);
+}
+
+:where(html:not(.dark)) .artisan-execution-hero {
+  border: 1px solid var(--bmp-light-border);
+  background:
+    radial-gradient(circle at top right, rgba(103, 80, 164, 0.12), transparent 36%),
+    linear-gradient(180deg, #ffffff 0%, #faf8fd 100%);
+  box-shadow: var(--bmp-light-shadow-lg);
+}
+
+:where(html:not(.dark)) .artisan-execution-hero::before {
+  background: rgba(103, 80, 164, 0.16);
+}
+
+:where(html:not(.dark)) .artisan-hero-copy h2,
+:where(html:not(.dark)) .artisan-hero-metric strong,
+:where(html:not(.dark)) .artisan-workspace-panel-head h3,
+:where(html:not(.dark)) .artisan-project-card-copy h3,
+:where(html:not(.dark)) .artisan-project-card-meta strong,
+:where(html:not(.dark)) .artisan-task-title-block h4 {
+  color: var(--bmp-light-text-strong);
+}
+
+:where(html:not(.dark)) .artisan-hero-copy p:last-child,
+:where(html:not(.dark)) .artisan-workspace-panel-head p,
+:where(html:not(.dark)) .artisan-project-card-copy p,
+:where(html:not(.dark)) .artisan-task-title-block p,
+:where(html:not(.dark)) .artisan-workspace-empty {
+  color: var(--bmp-light-text-muted);
+}
+
+:where(html:not(.dark)) .artisan-hero-eyebrow,
+:where(html:not(.dark)) .artisan-hero-metric span,
+:where(html:not(.dark)) .artisan-project-card-meta span,
+:where(html:not(.dark)) .artisan-project-progress-head {
+  color: var(--bmp-light-accent);
+}
+
+:where(html:not(.dark)) .artisan-hero-btn-secondary,
+:where(html:not(.dark)) .artisan-project-card-btn-secondary {
+  background: var(--bmp-light-surface) !important;
+  border: 1px solid #dee2e6 !important;
+  color: var(--bmp-light-text) !important;
+}
+
+:where(html:not(.dark)) .artisan-hero-btn-primary,
+:where(html:not(.dark)) .artisan-project-card-btn-primary,
+:where(html:not(.dark)) .artisan-task-save-btn {
+  background: linear-gradient(135deg, var(--bmp-light-accent) 0%, var(--bmp-light-accent-strong) 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 24px rgba(79, 55, 138, 0.18);
+}
+
+:where(html:not(.dark)) .artisan-hero-metric,
+:where(html:not(.dark)) .artisan-workspace-panel,
+:where(html:not(.dark)) .artisan-workspace-project-card,
+:where(html:not(.dark)) .artisan-task-card {
+  background: var(--bmp-light-surface);
+  border-color: var(--bmp-light-border);
+  box-shadow: var(--bmp-light-shadow);
+}
+
+:where(html:not(.dark)) .artisan-workspace-count {
+  background: var(--bmp-light-surface-soft);
+  border: 1px solid var(--bmp-light-border);
+  color: var(--bmp-light-accent);
+}
+
+:where(html:not(.dark)) .artisan-workspace-empty {
+  border-color: var(--bmp-light-border);
+  background: #fcfbff;
+}
+
+:where(html:not(.dark)) .artisan-workspace-project-card.selected {
+  border-color: rgba(103, 80, 164, 0.28);
+  background: linear-gradient(180deg, rgba(103, 80, 164, 0.06) 0%, #ffffff 100%);
+  box-shadow: 0 16px 36px rgba(79, 55, 138, 0.08);
+}
+
+:where(html:not(.dark)) .artisan-project-card-meta {
+  background: var(--bmp-light-surface-soft);
+  border: 1px solid var(--bmp-light-border);
+}
+
+:where(html:not(.dark)) .artisan-project-progress-track {
+  background: #e9e3f0;
+}
+
+:where(html:not(.dark)) .artisan-project-progress-fill {
+  background: linear-gradient(90deg, #b8a7e8 0%, #8e7bd4 50%, var(--bmp-light-accent) 100%);
+}
+
+:where(html:not(.dark)) .artisan-task-checkbox {
+  accent-color: var(--bmp-light-accent);
+}
+
+:where(html:not(.dark)) .artisan-task-editor {
+  background: #ffffff;
+  border: 1px solid #dee2e6;
+  color: var(--bmp-light-text);
+}
+
+:where(html:not(.dark)) .artisan-task-editor::placeholder {
+  color: #8b93a5;
+}
+
+:where(html:not(.dark)) .artisan-task-editor:focus {
+  border-color: var(--bmp-light-accent);
+  box-shadow: 0 0 0 4px rgba(103, 80, 164, 0.08);
+}
+
+@media (max-width: 1100px) {
+  .artisan-workspace-grid,
+  .artisan-hero-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .artisan-execution-hero,
+  .artisan-workspace-panel {
+    padding: 20px;
+  }
+
+  .artisan-project-card-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .artisan-task-card-top {
     align-items: stretch;
   }
 }

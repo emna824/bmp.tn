@@ -127,3 +127,30 @@ export function normalizeProduct(product = {}) {
       : null,
   }
 }
+
+export function normalizeLog(log = {}) {
+  const user = log.user && typeof log.user === 'object' ? log.user : null
+
+  return {
+    id: getEntityId(log),
+    userId: log.userId || getEntityId(user),
+    user: user
+      ? {
+          id: getEntityId(user),
+          name: user.name || 'Unknown user',
+          email: user.email || '',
+          role: user.role || '',
+        }
+      : {
+          id: log.userId || '',
+          name: 'Unknown user',
+          email: '',
+          role: '',
+        },
+    action: log.action || 'unknown_action',
+    entityType: log.entityType || 'entity',
+    entityId: log.entityId || '',
+    description: log.description || '',
+    createdAt: log.createdAt || null,
+  }
+}

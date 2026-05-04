@@ -7,6 +7,7 @@ const User = require('../models/user');
 const Milestone = require('../models/milestone');
 const { TRADES } = require('../constants/trades');
 const { assertUserNotBanned } = require('../utils/banUtils');
+const { logAction } = require('../utils/logAction');
 const { notifyArtisansForNewProject } = require('./notificationController');
 const { startProject, syncProjectStatusFromMilestones } = require('../utils/projectExecution');
 
@@ -191,6 +192,14 @@ exports.createProject = async (req, res) => {
       });
 
       if (isSoloProject) {
+        logAction({
+          userId: req.user._id,
+          action: 'project_created',
+          entityType: 'project',
+          entityId: project._id,
+          description: `Solo project created: ${project.projectName}`,
+        });
+
         return res.status(201).json({
           message: 'Solo project created successfully',
           project,
@@ -214,6 +223,14 @@ exports.createProject = async (req, res) => {
       } catch (notificationError) {
         console.error('Failed to notify artisans about new project', notificationError);
       }
+
+      logAction({
+        userId: req.user._id,
+        action: 'project_created',
+        entityType: 'project',
+        entityId: project._id,
+        description: `Project created: ${project.projectName}`,
+      });
 
       return res.status(201).json({
         message: 'Project created successfully',

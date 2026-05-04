@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dashboard - BMP Construction Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface": "#1b110a",
+                      "on-surface": "#f3dfd1",
+                      "inverse-surface": "#f3dfd1",
+                      "primary-container": "#ff8a00",
+                      "on-secondary-container": "#3d2400",
+                      "tertiary": "#88ceff",
+                      "outline": "#a58c7b",
+                      "inverse-primary": "#914c00",
+                      "tertiary-container": "#00b3fc",
+                      "on-primary-container": "#613100",
+                      "on-error-container": "#ffdad6",
+                      "on-tertiary-fixed-variant": "#004c6d",
+                      "primary-fixed": "#ffdcc4",
+                      "surface-container": "#281d15",
+                      "outline-variant": "#564334",
+                      "inverse-on-surface": "#3a2e25",
+                      "surface-bright": "#43372e",
+                      "on-tertiary": "#00344d",
+                      "on-primary": "#4e2600",
+                      "primary": "#ffb77f",
+                      "secondary-fixed-dim": "#ffb95a",
+                      "secondary-container": "#c68315",
+                      "tertiary-fixed": "#c8e6ff",
+                      "surface-container-highest": "#3f3229",
+                      "error-container": "#93000a",
+                      "surface-dim": "#1b110a",
+                      "on-secondary-fixed-variant": "#643f00",
+                      "surface-variant": "#3f3229",
+                      "tertiary-fixed-dim": "#88ceff",
+                      "on-error": "#690005",
+                      "surface-tint": "#ffb77f",
+                      "on-background": "#f3dfd1",
+                      "surface-container-high": "#33281f",
+                      "on-secondary-fixed": "#2a1800",
+                      "on-primary-fixed": "#2f1500",
+                      "on-tertiary-fixed": "#001e2e",
+                      "background": "#1b110a",
+                      "surface-container-lowest": "#150c06",
+                      "on-surface-variant": "#ddc1ae",
+                      "primary-fixed-dim": "#ffb77f",
+                      "on-primary-fixed-variant": "#6f3900",
+                      "error": "#ffb4ab",
+                      "on-secondary": "#462a00",
+                      "on-tertiary-container": "#004260",
+                      "surface-container-low": "#241912",
+                      "secondary-fixed": "#ffddb6",
+                      "secondary": "#ffb95a"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "sm": "16px",
+                      "gutter": "24px",
+                      "lg": "40px",
+                      "xs": "8px",
+                      "margin": "32px",
+                      "base": "4px",
+                      "xl": "64px",
+                      "md": "24px"
+              },
+              "fontFamily": {
+                      "h1": [
+                              "Manrope"
+                      ],
+                      "display": [
+                              "Manrope"
+                      ],
+                      "h2": [
+                              "Manrope"
+                      ],
+                      "body-lg": [
+                              "Manrope"
+                      ],
+                      "body-md": [
+                              "Manrope"
+                      ],
+                      "label-sm": [
+                              "Manrope"
+                      ]
+              },
+              "fontSize": {
+                      "h1": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "display": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "800"
+                              }
+                      ],
+                      "h2": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.3",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "13px",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body {
+            background-color: #0A0A0A; /* Solid obsidian base */
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(255, 138, 0, 0.05), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(255, 138, 0, 0.03), transparent 25%);
+            background-attachment: fixed;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Glassmorphism utility classes */
+        .glass-panel {
+            background-color: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .glass-accent {
+            background-color: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 40px rgba(255, 138, 0, 0.1);
+        }
+
+        .status-strip-top {
+            border-top: 2px solid theme('colors.primary');
+        }
+
+        /* Custom Scrollbar for dark theme */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="text-on-surface font-body-md antialiased">
+<!-- SideNavBar (Hidden on Mobile, Flex on Desktop) -->
+<nav class="hidden md:flex flex-col h-full py-6 bg-black/40 dark:bg-[#0A0A0A]/90 backdrop-blur-2xl border-r border-white/10 shadow-2xl docked left-0 w-64 z-50 shrink-0">
+<!-- Header -->
+<div class="px-6 mb-8 flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-orange-700 flex items-center justify-center shadow-[0_0_20px_rgba(255,138,0,0.3)]">
+<span class="material-symbols-outlined text-white font-bold" style="font-variation-settings: 'FILL' 1;">architecture</span>
+</div>
+<div>
+<h2 class="text-xl font-black text-white font-h2 tracking-tighter">BMP</h2>
+<p class="text-on-surface-variant font-label-sm text-[10px] uppercase tracking-widest opacity-70">Industrial Elegance</p>
+</div>
+</div>
+<!-- Navigation Links -->
+<ul class="flex flex-col gap-xs flex-grow font-manrope text-sm font-semibold">
+<!-- Active Tab: Dashboard -->
+<li>
+<a class="bg-white/10 text-orange-500 border-r-4 border-orange-500 rounded-l-none rounded-r-lg flex items-center gap-3 px-4 py-3 ml-2 hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+                    Dashboard
+                </a>
+</li>
+<!-- Inactive Tabs -->
+<li>
+<a class="text-slate-400 flex items-center gap-3 px-4 py-3 ml-2 hover:bg-white/5 hover:text-white transition-all hover:translate-x-1 duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">architecture</span>
+                    Projects
+                </a>
+</li>
+<li>
+<a class="text-slate-400 flex items-center gap-3 px-4 py-3 ml-2 hover:bg-white/5 hover:text-white transition-all hover:translate-x-1 duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">storefront</span>
+                    Marketplace
+                </a>
+</li>
+<li>
+<a class="text-slate-400 flex items-center gap-3 px-4 py-3 ml-2 hover:bg-white/5 hover:text-white transition-all hover:translate-x-1 duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">request_quote</span>
+                    Quotes
+                </a>
+</li>
+<li>
+<a class="text-slate-400 flex items-center gap-3 px-4 py-3 ml-2 hover:bg-white/5 hover:text-white transition-all hover:translate-x-1 duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+                    Invoices
+                </a>
+</li>
+<li>
+<a class="text-slate-400 flex items-center gap-3 px-4 py-3 ml-2 hover:bg-white/5 hover:text-white transition-all hover:translate-x-1 duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+                    Calendar
+                </a>
+</li>
+<li>
+<a class="text-slate-400 flex items-center gap-3 px-4 py-3 ml-2 hover:bg-white/5 hover:text-white transition-all hover:translate-x-1 duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">chat</span>
+                    Messages
+                </a>
+</li>
+<li class="mt-auto">
+<a class="text-slate-400 flex items-center gap-3 px-4 py-3 ml-2 hover:bg-white/5 hover:text-white transition-all hover:translate-x-1 duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+                    Profile
+                </a>
+</li>
+<li>
+<a class="text-slate-400 flex items-center gap-3 px-4 py-3 ml-2 hover:bg-white/5 hover:text-white transition-all hover:translate-x-1 duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+                    Settings
+                </a>
+</li>
+</ul>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col h-full overflow-hidden relative">
+<!-- TopNavBar (Visible on Mobile, Desktop variation handled via structure) -->
+<header class="flex justify-between items-center w-full px-6 py-3 bg-black/60 dark:bg-[#0A0A0A]/80 backdrop-blur-md font-manrope antialiased tracking-tight docked full-width top-0 z-40 border-b border-white/10 shadow-xl shrink-0">
+<!-- Mobile Brand (Hidden on Desktop since SideNav has it) -->
+<div class="md:hidden text-2xl font-black text-orange-500 dark:text-[#FF8A00] tracking-tighter">BMP</div>
+<!-- Search Bar (Left aligned per JSON) -->
+<div class="hidden md:flex flex-1 max-w-md relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+<input class="w-full bg-white/5 border border-white/10 rounded-lg py-2 pl-10 pr-4 text-sm text-on-surface placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary focus:bg-white/10 transition-all shadow-inner" placeholder="Search projects, invoices..." type="text"/>
+</div>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-4 ml-auto">
+<button class="text-slate-400 hover:text-orange-400 hover:bg-white/5 p-2 rounded-full transition-all duration-300 Active:scale-[0.98]">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-slate-400 hover:text-orange-400 hover:bg-white/5 p-2 rounded-full transition-all duration-300 Active:scale-[0.98]">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="w-8 h-8 rounded-full border border-white/20 overflow-hidden ml-2 cursor-pointer hover:border-primary transition-colors">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="close up portrait of a professional man in soft natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgBe-1-Z97k89VpJyzjRW1wZAJqNSH0BEG5viuRgej8uoZBKZVAkEtt-byVtMn2q-X0gluP8Xg9eEH7yk_CX_cpRFnKNsAyDWtGLNoSiu7eMmqIi1kJ1Lt8ZV8KZ2vUpk-9SS58jOz4DeycpARFSjabeaRclzpwvJ-wvo-wAYQcp7dJAtj-Z36836iP7SUhZgO0JUtqXWHPQJKZa3ChA3ba7iRUlxpJRWjHgTPU-oM-ilz6fzdj4aMS56_shQGZ0P8edBtQT1QYy8"/>
+</div>
+</div>
+</header>
+<!-- Scrollable Canvas -->
+<div class="flex-1 overflow-y-auto p-gutter md:p-lg space-y-gutter">
+<!-- Page Title -->
+<div class="flex justify-between items-end mb-margin">
+<div>
+<h1 class="font-h1 text-h1 text-white mb-2">Overview</h1>
+<p class="font-body-md text-body-md text-slate-400">Real-time metrics and project status across all sites.</p>
+</div>
+<button class="hidden sm:flex items-center gap-2 bg-gradient-to-r from-primary to-orange-600 text-white px-4 py-2 rounded-lg font-label-sm text-label-sm shadow-[0_0_20px_rgba(255,138,0,0.2)] hover:shadow-[0_0_25px_rgba(255,138,0,0.4)] transition-all">
+<span class="material-symbols-outlined text-sm">add</span>
+                    New Project
+                </button>
+</div>
+<!-- Bento Grid: Stats Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-sm">
+<!-- Stat 1: Revenue -->
+<div class="glass-panel rounded-xl p-sm flex flex-col justify-between relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-colors"></div>
+<div class="flex justify-between items-start mb-4 relative z-10">
+<span class="text-slate-400 font-label-sm text-label-sm uppercase tracking-wider">Total Revenue</span>
+<span class="material-symbols-outlined text-primary bg-primary/10 p-1.5 rounded-lg" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+</div>
+<div class="relative z-10">
+<h3 class="font-display text-display text-white text-3xl">$4.2M</h3>
+<div class="flex items-center gap-1 text-emerald-400 mt-2 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-xs">trending_up</span>
+<span>+12.5% vs last month</span>
+</div>
+</div>
+</div>
+<!-- Stat 2: Projects -->
+<div class="glass-panel rounded-xl p-sm flex flex-col justify-between relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-tertiary/10 rounded-full blur-2xl group-hover:bg-tertiary/20 transition-colors"></div>
+<div class="flex justify-between items-start mb-4 relative z-10">
+<span class="text-slate-400 font-label-sm text-label-sm uppercase tracking-wider">Active Projects</span>
+<span class="material-symbols-outlined text-tertiary bg-tertiary/10 p-1.5 rounded-lg" style="font-variation-settings: 'FILL' 1;">construction</span>
+</div>
+<div class="relative z-10">
+<h3 class="font-display text-display text-white text-3xl">24</h3>
+<div class="flex items-center gap-1 text-slate-400 mt-2 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-xs">check_circle</span>
+<span>3 nearing completion</span>
+</div>
+</div>
+</div>
+<!-- Stat 3: Invoices -->
+<div class="glass-panel rounded-xl p-sm flex flex-col justify-between relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-secondary/10 rounded-full blur-2xl group-hover:bg-secondary/20 transition-colors"></div>
+<div class="flex justify-between items-start mb-4 relative z-10">
+<span class="text-slate-400 font-label-sm text-label-sm uppercase tracking-wider">Pending Invoices</span>
+<span class="material-symbols-outlined text-secondary bg-secondary/10 p-1.5 rounded-lg" style="font-variation-settings: 'FILL' 1;">receipt_long</span>
+</div>
+<div class="relative z-10">
+<h3 class="font-display text-display text-white text-3xl">18</h3>
+<div class="flex items-center gap-1 text-primary mt-2 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-xs">warning</span>
+<span>5 overdue ($120k)</span>
+</div>
+</div>
+</div>
+<!-- Stat 4: Risk -->
+<div class="glass-accent status-strip-top rounded-xl p-sm flex flex-col justify-between relative overflow-hidden">
+<div class="flex justify-between items-start mb-4 relative z-10">
+<span class="text-slate-200 font-label-sm text-label-sm uppercase tracking-wider">Overall Risk Level</span>
+<span class="material-symbols-outlined text-white bg-white/20 p-1.5 rounded-lg" style="font-variation-settings: 'FILL' 1;">health_and_safety</span>
+</div>
+<div class="relative z-10">
+<h3 class="font-display text-display text-primary text-3xl">Low</h3>
+<div class="flex items-center gap-1 text-slate-300 mt-2 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-xs">shield</span>
+<span>All site protocols active</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Charts Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+<!-- Revenue Chart (Spans 2 columns) -->
+<div class="glass-panel rounded-xl p-sm lg:col-span-2 flex flex-col min-h-[300px]">
+<div class="flex justify-between items-center mb-6">
+<h2 class="font-h2 text-h2 text-white text-lg">Revenue vs Projections</h2>
+<select class="bg-surface-container border border-white/10 rounded-md text-sm text-slate-300 focus:ring-primary focus:border-primary p-1">
+<option>YTD 2024</option>
+<option>Q3 2024</option>
+</select>
+</div>
+<!-- Faux Line Chart Area -->
+<div class="flex-1 relative w-full border-l border-b border-white/10 flex items-end pt-4 pl-2">
+<!-- Y-axis labels -->
+<div class="absolute left-[-30px] bottom-0 flex flex-col justify-between h-full text-[10px] text-slate-500 py-2">
+<span>$1M</span>
+<span>$500k</span>
+<span>$0</span>
+</div>
+<!-- Grid lines -->
+<div class="absolute inset-0 flex flex-col justify-between border-l border-b border-transparent pointer-events-none">
+<div class="w-full border-t border-white/5 h-0 mt-[10%]"></div>
+<div class="w-full border-t border-white/5 h-0"></div>
+<div class="w-full border-t border-transparent h-0 mb-0"></div>
+</div>
+<!-- SVG Line (Simulated) -->
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 100 100">
+<defs>
+<lineargradient id="grad1" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" style="stop-color:theme('colors.primary');stop-opacity:0.4"></stop>
+<stop offset="100%" style="stop-color:theme('colors.primary');stop-opacity:0"></stop>
+</lineargradient>
+</defs>
+<path d="M0,80 L20,60 L40,70 L60,30 L80,40 L100,10" fill="url(#grad1)"></path>
+<path class="drop-shadow-[0_0_8px_rgba(255,138,0,0.5)]" d="M0,80 L20,60 L40,70 L60,30 L80,40 L100,10" fill="none" stroke="theme('colors.primary')" stroke-width="2"></path>
+<!-- Data points -->
+<circle class="drop-shadow-[0_0_5px_rgba(255,138,0,0.8)]" cx="60" cy="30" fill="white" r="2" stroke="theme('colors.primary')" stroke-width="1"></circle>
+<circle class="drop-shadow-[0_0_5px_rgba(255,138,0,0.8)]" cx="100" cy="10" fill="white" r="2" stroke="theme('colors.primary')" stroke-width="1"></circle>
+</svg>
+<!-- X-axis labels -->
+<div class="absolute -bottom-6 left-0 w-full flex justify-between text-[10px] text-slate-500 px-2">
+<span>Jan</span><span>Mar</span><span>May</span><span>Jul</span><span>Sep</span><span>Nov</span>
+</div>
+</div>
+</div>
+<!-- Budget Bar Chart -->
+<div class="glass-panel rounded-xl p-sm flex flex-col min-h-[300px]">
+<div class="mb-6">
+<h2 class="font-h2 text-h2 text-white text-lg">Budget Utilization</h2>
+<p class="text-xs text-slate-400">Top 3 Active Sites</p>
+</div>
+<div class="flex-1 flex flex-col justify-end gap-4 pb-2">
+<!-- Bar 1 -->
+<div class="w-full">
+<div class="flex justify-between text-xs mb-1">
+<span class="text-slate-300">Site Alpha</span>
+<span class="text-slate-400">85%</span>
+</div>
+<div class="h-3 w-full bg-surface-container-high rounded-full overflow-hidden border border-white/5">
+<div class="h-full bg-gradient-to-r from-tertiary-container to-tertiary w-[85%] rounded-full shadow-[0_0_10px_rgba(0,179,252,0.3)]"></div>
+</div>
+</div>
+<!-- Bar 2 -->
+<div class="w-full">
+<div class="flex justify-between text-xs mb-1">
+<span class="text-slate-300">Downtown Tower</span>
+<span class="text-primary font-bold">105%</span>
+</div>
+<div class="h-3 w-full bg-surface-container-high rounded-full overflow-hidden border border-white/5 relative">
+<div class="h-full bg-gradient-to-r from-primary to-orange-500 w-full rounded-full shadow-[0_0_10px_rgba(255,138,0,0.4)]"></div>
+<div class="absolute right-0 top-0 h-full w-[5%] bg-red-500/50"></div> <!-- Over budget indicator -->
+</div>
+</div>
+<!-- Bar 3 -->
+<div class="w-full">
+<div class="flex justify-between text-xs mb-1">
+<span class="text-slate-300">Harbor Logistics</span>
+<span class="text-slate-400">42%</span>
+</div>
+<div class="h-3 w-full bg-surface-container-high rounded-full overflow-hidden border border-white/5">
+<div class="h-full bg-gradient-to-r from-secondary-container to-secondary w-[42%] rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Activity List -->
+<div class="glass-panel rounded-xl overflow-hidden mt-gutter">
+<div class="p-sm border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
+<h2 class="font-h2 text-h2 text-white text-lg">Recent Activity</h2>
+<button class="text-sm text-primary hover:text-white transition-colors">View All</button>
+</div>
+<ul class="divide-y divide-white/5">
+<!-- Item 1 -->
+<li class="p-4 hover:bg-white/5 transition-colors flex items-start gap-4">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
+<span class="material-symbols-outlined text-primary text-sm">assignment_turned_in</span>
+</div>
+<div class="flex-1">
+<p class="text-sm text-white font-medium">Phase 2 Inspection Approved</p>
+<p class="text-xs text-slate-400 mt-1">Downtown Tower • Inspector Roberts signed off on foundation framing.</p>
+</div>
+<span class="text-xs text-slate-500 whitespace-nowrap">2 hrs ago</span>
+</li>
+<!-- Item 2 -->
+<li class="p-4 hover:bg-white/5 transition-colors flex items-start gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center shrink-0 border border-secondary/20">
+<span class="material-symbols-outlined text-secondary text-sm">receipt_long</span>
+</div>
+<div class="flex-1">
+<p class="text-sm text-white font-medium">Invoice #INV-2024-089 Submitted</p>
+<p class="text-xs text-slate-400 mt-1">Site Alpha • $45,200 for structural steel delivery.</p>
+</div>
+<span class="text-xs text-slate-500 whitespace-nowrap">5 hrs ago</span>
+</li>
+<!-- Item 3 -->
+<li class="p-4 hover:bg-white/5 transition-colors flex items-start gap-4">
+<div class="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center shrink-0 border border-red-500/20">
+<span class="material-symbols-outlined text-red-400 text-sm">warning</span>
+</div>
+<div class="flex-1">
+<p class="text-sm text-red-200 font-medium">Material Delay Alert</p>
+<p class="text-xs text-slate-400 mt-1">Harbor Logistics • Concrete pour delayed by 48 hours due to supply chain issues.</p>
+</div>
+<span class="text-xs text-slate-500 whitespace-nowrap">1 day ago</span>
+</li>
+</ul>
+</div>
+</div>
+</main>
+</body></html>

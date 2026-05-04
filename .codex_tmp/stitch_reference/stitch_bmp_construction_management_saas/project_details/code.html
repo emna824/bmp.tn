@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BMP - Project Details</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#1b110a",
+                        "on-surface": "#f3dfd1",
+                        "inverse-surface": "#f3dfd1",
+                        "primary-container": "#ff8a00",
+                        "on-secondary-container": "#3d2400",
+                        "tertiary": "#88ceff",
+                        "outline": "#a58c7b",
+                        "inverse-primary": "#914c00",
+                        "tertiary-container": "#00b3fc",
+                        "on-primary-container": "#613100",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#004c6d",
+                        "primary-fixed": "#ffdcc4",
+                        "surface-container": "#281d15",
+                        "outline-variant": "#564334",
+                        "inverse-on-surface": "#3a2e25",
+                        "surface-bright": "#43372e",
+                        "on-tertiary": "#00344d",
+                        "on-primary": "#4e2600",
+                        "primary": "#ffb77f",
+                        "secondary-fixed-dim": "#ffb95a",
+                        "secondary-container": "#c68315",
+                        "tertiary-fixed": "#c8e6ff",
+                        "surface-container-highest": "#3f3229",
+                        "error-container": "#93000a",
+                        "surface-dim": "#1b110a",
+                        "on-secondary-fixed-variant": "#643f00",
+                        "surface-variant": "#3f3229",
+                        "tertiary-fixed-dim": "#88ceff",
+                        "on-error": "#690005",
+                        "surface-tint": "#ffb77f",
+                        "on-background": "#f3dfd1",
+                        "surface-container-high": "#33281f",
+                        "on-secondary-fixed": "#2a1800",
+                        "on-primary-fixed": "#2f1500",
+                        "on-tertiary-fixed": "#001e2e",
+                        "background": "#1b110a",
+                        "surface-container-lowest": "#150c06",
+                        "on-surface-variant": "#ddc1ae",
+                        "primary-fixed-dim": "#ffb77f",
+                        "on-primary-fixed-variant": "#6f3900",
+                        "error": "#ffb4ab",
+                        "on-secondary": "#462a00",
+                        "on-tertiary-container": "#004260",
+                        "surface-container-low": "#241912",
+                        "secondary-fixed": "#ffddb6",
+                        "secondary": "#ffb95a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sm": "16px",
+                        "gutter": "24px",
+                        "lg": "40px",
+                        "xs": "8px",
+                        "margin": "32px",
+                        "base": "4px",
+                        "xl": "64px",
+                        "md": "24px"
+                    },
+                    "fontFamily": {
+                        "h1": ["Manrope"],
+                        "display": ["Manrope"],
+                        "h2": ["Manrope"],
+                        "body-lg": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "label-sm": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "h1": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "display": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+                        "h2": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-sm": ["13px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-panel-active {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 20px rgba(255, 138, 0, 0.1);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #ffb77f 0%, #ff8a00 100%);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            box-shadow: 0 0 20px rgba(255, 138, 0, 0.3);
+            transform: translateY(-1px);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-[#0A0A0A] text-on-surface font-body-md min-h-screen flex overflow-hidden">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col h-full py-6 bg-black/40 dark:bg-[#0A0A0A]/90 backdrop-blur-2xl text-orange-500 dark:text-[#FF8A00] font-manrope text-sm font-semibold docked left-0 h-screen w-64 z-50 border-r border-white/10 shadow-2xl flex-shrink-0">
+<div class="px-6 mb-8">
+<h1 class="text-xl font-black text-white tracking-tighter">BMP</h1>
+<p class="text-slate-400 font-label-sm mt-1">Industrial Elegance</p>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar px-2 space-y-1">
+<a class="text-slate-400 flex items-center gap-3 px-4 py-3 hover:bg-white/5 hover:text-white transition-all duration-200 hover:translate-x-1 rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="bg-white/10 text-orange-500 border-r-4 border-orange-500 rounded-l-none rounded-r-lg flex items-center gap-3 px-4 py-3 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">architecture</span>
+<span>Projects</span>
+</a>
+<a class="text-slate-400 flex items-center gap-3 px-4 py-3 hover:bg-white/5 hover:text-white transition-all duration-200 hover:translate-x-1 rounded-lg" href="#">
+<span class="material-symbols-outlined">storefront</span>
+<span>Marketplace</span>
+</a>
+<a class="text-slate-400 flex items-center gap-3 px-4 py-3 hover:bg-white/5 hover:text-white transition-all duration-200 hover:translate-x-1 rounded-lg" href="#">
+<span class="material-symbols-outlined">request_quote</span>
+<span>Quotes</span>
+</a>
+<a class="text-slate-400 flex items-center gap-3 px-4 py-3 hover:bg-white/5 hover:text-white transition-all duration-200 hover:translate-x-1 rounded-lg" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span>Invoices</span>
+</a>
+<a class="text-slate-400 flex items-center gap-3 px-4 py-3 hover:bg-white/5 hover:text-white transition-all duration-200 hover:translate-x-1 rounded-lg" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span>Calendar</span>
+</a>
+<a class="text-slate-400 flex items-center gap-3 px-4 py-3 hover:bg-white/5 hover:text-white transition-all duration-200 hover:translate-x-1 rounded-lg" href="#">
+<span class="material-symbols-outlined">chat</span>
+<span>Messages</span>
+</a>
+</div>
+<div class="px-2 mt-auto pt-4 border-t border-white/10 space-y-1">
+<a class="text-slate-400 flex items-center gap-3 px-4 py-3 hover:bg-white/5 hover:text-white transition-all duration-200 hover:translate-x-1 rounded-lg" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<span>Profile</span>
+</a>
+<a class="text-slate-400 flex items-center gap-3 px-4 py-3 hover:bg-white/5 hover:text-white transition-all duration-200 hover:translate-x-1 rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+<!-- TopNavBar (Mobile) / Header Area -->
+<header class="flex justify-between items-center w-full px-6 py-3 bg-black/60 dark:bg-[#0A0A0A]/80 backdrop-blur-md text-orange-500 dark:text-[#FF8A00] font-manrope antialiased tracking-tight docked full-width top-0 z-40 border-b border-white/10 shadow-xl md:hidden">
+<div class="text-2xl font-black text-orange-500 dark:text-[#FF8A00] tracking-tighter">BMP</div>
+<div class="flex items-center gap-4">
+<button class="hover:bg-white/5 hover:text-orange-400 transition-all duration-300 p-2 rounded-full">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="hover:bg-white/5 hover:text-orange-400 transition-all duration-300 p-2 rounded-full">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<img alt="User Profile Avatar" class="w-8 h-8 rounded-full border border-white/10" data-alt="Close up portrait of a professional man with short hair looking confidently at the camera, studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZxkSHQak6xjYMLAIEfQwxNT2Bl6HqfyJkGTXnRnE0eNd2F0tIyFUsTrFavfvuifZUkUEznuYggTIn3HGw5xVpOUWgrXbWKTh23vA8rSjgp8pB4FsQzXmH1XjT_lUEfWLBh6WvTgU8ZLA9SIyD4oTJ2jxMBXGftVCsfW5dK9gvj0McoOtkY-xwwRxVMauzDLyJfaXx_SQZzhpN7-icUC4BJUJKKED4pPJST7VwawTd2hXsRNUD9gU4UET9hV4DMQItGlKOG8h-fPw"/>
+</div>
+</header>
+<!-- Project Header -->
+<div class="px-gutter pt-margin pb-sm flex-shrink-0">
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm mb-2">
+<span class="material-symbols-outlined text-[16px]">architecture</span>
+<span>Projects</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-primary-container">Downtown Tower Renovation</span>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<h1 class="font-display text-display text-white">Downtown Tower Renovation</h1>
+<p class="font-body-md text-on-surface-variant mt-2 max-w-2xl">Phase 3 structural reinforcement and interior modernization for the core lobby and elevator banks.</p>
+</div>
+<div class="hidden sm:flex gap-3">
+<button class="glass-panel px-4 py-2 rounded-lg font-label-sm text-white flex items-center gap-2 hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-[18px]">share</span>
+                        Share
+                    </button>
+<button class="btn-primary px-4 py-2 rounded-lg font-label-sm text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+                        Edit Project
+                    </button>
+</div>
+</div>
+<!-- Tabs -->
+<div class="flex gap-6 mt-lg border-b border-white/10 overflow-x-auto custom-scrollbar pb-xs">
+<button class="text-on-surface-variant font-label-sm pb-2 hover:text-white transition-colors flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px]">info</span>
+                    Overview
+                </button>
+<button class="text-primary-container font-label-sm pb-2 border-b-2 border-primary-container flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">storefront</span>
+                    Marketplace
+                </button>
+<button class="text-on-surface-variant font-label-sm pb-2 hover:text-white transition-colors flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px]">request_quote</span>
+                    Quotes
+                </button>
+<button class="text-on-surface-variant font-label-sm pb-2 hover:text-white transition-colors flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px]">receipt_long</span>
+                    Invoices
+                </button>
+<button class="text-on-surface-variant font-label-sm pb-2 hover:text-white transition-colors flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px]">task_alt</span>
+                    Tasks
+                </button>
+</div>
+</div>
+<!-- Scrollable Content Area -->
+<div class="flex-1 overflow-y-auto custom-scrollbar px-gutter pb-xl">
+<!-- Marketplace Section (Active Tab Content) -->
+<div class="space-y-sm">
+<div class="flex justify-between items-center mb-md">
+<h2 class="font-h2 text-h2 text-white">Project Materials</h2>
+<div class="glass-panel rounded-lg flex items-center px-3 py-1">
+<span class="material-symbols-outlined text-on-surface-variant mr-2">search</span>
+<input class="bg-transparent border-none text-white focus:ring-0 placeholder-on-surface-variant/50 w-48 font-body-md text-sm" placeholder="Search materials..." type="text"/>
+</div>
+</div>
+<!-- Bento Grid Layout for Marketplace -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-sm">
+<!-- Product Card 1 -->
+<div class="glass-panel rounded-xl overflow-hidden flex flex-col group hover:border-white/20 transition-all duration-300">
+<div class="h-40 bg-surface-container-high relative overflow-hidden">
+<img alt="Steel I-Beams" class="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" data-alt="Stack of raw steel I-beams in an industrial warehouse setting with dramatic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBu2zawVkBuIzB2SPfoDY5GF87EHuBTK7Xmd5EJseoiOARgcr9enAIlqJHDGJqm7avnBKJqvYa1OKtvFq-XnQhVrVKtnpavtbu09sKzhfIeg5HG2be4XQnS3pi5MHwbY3gLHkdzW-y1c8U-ypN2oRZwk3cIdMAGADblxr8P1yxBLVbRsPxS1BMoAU3BHAYaFCpinbJ29ydaVBFxTjdXPRp8eR4QE_7E-ChH5B36nolvC4dtuuHWkGRSRXBDnANlPcCAPAGTY7IMj6k"/>
+<div class="absolute top-2 right-2 glass-panel px-2 py-1 rounded text-xs font-label-sm text-tertiary">Structural</div>
+</div>
+<div class="p-4 flex-1 flex flex-col">
+<h3 class="font-h2 text-lg text-white mb-1">High-Tensile Steel I-Beams</h3>
+<p class="font-body-md text-sm text-on-surface-variant mb-4 flex-1 line-clamp-2">W12x26 standard structural beams, cut to custom lengths.</p>
+<div class="flex items-end justify-between mt-auto pt-4 border-t border-white/5">
+<div>
+<span class="font-body-md text-xs text-on-surface-variant block">Est. Price</span>
+<span class="font-h2 text-xl text-primary-container">$450<span class="text-sm text-on-surface-variant font-body-md">/ton</span></span>
+</div>
+<button class="btn-primary p-2 rounded-lg" title="Request Quote">
+<span class="material-symbols-outlined">add_shopping_cart</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Product Card 2 -->
+<div class="glass-panel rounded-xl overflow-hidden flex flex-col group hover:border-white/20 transition-all duration-300 border-t-2 border-t-primary-container">
+<div class="h-40 bg-surface-container-high relative overflow-hidden">
+<img alt="Concrete Mix" class="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" data-alt="Close up texture of freshly poured high grade commercial concrete in soft lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAoetVUo9ivMry18Kjsfvd3Y4ENzgq87d_cRYMWd1ucge3tFO6OS_Kvuq2GMu1Kmgx2HVF5wkQpVHY1Bvk8UiCpUwQfR13-kY7hF5XthOgz843ybckfSrq-48Q1uVvo8CLHQTUwE_WHaZWW2TQPjyXHFzlvAuRf9f-eZHEIBIzkHs55WSe664AL5m0XRKgs2elKCFdEjD6mRET3orWOARaG32A1Bm-pitcjU-t9AcK4Zj6LX1jXbwTrRlzXM6zYRIoHMvn5JTIPLAI"/>
+<div class="absolute top-2 right-2 glass-panel px-2 py-1 rounded text-xs font-label-sm text-secondary">Foundation</div>
+<div class="absolute top-2 left-2 bg-primary-container/20 text-primary-container border border-primary-container/30 px-2 py-1 rounded text-xs font-label-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">local_shipping</span> Fast Delivery
+                            </div>
+</div>
+<div class="p-4 flex-1 flex flex-col">
+<h3 class="font-h2 text-lg text-white mb-1">Premium Commercial Concrete</h3>
+<p class="font-body-md text-sm text-on-surface-variant mb-4 flex-1 line-clamp-2">5000 PSI high-strength mix for core foundational structures.</p>
+<div class="flex items-end justify-between mt-auto pt-4 border-t border-white/5">
+<div>
+<span class="font-body-md text-xs text-on-surface-variant block">Est. Price</span>
+<span class="font-h2 text-xl text-primary-container">$125<span class="text-sm text-on-surface-variant font-body-md">/yd³</span></span>
+</div>
+<button class="btn-primary p-2 rounded-lg" title="Request Quote">
+<span class="material-symbols-outlined">add_shopping_cart</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Product Card 3 -->
+<div class="glass-panel rounded-xl overflow-hidden flex flex-col group hover:border-white/20 transition-all duration-300">
+<div class="h-40 bg-surface-container-high relative overflow-hidden">
+<img alt="Architectural Glass" class="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" data-alt="Abstract reflection on modern architectural glass panels against a dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkuYL7fLamdW_M5YUOz_nbFa_ohSjbGd4s5_9Xr81Rp95CaKhxNqQrDkn5iOsD28_up9jkiplF-Z7o284Uk5bIqEn1XDSIJkEgKjI9Uw2b9p2Nyvc-k3Q6UOU8uI99nxNpEC1cXQgOUpdva54Low7VNMyjEPitz1snOQApsCQd7CLxs2iWmThMuVmmUxdHzW_JCXfIh-1Le7Q2e5jAZ2XNRCr17zueUehoylyhLcjFbWIVBXnnYtUiMW5Bg3TkEn6dDd3JV_-2jWQ"/>
+<div class="absolute top-2 right-2 glass-panel px-2 py-1 rounded text-xs font-label-sm text-tertiary-container">Exterior</div>
+</div>
+<div class="p-4 flex-1 flex flex-col">
+<h3 class="font-h2 text-lg text-white mb-1">Low-E Architectural Glass</h3>
+<p class="font-body-md text-sm text-on-surface-variant mb-4 flex-1 line-clamp-2">Double-glazed, argon-filled panels for maximum thermal efficiency.</p>
+<div class="flex items-end justify-between mt-auto pt-4 border-t border-white/5">
+<div>
+<span class="font-body-md text-xs text-on-surface-variant block">Est. Price</span>
+<span class="font-h2 text-xl text-primary-container">$85<span class="text-sm text-on-surface-variant font-body-md">/sq ft</span></span>
+</div>
+<button class="btn-primary p-2 rounded-lg" title="Request Quote">
+<span class="material-symbols-outlined">add_shopping_cart</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Request Custom Material Card -->
+<div class="glass-panel rounded-xl overflow-hidden flex flex-col justify-center items-center p-6 border-dashed border-2 hover:border-primary-container/50 transition-colors cursor-pointer text-center group">
+<div class="w-16 h-16 rounded-full glass-panel flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl text-primary-container">post_add</span>
+</div>
+<h3 class="font-h2 text-lg text-white mb-2">Request Custom Quote</h3>
+<p class="font-body-md text-sm text-on-surface-variant">Don't see what you need? Submit custom specifications for bidding.</p>
+</div>
+</div>
+</div>
+<!-- Preview Sections for other tabs (Styled for context, but less prominent as they aren't active) -->
+<div class="mt-xl space-y-sm opacity-50 pointer-events-none filter grayscale">
+<h2 class="font-h2 text-h2 text-white border-b border-white/10 pb-2">Recent Quotes (Preview)</h2>
+<div class="glass-panel rounded-xl overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-white/10 bg-white/5">
+<th class="py-3 px-4 font-label-sm text-on-surface-variant">ID</th>
+<th class="py-3 px-4 font-label-sm text-on-surface-variant">Supplier</th>
+<th class="py-3 px-4 font-label-sm text-on-surface-variant">Date</th>
+<th class="py-3 px-4 font-label-sm text-on-surface-variant">Status</th>
+</tr>
+</thead>
+<tbody>
+<tr class="border-b border-white/5">
+<td class="py-3 px-4 font-body-md text-white">QT-1042</td>
+<td class="py-3 px-4 font-body-md text-on-surface-variant">Apex Steel Corp</td>
+<td class="py-3 px-4 font-body-md text-on-surface-variant">Oct 12, 2023</td>
+<td class="py-3 px-4"><span class="px-2 py-1 rounded text-xs font-label-sm bg-yellow-500/20 text-yellow-500 border border-yellow-500/30">Pending</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+</body></html>
