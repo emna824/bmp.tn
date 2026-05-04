@@ -51,7 +51,7 @@ function InsightCard({ eyebrow, title, children, accent = 'orange' }) {
   }
 
   return (
-    <article className="rounded-2xl border border-white/60 bg-white/75 p-5 shadow-lg shadow-slate-200/50 backdrop-blur-xl transition-colors duration-300 dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-950/30">
+    <article className="rounded-2xl border border-white/60 bg-white/75 p-5 shadow-lg shadow-slate-200/50 backdrop-blur-sm transition-colors duration-300 dark:border-white/10 dark:bg-slate-900/70 dark:shadow-slate-950/30">
       <div className={`mb-4 inline-flex rounded-full bg-gradient-to-r px-3 py-1 text-xs font-semibold ${accentClasses[accent] || accentClasses.orange}`}>
         {eyebrow}
       </div>
@@ -109,7 +109,7 @@ function ProjectAIInsights({ projectId, userId }) {
   const hasInsights = Boolean(insights.summary || insights.risk || insights.recommendations.length || insights.taskInsights.length)
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-white/60 bg-gradient-to-br from-white/90 via-orange-50/55 to-slate-100/80 p-6 shadow-xl shadow-slate-200/50 backdrop-blur-xl transition-colors duration-300 dark:border-white/10 dark:from-slate-950/95 dark:via-slate-900/80 dark:to-orange-950/20 dark:shadow-slate-950/30" aria-labelledby="project-ai-insights-title">
+    <section className="overflow-hidden rounded-2xl border border-white/60 bg-gradient-to-br from-white/90 via-orange-50/55 to-slate-100/80 p-6 shadow-xl shadow-slate-200/50 backdrop-blur-sm transition-colors duration-300 dark:border-white/10 dark:from-slate-950/95 dark:via-slate-900/80 dark:to-orange-950/20 dark:shadow-slate-950/30" aria-labelledby="project-ai-insights-title">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-600 dark:text-orange-300">Expert assistant</p>
@@ -133,7 +133,7 @@ function ProjectAIInsights({ projectId, userId }) {
       {stats.length ? (
         <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {stats.map((stat) => (
-            <div key={stat.label} className="rounded-xl border border-white/60 bg-white/65 px-4 py-3 backdrop-blur-md dark:border-white/10 dark:bg-slate-900/65">
+            <div key={stat.label} className="rounded-xl border border-white/60 bg-white/65 px-4 py-3 backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/65">
               <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">{stat.label}</p>
               <p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{stat.value}</p>
             </div>
@@ -142,7 +142,7 @@ function ProjectAIInsights({ projectId, userId }) {
       ) : null}
 
       {loading ? (
-        <div className="mt-6 rounded-2xl border border-white/60 bg-white/70 p-5 text-sm text-slate-600 shadow-md shadow-slate-200/40 backdrop-blur-md dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-300 dark:shadow-slate-950/20" role="status" aria-live="polite">
+        <div className="mt-6 rounded-2xl border border-white/60 bg-white/70 p-5 text-sm text-slate-600 shadow-md shadow-slate-200/40 backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/70 dark:text-slate-300 dark:shadow-slate-950/20" role="status" aria-live="polite">
           <span className="font-semibold text-slate-900 dark:text-white">Analyzing project data</span>
           <span className="ml-1 animate-pulse">...</span>
         </div>

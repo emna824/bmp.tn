@@ -1,16 +1,18 @@
-import { useCallback, useEffect, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api, { withUserHeaders } from './api'
-import ArtisanProfile from './components/ArtisanProfile'
-import ExpertProfile from './components/ExpertProfile'
-import ManufacturerProfile from './components/ManufacturerProfile'
-import PremiumModal from './components/PremiumModal'
-import PremiumAssistant from './components/PremiumAssistant'
-import LandingPage from './components/landing/LandingPage'
-import AdminDashboard from './pages/AdminDashboard'
-import SelectTradePage from './pages/SelectTradePage'
 import { getCurrentPath, getHomePathForRole, isRolePathAllowed, navigateToPath } from './utils/roleRoutes'
+import PremiumAssistantGate from './components/PremiumAssistantGate'
 import './App.css'
+
+const ArtisanProfile = lazy(() => import('./components/ArtisanProfile'))
+const ExpertProfile = lazy(() => import('./components/ExpertProfile'))
+const ManufacturerProfile = lazy(() => import('./components/ManufacturerProfile'))
+const PremiumModal = lazy(() => import('./components/PremiumModal'))
+const PremiumAssistant = lazy(() => import('./components/PremiumAssistant'))
+const LandingPage = lazy(() => import('./components/landing/LandingPage'))
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
+const SelectTradePage = lazy(() => import('./pages/SelectTradePage'))
 
 function normalizeUser(user) {
   if (!user) return null
@@ -63,6 +65,7 @@ function App() {
   const [premiumPromptDismissed, setPremiumPromptDismissed] = useState(false)
   const [cancellingPremium, setCancellingPremium] = useState(false)
   const [premiumNotice, setPremiumNotice] = useState({ type: '', text: '' })
+  const [assistantBundleLoaded, setAssistantBundleLoaded] = useState(false)
 
   const applyUserUpdate = useCallback((nextUser) => {
     const normalizedUser = normalizeUser(nextUser)
@@ -74,7 +77,7 @@ function App() {
   const refreshCurrentUser = useCallback(async (userId) => {
     if (!userId) return null
 
-    const response = await api.get(`/users/${userId}/profile`)
+    const response = await api.get(`/users/${userId}/profile`, { skipApiCache: true })
     const refreshedUser = response.data?.user ? applyUserUpdate(response.data.user) : null
 
     if (refreshedUser?.role !== 'artisan') {
@@ -84,7 +87,7 @@ function App() {
     try {
       const subscriptionResponse = await api.get(
         '/payments/subscription-status',
-        withUserHeaders(refreshedUser.id),
+        { ...withUserHeaders(refreshedUser.id), skipApiCache: true },
       )
       if (subscriptionResponse.data?.user) {
         return applyUserUpdate(subscriptionResponse.data.user)
@@ -152,6 +155,15 @@ function App() {
   const handleProfileUpdate = (nextUser) => {
     applyUserUpdate(nextUser)
   }
+
+  const handleToggleNav = useCallback(() => {
+    setNavOpen((prev) => !prev)
+  }, [])
+
+  const handleSelectMode = useCallback((nextMode) => {
+    setMode(nextMode)
+    setNavOpen(false)
+  }, [])
 
   const handleOpenPremiumModal = () => {
     setPremiumPromptDismissed(false)
@@ -304,6 +316,17 @@ function App() {
     refreshUser()
   }, [refreshCurrentUser, user?.id])
 
+  const shouldShowAssistant = useMemo(
+    () => Boolean(user?.role && !(user.role === 'artisan' && !user.trade)),
+    [user?.role, user?.trade],
+  )
+
+  useEffect(() => {
+    if (!shouldShowAssistant) {
+      setAssistantBundleLoaded(false)
+    }
+  }, [shouldShowAssistant])
+
   let content = null
 
   if (user?.role === 'artisan' && !user?.trade) {
@@ -364,11 +387,8 @@ function App() {
       <LandingPage
         mode={mode}
         navOpen={navOpen}
-        onToggleNav={() => setNavOpen((prev) => !prev)}
-        onSelectMode={(nextMode) => {
-          setMode(nextMode)
-          setNavOpen(false)
-        }}
+        onToggleNav={handleToggleNav}
+        onSelectMode={handleSelectMode}
         onLoginSuccess={handleLoginSuccess}
       />
     )
@@ -390,22 +410,29 @@ function App() {
         </div>
       ) : null}
 
-      {content}
+      <Suspense fallback={null}>{content}</Suspense>
 
-      {user?.role && !(user.role === 'artisan' && !user.trade) ? (
-        <PremiumAssistant
-          user={user}
-          currentPath={currentPath}
-          onNavigate={navigateToPath}
-          onRequirePremium={handleOpenPremiumModal}
-        />
+      {shouldShowAssistant && !assistantBundleLoaded ? (
+        <PremiumAssistantGate onActivate={() => setAssistantBundleLoaded(true)} />
       ) : null}
 
-      <PremiumModal
-        isOpen={Boolean(showPremiumModal && user?.role === 'artisan' && !user.isPremium)}
-        user={user}
-        onClose={handleClosePremiumModal}
-      />
+      {shouldShowAssistant && assistantBundleLoaded ? (
+        <Suspense fallback={null}>
+          <PremiumAssistant
+            user={user}
+            currentPath={currentPath}
+            onNavigate={navigateToPath}
+            onRequirePremium={handleOpenPremiumModal}
+            defaultOpen
+          />
+        </Suspense>
+      ) : null}
+
+      {showPremiumModal && user?.role === 'artisan' && !user.isPremium ? (
+        <Suspense fallback={null}>
+          <PremiumModal isOpen onClose={handleClosePremiumModal} user={user} />
+        </Suspense>
+      ) : null}
 
     </>
   )

@@ -203,7 +203,16 @@ function DashboardLayout({
                 aria-label={`${user?.name || t('common.guest')} account menu`}
               >
                 <div className="header-avatar">
-                  {user?.profileImage ? <img src={user.profileImage} alt={`${user?.name || t('common.guest')} profile`} /> : <span>{userInitials}</span>}
+                  {user?.profileImage ? (
+                    <img
+                      src={user.profileImage}
+                      alt={`${user?.name || t('common.guest')} profile`}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ) : (
+                    <span>{userInitials}</span>
+                  )}
                 </div>
 
                 <div className="header-user-meta">

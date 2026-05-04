@@ -13,6 +13,9 @@ function NotificationBell({ user }) {
   const [error, setError] = useState('')
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(Number(user?.notificationCount) || 0)
+  const [tabVisible, setTabVisible] = useState(
+    () => typeof document !== 'undefined' && document.visibilityState === 'visible',
+  )
 
   const loadNotifications = useCallback(
     async (showLoader = false) => {
@@ -24,6 +27,7 @@ function NotificationBell({ user }) {
 
       try {
         const response = await api.get('/notifications', {
+          skipApiCache: true,
           headers: {
             'x-user-id': artisanId,
           },
@@ -52,14 +56,21 @@ function NotificationBell({ user }) {
   }, [loadNotifications])
 
   useEffect(() => {
-    if (!isArtisan || !artisanId) return undefined
+    const onVisibility = () => setTabVisible(document.visibilityState === 'visible')
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [])
 
+  useEffect(() => {
+    if (!isArtisan || !artisanId || !tabVisible) return undefined
+
+    const intervalMs = isOpen ? 10000 : 30000
     const interval = window.setInterval(() => {
       loadNotifications(false)
-    }, 10000)
+    }, intervalMs)
 
     return () => window.clearInterval(interval)
-  }, [artisanId, isArtisan, loadNotifications])
+  }, [artisanId, isArtisan, isOpen, loadNotifications, tabVisible])
 
   useEffect(() => {
     if (!isOpen) return undefined

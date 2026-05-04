@@ -1,13 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import api from '../../api'
 import ManufacturerLayout from '../../layouts/ManufacturerLayout'
 import ProductCard from '../../components/manufacturer/ProductCard'
-import RoleStatsCharts from '../../components/charts/RoleStatsCharts'
-import AddProductPage from './AddProductPage'
-import EditProductPage from './EditProductPage'
-import OrdersPage from './OrdersPage'
-import ProductsPage from './ProductsPage'
-import ProfilePage from './ProfilePage'
 import { formatProductPrice } from '../../utils/adminDashboard'
 import {
   extractManufacturerEditProductId,
@@ -15,6 +9,13 @@ import {
   MANUFACTURER_ROUTES,
   resolveManufacturerRoute,
 } from '../../utils/roleRoutes'
+
+const RoleStatsCharts = lazy(() => import('../../components/charts/RoleStatsCharts'))
+const AddProductPage = lazy(() => import('./AddProductPage'))
+const EditProductPage = lazy(() => import('./EditProductPage'))
+const OrdersPage = lazy(() => import('./OrdersPage'))
+const ProductsPage = lazy(() => import('./ProductsPage'))
+const ProfilePage = lazy(() => import('./ProfilePage'))
 
 function normalizeProduct(product = {}) {
   return {
@@ -318,52 +319,66 @@ function ManufacturerDashboard({
   const renderContent = () => {
     if (activeView === MANUFACTURER_ROUTES.products) {
       return (
-        <ProductsPage
-          products={products}
-          loading={loadingProducts}
-          deletingProductId={deletingProductId}
-          onEdit={(product) => {
-            setEditingProductId(product.id)
-            onNavigate?.(`/manufacturer/products/${product.id}/edit`)
-          }}
-          onDelete={handleDeleteProduct}
-          onAddProduct={() => onNavigate?.(MANUFACTURER_ROUTES.addProduct)}
-        />
+        <Suspense fallback={null}>
+          <ProductsPage
+            products={products}
+            loading={loadingProducts}
+            deletingProductId={deletingProductId}
+            onEdit={(product) => {
+              setEditingProductId(product.id)
+              onNavigate?.(`/manufacturer/products/${product.id}/edit`)
+            }}
+            onDelete={handleDeleteProduct}
+            onAddProduct={() => onNavigate?.(MANUFACTURER_ROUTES.addProduct)}
+          />
+        </Suspense>
       )
     }
 
     if (activeView === MANUFACTURER_ROUTES.addProduct) {
       return (
-        <AddProductPage
-          submitting={submittingProduct}
-          onSubmit={handleCreateProduct}
-          onCancel={() => onNavigate?.(MANUFACTURER_ROUTES.products)}
-          userId={manufacturerId}
-        />
+        <Suspense fallback={null}>
+          <AddProductPage
+            submitting={submittingProduct}
+            onSubmit={handleCreateProduct}
+            onCancel={() => onNavigate?.(MANUFACTURER_ROUTES.products)}
+            userId={manufacturerId}
+          />
+        </Suspense>
       )
     }
 
     if (activeView === 'manufacturer-edit-product') {
       return (
-        <EditProductPage
-          product={selectedProduct}
-          submitting={submittingProduct}
-          onSubmit={handleUpdateProduct}
-          onCancel={() => {
-            setEditingProductId('')
-            onNavigate?.(MANUFACTURER_ROUTES.products)
-          }}
-          userId={manufacturerId}
-        />
+        <Suspense fallback={null}>
+          <EditProductPage
+            product={selectedProduct}
+            submitting={submittingProduct}
+            onSubmit={handleUpdateProduct}
+            onCancel={() => {
+              setEditingProductId('')
+              onNavigate?.(MANUFACTURER_ROUTES.products)
+            }}
+            userId={manufacturerId}
+          />
+        </Suspense>
       )
     }
 
     if (activeView === MANUFACTURER_ROUTES.orders) {
-      return <OrdersPage products={products} />
+      return (
+        <Suspense fallback={null}>
+          <OrdersPage products={products} />
+        </Suspense>
+      )
     }
 
     if (activeView === MANUFACTURER_ROUTES.profile) {
-      return <ProfilePage profile={profile} saving={savingProfile} onSave={handleSaveProfile} />
+      return (
+        <Suspense fallback={null}>
+          <ProfilePage profile={profile} saving={savingProfile} onSave={handleSaveProfile} />
+        </Suspense>
+      )
     }
 
     return (
@@ -386,7 +401,9 @@ function ManufacturerDashboard({
           ))}
         </div>
 
-        <RoleStatsCharts role="manufacturer" userId={manufacturerId} title="Manufacturer analytics" />
+        <Suspense fallback={null}>
+          <RoleStatsCharts role="manufacturer" userId={manufacturerId} title="Manufacturer analytics" />
+        </Suspense>
 
         <div className="manufacturer-page-panel">
           <div className="manufacturer-section-head">

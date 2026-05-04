@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import api from '../api'
 import UserCard from '../components/UserCard'
 import { normalizeUser, withAdminHeaders } from '../utils/adminDashboard'
@@ -6,27 +6,33 @@ import { normalizeUser, withAdminHeaders } from '../utils/adminDashboard'
 function UsersPage({ user }) {
   const [users, setUsers] = useState([])
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeUserId, setActiveUserId] = useState('')
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     setLoading(true)
     setError('')
 
     try {
-      const response = await api.get('/users', withAdminHeaders(user))
+      const response = await api.get('/users', { ...withAdminHeaders(user), skipApiCache: true })
       setUsers((response.data || []).map((item) => normalizeUser(item)))
     } catch (requestError) {
       setError(requestError.response?.data?.message || 'Failed to load users')
     } finally {
       setLoading(false)
     }
-  }
+  }, [user?.id])
 
   useEffect(() => {
     loadUsers()
-  }, [])
+  }, [loadUsers])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearch(search), 220)
+    return () => window.clearTimeout(timer)
+  }, [search])
 
   const patchUserState = (userId, patch) => {
     setUsers((current) =>
@@ -74,18 +80,19 @@ function UsersPage({ user }) {
     }
   }
 
-  const filteredUsers = users.filter((entry) => {
-    const query = search.trim().toLowerCase()
-    if (!query) return true
+  const filteredUsers = useMemo(() => {
+    const query = debouncedSearch.trim().toLowerCase()
+    if (!query) return users
 
-    return (
-      entry.name.toLowerCase().includes(query) ||
-      entry.email.toLowerCase().includes(query) ||
-      entry.role.toLowerCase().includes(query)
+    return users.filter(
+      (entry) =>
+        entry.name.toLowerCase().includes(query) ||
+        entry.email.toLowerCase().includes(query) ||
+        entry.role.toLowerCase().includes(query),
     )
-  })
+  }, [debouncedSearch, users])
 
-  const bannedCount = users.filter((entry) => entry.isBanned).length
+  const bannedCount = useMemo(() => users.filter((entry) => entry.isBanned).length, [users])
 
   return (
     <section className="admin-page-stack">

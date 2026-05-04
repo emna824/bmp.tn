@@ -118,7 +118,7 @@ function CalendarPage({ projects, workLogs, loading, onBack }) {
 
   return (
     <section className="space-y-6 transition-colors duration-300">
-      <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
+      <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-sm transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-500">{t('calendarUi.planning')}</p>
@@ -135,7 +135,7 @@ function CalendarPage({ projects, workLogs, loading, onBack }) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
+      <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-sm transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
         {loading ? (
           <p className="text-sm text-slate-500 dark:text-slate-300">{t('calendarUi.loadingCalendar')}</p>
         ) : (

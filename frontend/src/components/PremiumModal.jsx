@@ -99,7 +99,7 @@ function PremiumModal({ isOpen, user, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-md"
+      className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-sm"
       onClick={() => onClose?.()}
       role="presentation"
     >

@@ -21,7 +21,7 @@ function ProductCard({
       <article className="market-card">
         <div className="market-card-image">
           {product.image ? (
-            <img src={product.image} alt={product.name} loading="lazy" />
+            <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
           ) : (
             <div className="market-img-fallback">{product.name?.charAt(0) || 'P'}</div>
           )}
@@ -127,7 +127,7 @@ function ProductCard({
     <article className="admin-card product-card">
       <div className="admin-product-media">
         {product.image ? (
-          <img src={product.image} alt={product.name} />
+          <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
         ) : (
           <span>{product.name.charAt(0).toUpperCase()}</span>
         )}

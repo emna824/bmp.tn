@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import api from '../api'
 import Sidebar from '../components/Sidebar'
 import Topbar from '../components/Topbar'
 import { HomeIcon, InvoiceIcon, MarketplaceIcon, MenuIcon, ShieldIcon, UserIcon } from '../components/Icons'
-import RoleStatsCharts from '../components/charts/RoleStatsCharts'
-import AdminLogs from './AdminLogs'
-import ProductsPage from './ProductsPage'
-import ReportsPage from './ReportsPage'
-import UsersPage from './UsersPage'
 import { normalizeProduct, normalizeReport, normalizeUser, withAdminHeaders } from '../utils/adminDashboard'
+
+const RoleStatsCharts = lazy(() => import('../components/charts/RoleStatsCharts'))
+const AdminLogs = lazy(() => import('./AdminLogs'))
+const ProductsPage = lazy(() => import('./ProductsPage'))
+const ReportsPage = lazy(() => import('./ReportsPage'))
+const UsersPage = lazy(() => import('./UsersPage'))
 
 const NAV_ITEMS = [
   {
@@ -108,19 +109,35 @@ function AdminDashboard({ user, onLogout }) {
 
   const renderActivePage = () => {
     if (activeView === 'reports') {
-      return <ReportsPage user={user} />
+      return (
+        <Suspense fallback={null}>
+          <ReportsPage user={user} />
+        </Suspense>
+      )
     }
 
     if (activeView === 'users') {
-      return <UsersPage user={user} />
+      return (
+        <Suspense fallback={null}>
+          <UsersPage user={user} />
+        </Suspense>
+      )
     }
 
     if (activeView === 'products') {
-      return <ProductsPage user={user} />
+      return (
+        <Suspense fallback={null}>
+          <ProductsPage user={user} />
+        </Suspense>
+      )
     }
 
     if (activeView === 'logs') {
-      return <AdminLogs user={user} />
+      return (
+        <Suspense fallback={null}>
+          <AdminLogs user={user} />
+        </Suspense>
+      )
     }
 
     return (
@@ -171,7 +188,9 @@ function AdminDashboard({ user, onLogout }) {
           </article>
         </div>
 
-        <RoleStatsCharts role="admin" userId={user?.id || user?._id} title="Admin analytics" />
+        <Suspense fallback={null}>
+          <RoleStatsCharts role="admin" userId={user?.id || user?._id} title="Admin analytics" />
+        </Suspense>
 
         <div className="admin-info-grid">
           <article className="admin-panel">

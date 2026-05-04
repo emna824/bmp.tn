@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getFallbackReply, QUICK_ACTIONS, resolveAssistantAction } from '../utils/assistantIntents'
 import { BotIcon, ChatIcon, CloseIcon, MicIcon, SendIcon, StopIcon } from './Icons'
 
@@ -34,7 +34,7 @@ function getSpeechRecognitionConstructor() {
   return window.SpeechRecognition || window.webkitSpeechRecognition || null
 }
 
-function TypingDots() {
+const TypingDots = memo(function TypingDots() {
   return (
     <span className="inline-flex items-center gap-1 pl-1" aria-hidden="true">
       {[0, 1, 2].map((index) => (
@@ -46,7 +46,7 @@ function TypingDots() {
       ))}
     </span>
   )
-}
+})
 
 function TypewriterText({ text, enabled }) {
   const [visibleText, setVisibleText] = useState(enabled ? '' : text)
@@ -71,7 +71,7 @@ function TypewriterText({ text, enabled }) {
   return visibleText
 }
 
-function MessageBubble({ message }) {
+const MessageBubble = memo(function MessageBubble({ message, reduceMotion }) {
   const isUser = message.role === 'user'
 
   return (
@@ -92,21 +92,22 @@ function MessageBubble({ message }) {
             </span>
           </span>
         ) : (
-          <TypewriterText text={message.text} enabled={Boolean(message.animated && !isUser)} />
+          <TypewriterText text={message.text} enabled={Boolean(message.animated && !isUser && !reduceMotion)} />
         )}
       </div>
     </div>
   )
-}
+})
 
-function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremium }) {
-  const [isOpen, setIsOpen] = useState(false)
+function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremium, defaultOpen = false }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen)
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState(() => buildInitialMessages(user))
   const [isTyping, setIsTyping] = useState(false)
   const [isExecuting, setIsExecuting] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [speechNotice, setSpeechNotice] = useState('')
+  const [reduceMotion, setReduceMotion] = useState(false)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
   const launcherRef = useRef(null)
@@ -117,6 +118,17 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
 
   const quickActions = useMemo(() => QUICK_ACTIONS[user?.role || ''] || [], [user?.role])
   const speechSupported = Boolean(getSpeechRecognitionConstructor())
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return undefined
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const updateMotionPreference = () => {
+      setReduceMotion(Boolean(mediaQuery.matches))
+    }
+    updateMotionPreference()
+    mediaQuery.addEventListener('change', updateMotionPreference)
+    return () => mediaQuery.removeEventListener('change', updateMotionPreference)
+  }, [])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: isOpen ? 'smooth' : 'auto', block: 'end' })
@@ -148,9 +160,11 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
         },
       ])
 
-      await new Promise((resolve) => {
-        window.setTimeout(resolve, ACTION_DELAY_MS)
-      })
+      if (!reduceMotion) {
+        await new Promise((resolve) => {
+          window.setTimeout(resolve, ACTION_DELAY_MS)
+        })
+      }
 
       if (action.route) {
         onNavigate?.(action.route)
@@ -178,7 +192,7 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
       )
       setIsExecuting(false)
     },
-    [currentPath, onNavigate, onRequirePremium],
+    [currentPath, onNavigate, onRequirePremium, reduceMotion],
   )
 
   const sendMessage = useCallback(
@@ -210,7 +224,7 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
                 animated: true,
               },
             ])
-          }, 650)
+          }, reduceMotion ? 0 : 650)
           return
         }
 
@@ -230,9 +244,9 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
             animated: true,
           },
         ])
-      }, 650)
+      }, reduceMotion ? 0 : 650)
     },
-    [isBusy, runAction, user],
+    [isBusy, reduceMotion, runAction, user],
   )
 
   const handleSubmit = (event) => {
@@ -341,7 +355,7 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
     <>
       <section
         id="bmp-assistant-panel"
-        className={`fixed bottom-24 right-6 z-[110] flex h-[600px] w-[380px] origin-bottom-right flex-col overflow-hidden rounded-2xl border border-white/15 bg-slate-950/85 text-white shadow-2xl shadow-slate-950/35 backdrop-blur-2xl transition-all duration-300 ease-out dark:border-slate-700/70 dark:bg-slate-950/90 max-sm:bottom-20 max-sm:left-3 max-sm:right-3 max-sm:h-[calc(100dvh-6rem)] max-sm:w-auto ${
+        className={`fixed bottom-24 right-6 z-[110] flex h-[600px] w-[380px] origin-bottom-right flex-col overflow-hidden rounded-2xl border border-white/15 bg-slate-950/85 text-white shadow-2xl shadow-slate-950/35 backdrop-blur-sm transition-all duration-300 ease-out dark:border-slate-700/70 dark:bg-slate-950/90 max-sm:bottom-20 max-sm:left-3 max-sm:right-3 max-sm:h-[calc(100dvh-6rem)] max-sm:w-auto ${
           isOpen
             ? 'translate-y-0 scale-100 opacity-100'
             : 'pointer-events-none translate-y-5 scale-95 opacity-0'
@@ -386,7 +400,7 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
           aria-label="Assistant conversation"
         >
           {messages.map((message) => (
-            <MessageBubble key={message.id} message={message} />
+            <MessageBubble key={message.id} message={message} reduceMotion={reduceMotion} />
           ))}
 
           {isTyping ? (
@@ -397,6 +411,7 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
                 text: 'Typing',
                 loading: true,
               }}
+              reduceMotion={reduceMotion}
             />
           ) : null}
           <div ref={messagesEndRef} />

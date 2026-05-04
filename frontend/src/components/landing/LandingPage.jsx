@@ -1,14 +1,16 @@
+import { Suspense, lazy, useCallback } from 'react'
 import SignInForm from '../SignInForm'
 import SignUpForm from '../SignUpForm'
 import LanguageSwitcher from '../LanguageSwitcher'
 import ThemeToggle from '../ThemeToggle'
 import { BmpLogo, LockIcon, UserIcon } from '../Icons'
-import LandingActors from './LandingActors'
-import LandingFeatures from './LandingFeatures'
-import LandingFooter from './LandingFooter'
 import LandingHero from './LandingHero'
-import LandingHowItWorks from './LandingHowItWorks'
 import { useTranslation } from 'react-i18next'
+
+const LandingFeatures = lazy(() => import('./LandingFeatures'))
+const LandingActors = lazy(() => import('./LandingActors'))
+const LandingHowItWorks = lazy(() => import('./LandingHowItWorks'))
+const LandingFooter = lazy(() => import('./LandingFooter'))
 
 function scrollToSection(sectionId) {
   if (typeof document === 'undefined') return
@@ -18,10 +20,13 @@ function scrollToSection(sectionId) {
 function LandingPage({ mode, navOpen, onToggleNav, onSelectMode, onLoginSuccess }) {
   const { t } = useTranslation()
 
-  const handleModeChange = (nextMode) => {
-    onSelectMode(nextMode)
-    scrollToSection('auth')
-  }
+  const handleModeChange = useCallback(
+    (nextMode) => {
+      onSelectMode(nextMode)
+      scrollToSection('auth')
+    },
+    [onSelectMode],
+  )
 
   return (
     <div className="landing-shell">
@@ -72,9 +77,15 @@ function LandingPage({ mode, navOpen, onToggleNav, onSelectMode, onLoginSuccess 
       <main id="landing-main" className="landing-main" tabIndex={-1}>
         <div className="landing-container">
           <LandingHero onSignUp={() => handleModeChange('signup')} onLogin={() => handleModeChange('signin')} />
-          <LandingFeatures />
-          <LandingActors />
-          <LandingHowItWorks />
+          <Suspense fallback={null}>
+            <LandingFeatures />
+          </Suspense>
+          <Suspense fallback={null}>
+            <LandingActors />
+          </Suspense>
+          <Suspense fallback={null}>
+            <LandingHowItWorks />
+          </Suspense>
 
           <section className="landing-section landing-auth-section" id="auth">
             <div className="landing-auth-copy">
@@ -134,7 +145,9 @@ function LandingPage({ mode, navOpen, onToggleNav, onSelectMode, onLoginSuccess 
         </div>
       </main>
 
-      <LandingFooter />
+      <Suspense fallback={null}>
+        <LandingFooter />
+      </Suspense>
     </div>
   )
 }

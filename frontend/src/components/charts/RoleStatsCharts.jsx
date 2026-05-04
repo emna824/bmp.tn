@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Bar,
   BarChart,
@@ -40,7 +40,7 @@ function valueFormatter(value) {
   return numericValue.toLocaleString()
 }
 
-function AppTooltip(props) {
+const AppTooltip = memo(function AppTooltip(props) {
   return (
     <Tooltip
       {...props}
@@ -53,9 +53,9 @@ function AppTooltip(props) {
       }}
     />
   )
-}
+})
 
-function LineMetricChart({ data, dataKey, stroke = COLORS[0], suffix = '' }) {
+const LineMetricChart = memo(function LineMetricChart({ data, dataKey, stroke = COLORS[0], suffix = '' }) {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -64,13 +64,21 @@ function LineMetricChart({ data, dataKey, stroke = COLORS[0], suffix = '' }) {
         <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `${value}${suffix}`} />
         <AppTooltip />
         <Legend />
-        <Line type="monotone" dataKey={dataKey} stroke={stroke} strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+        <Line
+          type="monotone"
+          dataKey={dataKey}
+          stroke={stroke}
+          strokeWidth={3}
+          dot={{ r: 4 }}
+          activeDot={{ r: 6 }}
+          isAnimationActive={false}
+        />
       </LineChart>
     </ResponsiveContainer>
   )
-}
+})
 
-function VerticalBarMetricChart({ data, bars, xKey = 'name' }) {
+const VerticalBarMetricChart = memo(function VerticalBarMetricChart({ data, bars, xKey = 'name' }) {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -80,14 +88,21 @@ function VerticalBarMetricChart({ data, bars, xKey = 'name' }) {
         <AppTooltip />
         <Legend />
         {bars.map((bar, index) => (
-          <Bar key={bar.key} dataKey={bar.key} name={bar.name} fill={bar.color || COLORS[index]} radius={[8, 8, 0, 0]} />
+          <Bar
+            key={bar.key}
+            dataKey={bar.key}
+            name={bar.name}
+            fill={bar.color || COLORS[index]}
+            radius={[8, 8, 0, 0]}
+            isAnimationActive={false}
+          />
         ))}
       </BarChart>
     </ResponsiveContainer>
   )
-}
+})
 
-function HorizontalBarMetricChart({ data, dataKey }) {
+const HorizontalBarMetricChart = memo(function HorizontalBarMetricChart({ data, dataKey }) {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} layout="vertical" margin={{ top: 10, right: 18, left: 18, bottom: 0 }}>
@@ -96,17 +111,27 @@ function HorizontalBarMetricChart({ data, dataKey }) {
         <YAxis type="category" dataKey="name" tickFormatter={shortName} tickLine={false} axisLine={false} width={96} />
         <AppTooltip />
         <Legend />
-        <Bar dataKey={dataKey} fill={COLORS[1]} radius={[0, 8, 8, 0]} />
+        <Bar dataKey={dataKey} fill={COLORS[1]} radius={[0, 8, 8, 0]} isAnimationActive={false} />
       </BarChart>
     </ResponsiveContainer>
   )
-}
+})
 
-function PieMetricChart({ data }) {
+const PieMetricChart = memo(function PieMetricChart({ data }) {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <PieChart>
-        <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={54} outerRadius={86} paddingAngle={4}>
+        <Pie
+          data={data}
+          dataKey="value"
+          nameKey="name"
+          cx="50%"
+          cy="50%"
+          innerRadius={54}
+          outerRadius={86}
+          paddingAngle={4}
+          isAnimationActive={false}
+        >
           {data.map((entry, index) => (
             <Cell key={entry.name} fill={COLORS[index % COLORS.length]} />
           ))}
@@ -116,7 +141,7 @@ function PieMetricChart({ data }) {
       </PieChart>
     </ResponsiveContainer>
   )
-}
+})
 
 function useRoleStats(role, userId) {
   const [state, setState] = useState({ loading: true, error: '', data: null })
@@ -262,6 +287,8 @@ function AdminCharts({ data, loading }) {
 }
 
 function RoleStatsCharts({ role, userId, title = 'Analytics' }) {
+  const sectionRef = useRef(null)
+  const [isVisible, setIsVisible] = useState(false)
   const { data, loading, error, reload } = useRoleStats(role, userId)
   const Charts = useMemo(
     () =>
@@ -274,10 +301,29 @@ function RoleStatsCharts({ role, userId, title = 'Analytics' }) {
     [role],
   )
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || isVisible) return undefined
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setIsVisible(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: '200px 0px' },
+    )
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [isVisible])
+
   if (!Charts) return null
 
   return (
-    <section className="space-y-4">
+    <section ref={sectionRef} className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-xs font-bold uppercase tracking-wide text-orange-600 dark:text-orange-300">{title}</p>
@@ -294,9 +340,19 @@ function RoleStatsCharts({ role, userId, title = 'Analytics' }) {
 
       <ErrorPanel message={error} onRetry={reload} />
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Charts data={data || {}} loading={loading} />
-      </div>
+      {isVisible ? (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <Charts data={data || {}} loading={loading} />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <ChartCard key={index} title="" subtitle="" loading empty={false}>
+              <span />
+            </ChartCard>
+          ))}
+        </div>
+      )}
     </section>
   )
 }

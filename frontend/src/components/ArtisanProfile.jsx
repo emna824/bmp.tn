@@ -1,19 +1,20 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api, { withUserHeaders } from '../api'
-import CreateProjectForm from './CreateProjectForm'
 import { LockIcon, SettingsIcon, UserIcon } from './Icons'
 import ArtisanLayout from '../layouts/ArtisanLayout'
 import ProductCard from './ProductCard'
-import ReportModal from './ReportModal'
-import RoleStatsCharts from './charts/RoleStatsCharts'
-import ArtisanDashboard from '../pages/ArtisanDashboard'
-import CalendarPage from '../pages/CalendarPage'
-import ProjectDetails from '../pages/ProjectDetails'
 import { downloadFileReference } from '../utils/fileHelpers'
 import { formatProductPrice, normalizeProduct } from '../utils/adminDashboard'
 import { getStripeClient } from '../utils/stripe'
 import { ARTISAN_ROUTES, resolveArtisanRoute } from '../utils/roleRoutes'
+
+const RoleStatsCharts = lazy(() => import('./charts/RoleStatsCharts'))
+const ArtisanDashboard = lazy(() => import('../pages/ArtisanDashboard'))
+const CalendarPage = lazy(() => import('../pages/CalendarPage'))
+const ProjectDetails = lazy(() => import('../pages/ProjectDetails'))
+const CreateProjectForm = lazy(() => import('./CreateProjectForm'))
+const ReportModal = lazy(() => import('./ReportModal'))
 
 const JOB_OPTIONS = ['Painter', 'Mason', 'Electrician', 'Plumber', 'Carpenter', 'Metalworker', 'Laborer']
 
@@ -966,7 +967,9 @@ function ArtisanProfile({
               ))}
             </div>
 
-            <RoleStatsCharts role="artisan" userId={userId} title="Artisan analytics" />
+            <Suspense fallback={null}>
+              <RoleStatsCharts role="artisan" userId={userId} title="Artisan analytics" />
+            </Suspense>
 
             <div className="cards-grid">
               <section className="card-panel">
@@ -1221,67 +1224,75 @@ function ArtisanProfile({
                     </p>
                   </div>
                 </div>
-                <CreateProjectForm
-                  userId={userId}
-                  role="artisan"
-                  defaultTrade={profile?.trade || profile?.job || user?.trade || user?.job || ''}
-                  isPremium={isPremiumUser}
-                  onRequirePremium={onRequirePremium}
-                  onCreated={handleSoloProjectCreated}
-                />
+                <Suspense fallback={null}>
+                  <CreateProjectForm
+                    userId={userId}
+                    role="artisan"
+                    defaultTrade={profile?.trade || profile?.job || user?.trade || user?.job || ''}
+                    isPremium={isPremiumUser}
+                    onRequirePremium={onRequirePremium}
+                    onCreated={handleSoloProjectCreated}
+                  />
+                </Suspense>
               </section>
             ) : null}
 
             {projectsDisplayMode === 'calendar' ? (
-              <CalendarPage
-                projects={assignedProjects}
-                workLogs={artisanWorkLogs}
-                loading={loadingAssignedProjects || loadingWorkLogs}
-                onBack={() => setProjectsDisplayMode('dashboard')}
-              />
+              <Suspense fallback={null}>
+                <CalendarPage
+                  projects={assignedProjects}
+                  workLogs={artisanWorkLogs}
+                  loading={loadingAssignedProjects || loadingWorkLogs}
+                  onBack={() => setProjectsDisplayMode('dashboard')}
+                />
+              </Suspense>
             ) : null}
 
             {projectsDisplayMode === 'details' ? (
-              <ProjectDetails
-                role="artisan"
-                userId={userId}
-                project={selectedProject}
-                milestones={selectedProjectMilestones}
-                workLogs={artisanWorkLogs}
-                loading={loadingMilestones || loadingWorkLogs}
-                savingTaskId={savingTaskId}
-                creatingMilestone={false}
-                onBack={() => setProjectsDisplayMode('dashboard')}
-                onTaskChange={handleTaskDraftChange}
-                onSaveTask={handleSaveTask}
-                onCreateMilestone={handleCreateSoloMilestone}
-                onCloseProject={() => handleSoloProjectStatusAction('closed')}
-                onFinishProject={() => handleSoloProjectStatusAction('finished')}
-                onProjectRefresh={loadAssignedProjects}
-              />
+              <Suspense fallback={null}>
+                <ProjectDetails
+                  role="artisan"
+                  userId={userId}
+                  project={selectedProject}
+                  milestones={selectedProjectMilestones}
+                  workLogs={artisanWorkLogs}
+                  loading={loadingMilestones || loadingWorkLogs}
+                  savingTaskId={savingTaskId}
+                  creatingMilestone={false}
+                  onBack={() => setProjectsDisplayMode('dashboard')}
+                  onTaskChange={handleTaskDraftChange}
+                  onSaveTask={handleSaveTask}
+                  onCreateMilestone={handleCreateSoloMilestone}
+                  onCloseProject={() => handleSoloProjectStatusAction('closed')}
+                  onFinishProject={() => handleSoloProjectStatusAction('finished')}
+                  onProjectRefresh={loadAssignedProjects}
+                />
+              </Suspense>
             ) : null}
 
             {projectsDisplayMode === 'dashboard' ? (
-              <ArtisanDashboard
-                projects={assignedProjects}
-                selectedProjectId={selectedProjectId}
-                loading={loadingAssignedProjects}
-                tasks={dailyTasks}
-                savingTaskId={savingTaskId}
-                isPremium={isPremiumUser}
-                onSelectProject={setSelectedProjectId}
-                onCreateProject={handleOpenSoloProjectCreator}
-                onOpenDetails={() => setProjectsDisplayMode('details')}
-                onOpenCalendar={() => {
-                  if (!isPremiumUser) {
-                    handlePremiumCalendarAccess()
-                    return
-                  }
-                  setProjectsDisplayMode('calendar')
-                }}
-                onTaskChange={handleTaskDraftChange}
-                onSaveTask={handleSaveTask}
-              />
+              <Suspense fallback={null}>
+                <ArtisanDashboard
+                  projects={assignedProjects}
+                  selectedProjectId={selectedProjectId}
+                  loading={loadingAssignedProjects}
+                  tasks={dailyTasks}
+                  savingTaskId={savingTaskId}
+                  isPremium={isPremiumUser}
+                  onSelectProject={setSelectedProjectId}
+                  onCreateProject={handleOpenSoloProjectCreator}
+                  onOpenDetails={() => setProjectsDisplayMode('details')}
+                  onOpenCalendar={() => {
+                    if (!isPremiumUser) {
+                      handlePremiumCalendarAccess()
+                      return
+                    }
+                    setProjectsDisplayMode('calendar')
+                  }}
+                  onTaskChange={handleTaskDraftChange}
+                  onSaveTask={handleSaveTask}
+                />
+              </Suspense>
             ) : null}
           </section>
         )}
@@ -1397,24 +1408,26 @@ function ArtisanProfile({
                 <p className="subtitle">Loading invoices...</p>
               </section>
             ) : assignedProjects.length && selectedProject ? (
-              <ProjectDetails
-                role="artisan"
-                userId={userId}
-                project={selectedProject}
-                milestones={selectedProjectMilestones}
-                workLogs={artisanWorkLogs}
-                loading={loadingMilestones || loadingWorkLogs}
-                savingTaskId={savingTaskId}
-                creatingMilestone={false}
-                initialTab="invoices"
-                onBack={() => onNavigate?.(ARTISAN_ROUTES.projects)}
-                onTaskChange={handleTaskDraftChange}
-                onSaveTask={handleSaveTask}
-                onCreateMilestone={handleCreateSoloMilestone}
-                onCloseProject={() => handleSoloProjectStatusAction('closed')}
-                onFinishProject={() => handleSoloProjectStatusAction('finished')}
-                onProjectRefresh={loadAssignedProjects}
-              />
+              <Suspense fallback={null}>
+                <ProjectDetails
+                  role="artisan"
+                  userId={userId}
+                  project={selectedProject}
+                  milestones={selectedProjectMilestones}
+                  workLogs={artisanWorkLogs}
+                  loading={loadingMilestones || loadingWorkLogs}
+                  savingTaskId={savingTaskId}
+                  creatingMilestone={false}
+                  initialTab="invoices"
+                  onBack={() => onNavigate?.(ARTISAN_ROUTES.projects)}
+                  onTaskChange={handleTaskDraftChange}
+                  onSaveTask={handleSaveTask}
+                  onCreateMilestone={handleCreateSoloMilestone}
+                  onCloseProject={() => handleSoloProjectStatusAction('closed')}
+                  onFinishProject={() => handleSoloProjectStatusAction('finished')}
+                  onProjectRefresh={loadAssignedProjects}
+                />
+              </Suspense>
             ) : (
               <section className="dashboard-card">
                 <p className="subtitle">No assigned projects yet.</p>
@@ -1740,15 +1753,19 @@ function ArtisanProfile({
         </div>
       ) : null}
 
-      <ReportModal
-        isOpen={Boolean(reportTarget)}
-        currentUserId={userId}
-        targetType={reportTarget?.targetType || 'product'}
-        targetId={reportTarget?.targetId || ''}
-        targetLabel={reportTarget?.targetLabel || ''}
-        onClose={closeReportModal}
-        onSuccess={(message) => showNotification('success', message)}
-      />
+      {reportTarget ? (
+        <Suspense fallback={null}>
+          <ReportModal
+            isOpen
+            currentUserId={userId}
+            targetType={reportTarget?.targetType || 'product'}
+            targetId={reportTarget?.targetId || ''}
+            targetLabel={reportTarget?.targetLabel || ''}
+            onClose={closeReportModal}
+            onSuccess={(message) => showNotification('success', message)}
+          />
+        </Suspense>
+      ) : null}
     </div>
   )
 }

@@ -1,13 +1,14 @@
-import { createElement, useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, createElement, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api, { withUserHeaders } from '../api'
 import { ChatIcon, InfoIcon, InvoiceIcon, MarketplaceIcon, ProjectIcon, QuoteIcon, SearchIcon } from '../components/Icons'
 import MilestoneCard from '../components/MilestoneCard'
-import ProjectAIInsights from '../components/ProjectAIInsights'
-import ProjectChatPanel from '../components/ProjectChatPanel'
-import ReportModal from '../components/ReportModal'
 import StatusBadge, { formatDisplayDate } from '../components/StatusBadge'
 import TaskCard from '../components/TaskCard'
+
+const ProjectAIInsights = lazy(() => import('../components/ProjectAIInsights'))
+const ProjectChatPanel = lazy(() => import('../components/ProjectChatPanel'))
+const ReportModal = lazy(() => import('../components/ReportModal'))
 import { downloadFileReference } from '../utils/fileHelpers'
 
 const todayKey = () => new Date().toISOString().slice(0, 10)
@@ -104,6 +105,7 @@ function ProjectDetails(props) {
   const [invoiceFilters, setInvoiceFilters] = useState({ dateFrom: '', dateTo: '', status: '', sort: 'newest' })
   const [milestoneForm, setMilestoneForm] = useState({ title: '', description: '', artisanId: '', startDate: '', endDate: '' })
   const [marketplaceSearch, setMarketplaceSearch] = useState('')
+  const [debouncedMarketplaceSearch, setDebouncedMarketplaceSearch] = useState('')
   const projectType = String(project?.type || 'expert')
   const projectOwnerId = getId(project?.ownerId) || getId(project?.expertId)
   const isSoloProject = projectType === 'solo'
@@ -124,6 +126,11 @@ function ProjectDetails(props) {
     const timer = setTimeout(() => setFeedback({ type: '', text: '' }), 3200)
     return () => clearTimeout(timer)
   }, [feedback])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedMarketplaceSearch(marketplaceSearch), 280)
+    return () => window.clearTimeout(timer)
+  }, [marketplaceSearch])
 
   const workLogByMilestone = useMemo(() => {
     const entries = {}
@@ -222,7 +229,7 @@ function ProjectDetails(props) {
   }, [invoices])
 
   const filteredProjectMarketplaceProducts = useMemo(() => {
-    const searchTerm = marketplaceSearch.trim().toLowerCase()
+    const searchTerm = debouncedMarketplaceSearch.trim().toLowerCase()
 
     if (!searchTerm) {
       return marketplaceProducts
@@ -232,7 +239,7 @@ function ProjectDetails(props) {
       [product.name, product.description, product.manufacturer?.name]
         .some((value) => String(value || '').toLowerCase().includes(searchTerm)),
     )
-  }, [marketplaceProducts, marketplaceSearch])
+  }, [marketplaceProducts, debouncedMarketplaceSearch])
 
   const previewQuotes = useMemo(() => quotes.slice(0, 5), [quotes])
 
@@ -343,7 +350,7 @@ function ProjectDetails(props) {
 
   if (!project) {
     return (
-      <section className="project-details-shell rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
+      <section className="project-details-shell rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-sm transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
         <p className="text-sm text-slate-500 dark:text-slate-300">{t('project.detailsEmpty')}</p>
       </section>
     )
@@ -351,7 +358,7 @@ function ProjectDetails(props) {
 
   return (
     <section className="project-details-shell space-y-6 transition-colors duration-300">
-      <div className="project-details-panel rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
+      <div className="project-details-panel rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-sm transition-colors duration-300 dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
         <div className="project-breadcrumbs">
           <button type="button" onClick={onBack} className="project-breadcrumb-back">
             {t('common.back')}
@@ -432,11 +439,13 @@ function ProjectDetails(props) {
       {activeTab === 'overview' ? (
         <>
           {role === 'expert' ? (
-            <ProjectAIInsights projectId={projectId} userId={userId} />
+            <Suspense fallback={null}>
+              <ProjectAIInsights projectId={projectId} userId={userId} />
+            </Suspense>
           ) : null}
 
           {canCreateMilestones ? (
-            <div className="project-section-panel rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
+            <div className="project-section-panel rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
               <div className="mb-4"><h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('project.createMilestone')}</h3><p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{isSoloProject ? t('project.createSoloMilestoneDescription', { defaultValue: 'Create personal tasks and milestones for your solo project.' }) : t('project.createMilestoneDescription')}</p></div>
               <form className="grid gap-4 md:grid-cols-2" onSubmit={submitMilestone}>
                 <input type="text" value={milestoneForm.title} onChange={(event) => setMilestoneForm((current) => ({ ...current, title: event.target.value }))} placeholder={t('project.milestoneTitle')} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition-all duration-300 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-orange-400 dark:focus:ring-orange-500/20" />
@@ -458,7 +467,7 @@ function ProjectDetails(props) {
             </div>
           ) : null}
 
-          <div className="project-section-panel rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
+          <div className="project-section-panel rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
             <div className="mb-4"><h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('common.milestones')}</h3><p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{role === 'expert' ? t('project.reviewTasks') : t('project.trackTasks')}</p></div>
             {loading ? (
               <p className="text-sm text-slate-500 dark:text-slate-300">{t('project.loadingMilestones')}</p>
@@ -488,7 +497,7 @@ function ProjectDetails(props) {
       ) : null}
 
       {activeTab === 'marketplace' ? (
-        <div className="project-section-panel rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
+        <div className="project-section-panel rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
           <div className="project-marketplace-toolbar mb-4">
             <div>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Project Materials</h3>
@@ -518,7 +527,7 @@ function ProjectDetails(props) {
                 const outOfStock = Number(product.stock) <= 0
                 return (
                   <article key={product.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-md transition-all duration-300 hover:shadow-lg dark:border-slate-700 dark:bg-slate-800/80 dark:shadow-slate-950/20">
-                    <div className="mb-4 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-900/80">{product.image ? <img src={product.image} alt={product.name} className="h-44 w-full object-cover" loading="lazy" /> : <div className="flex h-44 items-center justify-center text-4xl font-semibold text-slate-400 dark:text-slate-600">{(product.name || 'P').charAt(0).toUpperCase()}</div>}</div>
+                    <div className="mb-4 overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-900/80">{product.image ? <img src={product.image} alt={product.name} className="h-44 w-full object-cover" loading="lazy" decoding="async" /> : <div className="flex h-44 items-center justify-center text-4xl font-semibold text-slate-400 dark:text-slate-600">{(product.name || 'P').charAt(0).toUpperCase()}</div>}</div>
                     <div className="flex items-start justify-between gap-3"><div><h4 className="text-base font-semibold text-slate-900 dark:text-white">{product.name}</h4><p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{product?.manufacturer?.name || 'Manufacturer'}</p></div><span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700 dark:bg-orange-500/10 dark:text-orange-300">{formatCurrency(product.price)}</span></div>
                     <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{product.description || t('project.noDescription')}</p>
                     <div className="mt-4 flex flex-wrap gap-2 text-xs"><span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600 dark:bg-slate-900/70 dark:text-slate-300">{product.documentName || 'PDF'}</span><span className={`rounded-full px-3 py-1 font-medium ${outOfStock ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'}`}>{outOfStock ? 'Out of stock' : `Stock: ${product.stock}`}</span></div>
@@ -572,7 +581,7 @@ function ProjectDetails(props) {
       ) : null}
 
       {activeTab === 'quotes' ? (
-        <div className="project-section-panel rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
+        <div className="project-section-panel rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
           <div className="mb-4"><h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('quotes')}</h3><p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{role === 'expert' ? 'Review and validate quote requests for this project.' : isSoloProject ? 'Request materials, review accepted quotes, and confirm purchases inside your solo project.' : 'Track your requested quotes and confirm accepted purchases.'}</p></div>
           {loadingQuotes ? (
             <p className="text-sm text-slate-500 dark:text-slate-300">{t('common.loading')}</p>
@@ -612,7 +621,7 @@ function ProjectDetails(props) {
       ) : null}
 
       {activeTab === 'invoices' ? (
-        <div className="project-section-panel rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
+        <div className="project-section-panel rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
           <div className="mb-4"><h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('invoices')}</h3><p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Archive and review purchase invoices inside this project.</p></div>
           <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <input type="date" value={invoiceFilters.dateFrom} onChange={(event) => setInvoiceFilters((current) => ({ ...current, dateFrom: event.target.value }))} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition-all duration-300 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-orange-400 dark:focus:ring-orange-500/20" />
@@ -645,17 +654,19 @@ function ProjectDetails(props) {
       ) : null}
 
       {activeTab === 'chat' ? (
-        <ProjectChatPanel
-          projectId={projectId}
-          project={project}
-          role={role}
-          userId={userId}
-          assignedArtisans={assignedArtisans}
-        />
+        <Suspense fallback={null}>
+          <ProjectChatPanel
+            projectId={projectId}
+            project={project}
+            role={role}
+            userId={userId}
+            assignedArtisans={assignedArtisans}
+          />
+        </Suspense>
       ) : null}
 
       {quoteProduct ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-900">
             <div className="flex items-start justify-between gap-3">
               <div><h3 className="text-lg font-semibold text-slate-900 dark:text-white">Request Quote</h3><p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{quoteProduct.name}</p></div>
@@ -673,15 +684,19 @@ function ProjectDetails(props) {
         </div>
       ) : null}
 
-      <ReportModal
-        isOpen={Boolean(reportTarget)}
-        currentUserId={userId}
-        targetType={reportTarget?.targetType || 'product'}
-        targetId={reportTarget?.targetId || ''}
-        targetLabel={reportTarget?.targetLabel || ''}
-        onClose={() => setReportTarget(null)}
-        onSuccess={(message) => setFeedback({ type: 'success', text: message || 'Report submitted successfully' })}
-      />
+      {reportTarget ? (
+        <Suspense fallback={null}>
+          <ReportModal
+            isOpen
+            currentUserId={userId}
+            targetType={reportTarget?.targetType || 'product'}
+            targetId={reportTarget?.targetId || ''}
+            targetLabel={reportTarget?.targetLabel || ''}
+            onClose={() => setReportTarget(null)}
+            onSuccess={(message) => setFeedback({ type: 'success', text: message || 'Report submitted successfully' })}
+          />
+        </Suspense>
+      ) : null}
     </section>
   )
 }

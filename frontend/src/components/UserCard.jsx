@@ -1,12 +1,13 @@
+import { memo } from 'react'
 import { formatDashboardDate, getInitials } from '../utils/adminDashboard'
 
-function UserCard({ user, isBusy, onBan, onUnban }) {
+const UserCard = memo(function UserCard({ user, isBusy, onBan, onUnban }) {
   return (
     <article className="admin-card user-card">
       <div className="admin-user-row">
         <div className="admin-user-avatar large">
           {user.profileImage ? (
-            <img src={user.profileImage} alt={user.name} />
+            <img src={user.profileImage} alt={user.name} loading="lazy" decoding="async" />
           ) : (
             <span>{getInitials(user.name)}</span>
           )}
@@ -55,6 +56,6 @@ function UserCard({ user, isBusy, onBan, onUnban }) {
       </div>
     </article>
   )
-}
+})
 
 export default UserCard

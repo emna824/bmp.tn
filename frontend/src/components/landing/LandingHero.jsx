@@ -49,9 +49,11 @@ function LandingHero({ onSignUp, onLogin }) {
 
           <img
             className="landing-hero-image"
-            src="https://images.pexels.com/photos/834892/pexels-photo-834892.jpeg?auto=compress&cs=tinysrgb&w=1400"
+            src="https://images.pexels.com/photos/834892/pexels-photo-834892.jpeg?auto=compress&cs=tinysrgb&w=1000&dpr=1"
             alt={t('landing.hero.imageAlt')}
-            loading="lazy"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
           />
 
           <div className="landing-metric-grid">

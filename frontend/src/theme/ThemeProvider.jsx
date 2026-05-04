@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 const STORAGE_KEY = 'bmp-theme'
 
@@ -21,6 +21,10 @@ export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(getInitialTheme)
   const isDark = theme === 'dark'
 
+  const toggleTheme = useCallback(() => {
+    setTheme((current) => (current === 'dark' ? 'light' : 'dark'))
+  }, [])
+
   useEffect(() => {
     if (typeof document === 'undefined') return
 
@@ -35,9 +39,9 @@ export function ThemeProvider({ children }) {
       theme,
       isDark,
       setTheme,
-      toggleTheme: () => setTheme((current) => (current === 'dark' ? 'light' : 'dark')),
+      toggleTheme,
     }),
-    [isDark, theme],
+    [isDark, theme, toggleTheme],
   )
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

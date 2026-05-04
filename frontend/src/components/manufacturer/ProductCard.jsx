@@ -5,7 +5,7 @@ function ProductCard({ product, onEdit, onDelete, deleting }) {
     <article className="manufacturer-product-card">
       <div className="manufacturer-product-media">
         {product.image ? (
-          <img src={product.image} alt={product.name} />
+          <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
         ) : (
           <span>{product.name?.charAt(0)?.toUpperCase() || 'P'}</span>
         )}

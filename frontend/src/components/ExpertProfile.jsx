@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api, { withUserHeaders } from '../api'
 import ExpertLayout from '../layouts/ExpertLayout'
-import CreateProjectForm from './CreateProjectForm'
 import { LockIcon } from './Icons'
-import ReportModal from './ReportModal'
-import RoleStatsCharts from './charts/RoleStatsCharts'
-import ProjectDetails from '../pages/ProjectDetails'
 import { EXPERT_ROUTES, resolveExpertRoute } from '../utils/roleRoutes'
+
+const RoleStatsCharts = lazy(() => import('./charts/RoleStatsCharts'))
+const ProjectDetails = lazy(() => import('../pages/ProjectDetails'))
+const CreateProjectForm = lazy(() => import('./CreateProjectForm'))
+const ReportModal = lazy(() => import('./ReportModal'))
 
 function normalizeProject(project) {
   return {
@@ -329,7 +330,9 @@ function ExpertProfile({
               </div>
             </div>
 
-            <RoleStatsCharts role="expert" userId={userId} title="Expert analytics" />
+            <Suspense fallback={null}>
+              <RoleStatsCharts role="expert" userId={userId} title="Expert analytics" />
+            </Suspense>
 
             <div className="expert-panels two">
               <div className="expert-panel">
@@ -393,7 +396,9 @@ function ExpertProfile({
                 <h3>{t('expert.menu.create')}</h3>
                 <p className="subtitle">Set the project details, map location, trade, and salary in one clean form.</p>
               </div>
-              <CreateProjectForm userId={userId} role="expert" onCreated={handleProjectCreated} />
+              <Suspense fallback={null}>
+                <CreateProjectForm userId={userId} role="expert" onCreated={handleProjectCreated} />
+              </Suspense>
             </section>
           ) : (
             <section className="dashboard-card">
@@ -447,7 +452,8 @@ function ExpertProfile({
 
                 {selectedProject ? (
                   <div className="space-y-6">
-                    <ProjectDetails
+                    <Suspense fallback={null}>
+                      <ProjectDetails
                       role="expert"
                       userId={userId}
                       project={selectedProject}
@@ -462,7 +468,8 @@ function ExpertProfile({
                       onCloseProject={() => handleProjectStatusAction('closed')}
                       onFinishProject={() => handleProjectStatusAction('finished')}
                       onProjectRefresh={() => Promise.all([loadProjects(), loadProjectDetails(selectedProjectId)])}
-                    />
+                      />
+                    </Suspense>
 
                     <div className="project-board">
                     <div className="project-summary-card">
@@ -583,7 +590,8 @@ function ExpertProfile({
                 </div>
 
                 {selectedProject ? (
-                  <ProjectDetails
+                  <Suspense fallback={null}>
+                    <ProjectDetails
                     role="expert"
                     userId={userId}
                     project={selectedProject}
@@ -599,7 +607,8 @@ function ExpertProfile({
                     onCloseProject={() => handleProjectStatusAction('closed')}
                     onFinishProject={() => handleProjectStatusAction('finished')}
                     onProjectRefresh={() => Promise.all([loadProjects(), loadProjectDetails(selectedProjectId)])}
-                  />
+                    />
+                  </Suspense>
                 ) : null}
               </div>
             ) : (
@@ -633,7 +642,8 @@ function ExpertProfile({
                 </div>
 
                 {selectedProject ? (
-                  <ProjectDetails
+                  <Suspense fallback={null}>
+                    <ProjectDetails
                     role="expert"
                     userId={userId}
                     project={selectedProject}
@@ -649,7 +659,8 @@ function ExpertProfile({
                     onCloseProject={() => handleProjectStatusAction('closed')}
                     onFinishProject={() => handleProjectStatusAction('finished')}
                     onProjectRefresh={() => Promise.all([loadProjects(), loadProjectDetails(selectedProjectId)])}
-                  />
+                    />
+                  </Suspense>
                 ) : null}
               </div>
             ) : (
@@ -688,15 +699,19 @@ function ExpertProfile({
         )}
       </ExpertLayout>
 
-      <ReportModal
-        isOpen={isReportModalOpen}
-        currentUserId={userId}
-        targetType="user"
-        targetId={userId}
-        targetLabel={user?.name || user?.email || 'this profile'}
-        onClose={() => setIsReportModalOpen(false)}
-        onSuccess={(message) => showNotification('success', message)}
-      />
+      {isReportModalOpen ? (
+        <Suspense fallback={null}>
+          <ReportModal
+            isOpen
+            currentUserId={userId}
+            targetType="user"
+            targetId={userId}
+            targetLabel={user?.name || user?.email || 'this profile'}
+            onClose={() => setIsReportModalOpen(false)}
+            onSuccess={(message) => showNotification('success', message)}
+          />
+        </Suspense>
+      ) : null}
     </div>
   )
 }
