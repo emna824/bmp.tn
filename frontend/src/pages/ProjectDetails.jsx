@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import api, { withUserHeaders } from '../api'
 import { ChatIcon, InfoIcon, InvoiceIcon, MarketplaceIcon, ProjectIcon, QuoteIcon, SearchIcon } from '../components/Icons'
 import MilestoneCard from '../components/MilestoneCard'
+import ProjectAIInsights from '../components/ProjectAIInsights'
 import ProjectChatPanel from '../components/ProjectChatPanel'
 import ReportModal from '../components/ReportModal'
 import StatusBadge, { formatDisplayDate } from '../components/StatusBadge'
@@ -430,6 +431,10 @@ function ProjectDetails(props) {
 
       {activeTab === 'overview' ? (
         <>
+          {role === 'expert' ? (
+            <ProjectAIInsights projectId={projectId} userId={userId} />
+          ) : null}
+
           {canCreateMilestones ? (
             <div className="project-section-panel rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
               <div className="mb-4"><h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('project.createMilestone')}</h3><p className="mt-1 text-sm text-slate-500 dark:text-slate-300">{isSoloProject ? t('project.createSoloMilestoneDescription', { defaultValue: 'Create personal tasks and milestones for your solo project.' }) : t('project.createMilestoneDescription')}</p></div>

@@ -1469,7 +1469,9 @@ function ArtisanProfile({
                 <h4>Payment Method</h4>
                 <div className="billing-payment-note">
                   <strong>Stripe Checkout</strong>
-                  <span>Payment details stay managed in the secure checkout flow and are not exposed in the dashboard.</span>
+                  <span>
+                    Payment details stay managed in the secure checkout flow and are not exposed in the dashboard.
+                  </span>
                 </div>
                 {!isPremiumUser ? (
                   <button type="button" className="secondary-btn" onClick={() => onRequirePremium?.()}>

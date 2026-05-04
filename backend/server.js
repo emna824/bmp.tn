@@ -44,6 +44,7 @@ app.use(
     })
 );
 const JSON_LIMIT = '15mb';
+app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), paymentRoutes.handleStripeWebhook);
 app.use(express.json({ limit: JSON_LIMIT }));
 app.use(express.urlencoded({ extended: true, limit: JSON_LIMIT }));
 

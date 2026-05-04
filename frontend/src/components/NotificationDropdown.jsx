@@ -74,7 +74,7 @@ function NotificationDropdown({
   if (!isOpen) return null
 
   return (
-    <div className="notification-dropdown" role="dialog" aria-label="Notifications">
+    <div id="notification-dropdown" className="notification-dropdown" role="dialog" aria-label="Notifications">
       <div className="notification-dropdown-header">
         <div className="notification-dropdown-heading">
           <div className="notification-dropdown-heading-icon">
@@ -109,6 +109,7 @@ function NotificationDropdown({
                     type="button"
                     className={`notification-dropdown-item ${notification.isRead ? '' : 'unread'} ${accentClass}`}
                     onClick={() => onMarkAsRead(notification.id, notification.isRead)}
+                    aria-label={`${label}: ${notification.message}${notification.isRead ? '' : '. Mark as read'}`}
                   >
                     <span className={`notification-dropdown-icon ${accentClass}`} aria-hidden="true">
                       <Icon className="icon tiny" />

@@ -71,7 +71,18 @@ function NotificationBell({ user }) {
     }
 
     document.addEventListener('mousedown', handlePointerDown)
-    return () => document.removeEventListener('mousedown', handlePointerDown)
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false)
+        bellRef.current?.querySelector('button')?.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
   }, [isOpen])
 
   const handleToggle = async () => {
@@ -130,6 +141,8 @@ function NotificationBell({ user }) {
         onClick={handleToggle}
         aria-label={unreadCount > 0 ? `Open notifications, ${unreadCount} unread` : 'Open notifications'}
         aria-expanded={isOpen}
+        aria-haspopup="menu"
+        aria-controls="notification-dropdown"
       >
         <BellIcon className="icon" />
         <span className={`header-badge ${unreadCount > 0 ? 'show' : ''}`}>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api, { withUserHeaders } from './api'
 import ArtisanProfile from './components/ArtisanProfile'
@@ -64,6 +64,38 @@ function App() {
   const [cancellingPremium, setCancellingPremium] = useState(false)
   const [premiumNotice, setPremiumNotice] = useState({ type: '', text: '' })
 
+  const applyUserUpdate = useCallback((nextUser) => {
+    const normalizedUser = normalizeUser(nextUser)
+    setUser(normalizedUser)
+    persistUser(normalizedUser)
+    return normalizedUser
+  }, [])
+
+  const refreshCurrentUser = useCallback(async (userId) => {
+    if (!userId) return null
+
+    const response = await api.get(`/users/${userId}/profile`)
+    const refreshedUser = response.data?.user ? applyUserUpdate(response.data.user) : null
+
+    if (refreshedUser?.role !== 'artisan') {
+      return refreshedUser
+    }
+
+    try {
+      const subscriptionResponse = await api.get(
+        '/payments/subscription-status',
+        withUserHeaders(refreshedUser.id),
+      )
+      if (subscriptionResponse.data?.user) {
+        return applyUserUpdate(subscriptionResponse.data.user)
+      }
+    } catch (error) {
+      console.warn('[premium] subscription status refresh failed', error)
+    }
+
+    return refreshedUser
+  }, [applyUserUpdate])
+
   useEffect(() => {
     if (!premiumNotice.text) return undefined
     const timer = window.setTimeout(() => setPremiumNotice({ type: '', text: '' }), 3500)
@@ -88,13 +120,6 @@ function App() {
       navigateToPath(getHomePathForRole(user.role), { replace: true })
     }
   }, [currentPath, user?.role])
-
-  const applyUserUpdate = (nextUser) => {
-    const normalizedUser = normalizeUser(nextUser)
-    setUser(normalizedUser)
-    persistUser(normalizedUser)
-    return normalizedUser
-  }
 
   const handleLoginSuccess = (loggedInUser, staySignedIn = false) => {
     const normalizedUser = normalizeUser(loggedInUser)
@@ -125,9 +150,7 @@ function App() {
   }
 
   const handleProfileUpdate = (nextUser) => {
-    const normalizedUser = normalizeUser(nextUser)
-    setUser(normalizedUser)
-    persistUser(normalizedUser)
+    applyUserUpdate(nextUser)
   }
 
   const handleOpenPremiumModal = () => {
@@ -194,9 +217,14 @@ function App() {
 
     const confirmPremium = async () => {
       setProcessingPremium(true)
+      console.info('[premium] checkout return detected', {
+        subscriptionStatus,
+        hasSessionId: Boolean(sessionId),
+      })
 
       try {
         if (subscriptionStatus === 'success' && sessionId) {
+          console.info('[premium] confirming checkout session', { sessionId })
           const response = await api.post(
             '/payments/confirm-premium',
             { sessionId },
@@ -205,12 +233,17 @@ function App() {
 
           if (!active) return
 
-          applyUserUpdate({ ...user, ...(response.data?.user || {}) })
+          if (response.data?.user) {
+            applyUserUpdate(response.data.user)
+          }
+          await refreshCurrentUser(user.id)
           setShowPremiumModal(false)
           setPremiumNotice({
             type: 'success',
             text: response.data?.message || t('premium.upgradeSuccess'),
           })
+        } else if (subscriptionStatus === 'success') {
+          throw new Error('Stripe returned without a checkout session id. Please contact support if payment was charged.')
         } else if (subscriptionStatus === 'cancelled') {
           if (!active) return
           setPremiumPromptDismissed(true)
@@ -221,6 +254,7 @@ function App() {
           })
         }
       } catch (error) {
+        console.error('[premium] checkout confirmation failed', error)
         if (!active) return
         setShowPremiumModal(true)
         setPremiumNotice({
@@ -240,7 +274,7 @@ function App() {
     return () => {
       active = false
     }
-  }, [t, user])
+  }, [applyUserUpdate, refreshCurrentUser, t, user?.id])
 
   useEffect(() => {
     if (processingPremium) return
@@ -254,6 +288,21 @@ function App() {
       setShowPremiumModal(false)
     }
   }, [premiumPromptDismissed, processingPremium, user])
+
+  useEffect(() => {
+    if (!user?.id) return undefined
+
+    const refreshUser = async () => {
+      try {
+        await refreshCurrentUser(user.id)
+      } catch (error) {
+        console.warn('[premium] profile refresh failed', error)
+        // Keep the stored session usable if the profile refresh is temporarily unavailable.
+      }
+    }
+
+    refreshUser()
+  }, [refreshCurrentUser, user?.id])
 
   let content = null
 
@@ -357,6 +406,7 @@ function App() {
         user={user}
         onClose={handleClosePremiumModal}
       />
+
     </>
   )
 }

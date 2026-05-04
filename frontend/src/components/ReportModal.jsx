@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import api from '../api'
 
 const REPORT_REASONS = [
@@ -22,6 +22,7 @@ function ReportModal({
   const [description, setDescription] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const modalRef = useRef(null)
 
   useEffect(() => {
     if (!isOpen) {
@@ -29,8 +30,19 @@ function ReportModal({
       setDescription('')
       setError('')
       setLoading(false)
+      return undefined
     }
-  }, [isOpen])
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape' && !loading) {
+        onClose?.()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    window.setTimeout(() => modalRef.current?.querySelector('select, button')?.focus(), 0)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, loading, onClose])
 
   if (!isOpen) return null
 
@@ -77,16 +89,16 @@ function ReportModal({
   }
 
   return (
-    <div className="settings-overlay" role="dialog" aria-modal="true" aria-label="Report content">
-      <section className="settings-modal report-modal">
+    <div className="settings-overlay" role="dialog" aria-modal="true" aria-labelledby="report-modal-title" aria-describedby="report-modal-description">
+      <section ref={modalRef} className="settings-modal report-modal">
         <div className="settings-header">
           <div>
-            <h3>Report {targetType}</h3>
-            <p className="subtitle small">
+            <h3 id="report-modal-title">Report {targetType}</h3>
+            <p id="report-modal-description" className="subtitle small">
               {targetLabel ? `You are reporting ${targetLabel}.` : 'Tell us why this should be reviewed.'}
             </p>
           </div>
-          <button type="button" className="text-btn close-btn" onClick={onClose} disabled={loading}>
+          <button type="button" className="text-btn close-btn" onClick={onClose} disabled={loading} aria-label="Cancel report and close dialog">
             Cancel
           </button>
         </div>
@@ -94,7 +106,7 @@ function ReportModal({
         <form onSubmit={handleSubmit} className="report-modal-form">
           <label>
             Reason
-            <select value={reason} onChange={(event) => setReason(event.target.value)} disabled={loading}>
+            <select value={reason} onChange={(event) => setReason(event.target.value)} disabled={loading} aria-label="Report reason">
               {REPORT_REASONS.map((option) => (
                 <option key={option.value || 'empty'} value={option.value}>
                   {option.label}
@@ -111,10 +123,11 @@ function ReportModal({
               onChange={(event) => setDescription(event.target.value)}
               placeholder="Optional details to help moderation review this case."
               disabled={loading}
+              aria-label="Report description"
             />
           </label>
 
-          {error ? <p className="report-form-error">{error}</p> : null}
+          {error ? <p className="report-form-error" role="alert">{error}</p> : null}
 
           <div className="report-modal-actions">
             <button type="button" className="secondary-btn" onClick={onClose} disabled={loading}>

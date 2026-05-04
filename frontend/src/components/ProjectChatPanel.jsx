@@ -281,12 +281,25 @@ function ProjectChatPanel({ projectId, project, role, userId, assignedArtisans =
     }
   }
 
-  const handleStopRecording = () => {
+  const handleStopRecording = useCallback(() => {
     const recorder = mediaRecorderRef.current
     if (recorder && recorder.state !== 'inactive') {
       recorder.stop()
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    if (!isRecording) return undefined
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        handleStopRecording()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [handleStopRecording, isRecording])
 
   const handleSendVoiceMessage = async () => {
     if (!voiceBlob || !projectId || !userId || sendingMessage || Boolean(emptyStateMessage)) return
@@ -348,7 +361,7 @@ function ProjectChatPanel({ projectId, project, role, userId, assignedArtisans =
       </div>
 
       {chatError ? (
-        <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
+        <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300" role="alert">
           {chatError}
         </div>
       ) : null}
@@ -360,7 +373,7 @@ function ProjectChatPanel({ projectId, project, role, userId, assignedArtisans =
       ) : null}
 
       <div className="flex h-[min(70vh,32rem)] min-h-[24rem] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-950/40 max-sm:h-[calc(100dvh-13rem)]">
-        <div className="flex-1 space-y-4 overflow-y-auto p-4">
+        <div className="flex-1 space-y-4 overflow-y-auto p-4" role="log" aria-live="polite" aria-relevant="additions text" aria-label="Project chat messages">
           {loadingMessages && !messages.length ? (
             <p className="text-sm text-slate-500 dark:text-slate-300">{t('common.loading')}</p>
           ) : null}
@@ -433,16 +446,17 @@ function ProjectChatPanel({ projectId, project, role, userId, assignedArtisans =
               rows={2}
               disabled={sendingMessage || Boolean(emptyStateMessage)}
               className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition-all duration-300 focus:border-orange-300 focus:ring-2 focus:ring-orange-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-orange-400 dark:focus:ring-orange-500/20"
+              aria-label="Write a project chat message"
             />
 
             {recordingError ? (
-              <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
+              <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300" role="alert">
                 {recordingError}
               </div>
             ) : null}
 
             {isRecording ? (
-              <div className="flex items-center justify-between gap-3 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-orange-700 shadow-sm dark:border-orange-500/30 dark:bg-orange-500/10 dark:text-orange-200">
+              <div className="flex items-center justify-between gap-3 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-orange-700 shadow-sm dark:border-orange-500/30 dark:bg-orange-500/10 dark:text-orange-200" role="status" aria-live="polite">
                 <div className="flex items-center gap-3">
                   <span className="relative flex h-3 w-3">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75" />
@@ -476,6 +490,7 @@ function ProjectChatPanel({ projectId, project, role, userId, assignedArtisans =
                     type="button"
                     onClick={clearVoiceDraft}
                     className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-all duration-300 hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-900"
+                    aria-label="Discard voice message preview"
                   >
                     Discard
                   </button>
@@ -494,6 +509,7 @@ function ProjectChatPanel({ projectId, project, role, userId, assignedArtisans =
                     type="button"
                     onClick={handleStopRecording}
                     className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 transition-all duration-300 hover:scale-[1.02] hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
+                    aria-label="Stop recording voice message"
                   >
                     <StopIcon className="h-4 w-4" />
                     Stop
@@ -504,6 +520,7 @@ function ProjectChatPanel({ projectId, project, role, userId, assignedArtisans =
                     onClick={handleStartRecording}
                     disabled={sendingMessage || Boolean(emptyStateMessage)}
                     className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-300 hover:scale-[1.02] hover:border-orange-300 hover:text-orange-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:border-orange-400 dark:hover:text-orange-300"
+                    aria-label="Record a voice message"
                   >
                     <MicIcon className="h-4 w-4" />
                     Record
@@ -516,6 +533,7 @@ function ProjectChatPanel({ projectId, project, role, userId, assignedArtisans =
                     onClick={handleSendVoiceMessage}
                     disabled={sendingMessage || Boolean(emptyStateMessage)}
                     className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-orange-200/50 transition-all duration-300 hover:scale-[1.02] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50 dark:shadow-orange-950/25"
+                    aria-label="Send voice message"
                   >
                     {sendingMessage ? t('common.saving') : 'Send voice'}
                   </button>
@@ -524,6 +542,7 @@ function ProjectChatPanel({ projectId, project, role, userId, assignedArtisans =
                     type="submit"
                     disabled={sendingMessage || !messageDraft.trim() || Boolean(emptyStateMessage)}
                     className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-orange-200/50 transition-all duration-300 hover:scale-[1.02] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50 dark:shadow-orange-950/25"
+                    aria-label="Send project chat message"
                   >
                     {sendingMessage ? t('common.saving') : 'Send'}
                   </button>

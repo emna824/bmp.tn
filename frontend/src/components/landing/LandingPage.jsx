@@ -25,6 +25,9 @@ function LandingPage({ mode, navOpen, onToggleNav, onSelectMode, onLoginSuccess 
 
   return (
     <div className="landing-shell">
+      <a className="skip-link" href="#landing-main">
+        {t('common.skipToContent', { defaultValue: 'Skip to content' })}
+      </a>
       <header className={`landing-navbar ${navOpen ? 'open' : ''}`}>
         <div className="landing-nav-brand">
           <BmpLogo className="landing-nav-logo" />
@@ -66,7 +69,7 @@ function LandingPage({ mode, navOpen, onToggleNav, onSelectMode, onLoginSuccess 
         </div>
       </header>
 
-      <main className="landing-main">
+      <main id="landing-main" className="landing-main" tabIndex={-1}>
         <div className="landing-container">
           <LandingHero onSignUp={() => handleModeChange('signup')} onLogin={() => handleModeChange('signin')} />
           <LandingFeatures />

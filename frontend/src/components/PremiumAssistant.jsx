@@ -108,6 +108,9 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
   const [isListening, setIsListening] = useState(false)
   const [speechNotice, setSpeechNotice] = useState('')
   const messagesEndRef = useRef(null)
+  const inputRef = useRef(null)
+  const launcherRef = useRef(null)
+  const closeButtonRef = useRef(null)
   const replyTimerRef = useRef(null)
   const recognitionRef = useRef(null)
   const isBusy = isTyping || isExecuting
@@ -242,6 +245,29 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
     setIsListening(false)
   }, [])
 
+  useEffect(() => {
+    if (!isOpen) return undefined
+
+    const focusTimer = window.setTimeout(() => {
+      inputRef.current?.focus()
+    }, 80)
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.stopPropagation()
+        setIsOpen(false)
+        stopListening()
+        launcherRef.current?.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.clearTimeout(focusTimer)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen, stopListening])
+
   const startListening = useCallback(() => {
     if (isBusy || isListening) return
 
@@ -314,6 +340,7 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
   return (
     <>
       <section
+        id="bmp-assistant-panel"
         className={`fixed bottom-24 right-6 z-[110] flex h-[600px] w-[380px] origin-bottom-right flex-col overflow-hidden rounded-2xl border border-white/15 bg-slate-950/85 text-white shadow-2xl shadow-slate-950/35 backdrop-blur-2xl transition-all duration-300 ease-out dark:border-slate-700/70 dark:bg-slate-950/90 max-sm:bottom-20 max-sm:left-3 max-sm:right-3 max-sm:h-[calc(100dvh-6rem)] max-sm:w-auto ${
           isOpen
             ? 'translate-y-0 scale-100 opacity-100'
@@ -321,6 +348,7 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
         }`}
         aria-hidden={!isOpen}
         aria-label="BMP Assistant chat"
+        aria-labelledby="bmp-assistant-title"
       >
         <header className="flex items-center justify-between border-b border-white/10 bg-white/5 px-4 py-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -328,17 +356,21 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
               <BotIcon className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <h2 className="truncate text-base font-semibold tracking-normal text-white">BMP Assistant</h2>
+              <h2 id="bmp-assistant-title" className="truncate text-base font-semibold tracking-normal text-white">BMP Assistant</h2>
               <p className="mt-0.5 flex items-center gap-2 text-xs font-medium text-emerald-300">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,0.85)]" />
+                <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,0.85)]" aria-hidden="true" />
                 Online
               </p>
             </div>
           </div>
 
           <button
+            ref={closeButtonRef}
             type="button"
-            onClick={() => setIsOpen(false)}
+            onClick={() => {
+              setIsOpen(false)
+              launcherRef.current?.focus()
+            }}
             className="grid h-9 w-9 place-items-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition-all duration-300 hover:scale-105 hover:border-white/20 hover:bg-white/10 hover:text-white"
             aria-label="Close BMP Assistant"
           >
@@ -346,7 +378,13 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
           </button>
         </header>
 
-        <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4 [scrollbar-color:rgba(251,146,60,0.55)_transparent] [scrollbar-width:thin]">
+        <div
+          className="flex-1 space-y-3 overflow-y-auto px-4 py-4 [scrollbar-color:rgba(251,146,60,0.55)_transparent] [scrollbar-width:thin]"
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions text"
+          aria-label="Assistant conversation"
+        >
           {messages.map((message) => (
             <MessageBubble key={message.id} message={message} />
           ))}
@@ -373,6 +411,7 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
                 onClick={() => sendMessage(action)}
                 disabled={isBusy}
                 className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-200 transition-all duration-300 hover:border-orange-300/40 hover:bg-orange-400/15 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label={`Send quick action: ${action}`}
               >
                 {action}
               </button>
@@ -382,7 +421,7 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
 
         <form onSubmit={handleSubmit} className="sticky bottom-0 border-t border-white/10 bg-slate-950/90 p-3 sm:p-4">
           {isListening ? (
-            <div className="mb-3 flex items-center justify-between rounded-2xl border border-orange-300/25 bg-orange-400/10 px-4 py-3 text-orange-100">
+            <div className="mb-3 flex items-center justify-between rounded-2xl border border-orange-300/25 bg-orange-400/10 px-4 py-3 text-orange-100" role="status" aria-live="polite">
               <div className="flex items-center gap-3">
                 <span className="relative flex h-3 w-3">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-300 opacity-75" />
@@ -410,6 +449,7 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
 
           <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 p-1.5 shadow-inner shadow-black/20 focus-within:border-orange-300/60 focus-within:bg-white/10">
             <input
+              ref={inputRef}
               type="text"
               value={input}
               onChange={(event) => setInput(event.target.value)}
@@ -445,11 +485,21 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
       </section>
 
       <button
+        ref={launcherRef}
         type="button"
-        onClick={() => setIsOpen((current) => !current)}
+        onClick={() => {
+          setIsOpen((current) => {
+            const nextOpen = !current
+            if (nextOpen) {
+              window.setTimeout(() => closeButtonRef.current?.focus(), 80)
+            }
+            return nextOpen
+          })
+        }}
         className="fixed bottom-6 right-6 z-[110] grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-orange-400 via-orange-500 to-amber-500 text-white shadow-[0_18px_45px_rgba(249,115,22,0.42)] transition-all duration-300 hover:scale-110 hover:shadow-[0_22px_55px_rgba(249,115,22,0.52)] focus:outline-none focus:ring-4 focus:ring-orange-300/35 max-sm:bottom-5 max-sm:right-5"
         aria-label={isOpen ? 'Close BMP Assistant' : 'Open BMP Assistant'}
         aria-expanded={isOpen}
+        aria-controls="bmp-assistant-panel"
       >
         <span className="absolute inset-0 rounded-full bg-orange-300/25 blur-xl" aria-hidden="true" />
         <ChatIcon className="relative h-7 w-7" />

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import LanguageSwitcher from './LanguageSwitcher'
 import ThemeToggle from './ThemeToggle'
 import NotificationBell from './NotificationBell'
+import SubscriptionStatusBadge from './SubscriptionStatusBadge'
 import { BrandMark, CloseIcon, LogoutIcon, MenuIcon, SearchIcon, SettingsIcon } from './Icons'
 
 function getUserPlanLabel(user, t) {
@@ -61,6 +62,20 @@ function DashboardLayout({
     return () => document.removeEventListener('mousedown', handlePointerDown)
   }, [isUserMenuOpen])
 
+  useEffect(() => {
+    if (!isUserMenuOpen && !isSidebarOpen) return undefined
+
+    const handleKeyDown = (event) => {
+      if (event.key !== 'Escape') return
+
+      setIsUserMenuOpen(false)
+      setIsSidebarOpen(false)
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isSidebarOpen, isUserMenuOpen])
+
   const handleNavigate = (key) => {
     onNavigate?.(key)
     setIsUserMenuOpen(false)
@@ -79,14 +94,18 @@ function DashboardLayout({
 
   return (
     <div className={`dashboard-shell ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+      <a className="skip-link" href="#dashboard-main-content">
+        {t('common.skipToContent', { defaultValue: 'Skip to content' })}
+      </a>
       <button
         type="button"
         className="sidebar-backdrop"
         onClick={() => setIsSidebarOpen(false)}
         aria-label={t('common.close', { defaultValue: 'Close' })}
+        aria-hidden={!isSidebarOpen}
       />
 
-      <aside className="dashboard-sidebar">
+      <aside id="dashboard-sidebar" className="dashboard-sidebar" aria-label={t('nav.dashboardSections', { defaultValue: 'Dashboard sections' })}>
         <div className="sidebar-brand-row">
           <div className="sidebar-brand">
             <BrandMark className="sidebar-brand-mark" />
@@ -117,6 +136,7 @@ function DashboardLayout({
                 type="button"
                 className={`sidebar-item ${isActive ? 'active' : ''}`}
                 onClick={() => handleNavigate(item.key)}
+                aria-current={isActive ? 'page' : undefined}
               >
                 <span className="sidebar-item-inner">
                   <span className="sidebar-item-icon">{Icon ? <Icon className="icon" /> : null}</span>
@@ -144,10 +164,11 @@ function DashboardLayout({
             <button
               type="button"
               className="sidebar-burger-btn"
-              onClick={() => setIsSidebarOpen(true)}
-              aria-label={t('nav.openMenu', { defaultValue: 'Open menu' })}
-              aria-expanded={isSidebarOpen}
-            >
+                onClick={() => setIsSidebarOpen(true)}
+                aria-label={t('nav.openMenu', { defaultValue: 'Open menu' })}
+                aria-expanded={isSidebarOpen}
+                aria-controls="dashboard-sidebar"
+              >
               <MenuIcon className="icon" />
             </button>
 
@@ -178,14 +199,17 @@ function DashboardLayout({
                 onClick={() => setIsUserMenuOpen((open) => !open)}
                 aria-haspopup="true"
                 aria-expanded={isUserMenuOpen}
+                aria-controls="header-user-menu"
+                aria-label={`${user?.name || t('common.guest')} account menu`}
               >
                 <div className="header-avatar">
-                  {user?.profileImage ? <img src={user.profileImage} alt="Profile" /> : <span>{userInitials}</span>}
+                  {user?.profileImage ? <img src={user.profileImage} alt={`${user?.name || t('common.guest')} profile`} /> : <span>{userInitials}</span>}
                 </div>
 
                 <div className="header-user-meta">
                   <strong>{user?.name || t('common.guest')}</strong>
                   <small>{userPlanLabel}</small>
+                  <SubscriptionStatusBadge role={user?.role} isPremium={Boolean(user?.isPremium)} className="header-plan-badge" />
                 </div>
 
                 <span className="header-caret" aria-hidden="true">
@@ -193,7 +217,7 @@ function DashboardLayout({
                 </span>
               </button>
 
-              <div className="header-user-menu" role="menu">
+              <div id="header-user-menu" className="header-user-menu" role="menu" aria-label="Account actions">
                 <button type="button" onClick={handleSettings} className="header-menu-item" role="menuitem">
                   <SettingsIcon className="icon tiny" />
                   {t('common.settings')}
@@ -223,7 +247,7 @@ function DashboardLayout({
           </div>
         </header>
 
-        <div className="dashboard-main-content">{children}</div>
+        <main id="dashboard-main-content" className="dashboard-main-content" tabIndex={-1}>{children}</main>
       </div>
     </div>
   )

@@ -78,7 +78,7 @@ exports.createProject = async (req, res) => {
     }
 
     if (isSoloProject && !req.user.isPremium) {
-      return res.status(403).json({ message: 'Only premium artisans can create solo projects' });
+      return res.status(403).json({ message: 'Upgrade to Premium to access this feature.' });
     }
 
     let expertId = null;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { createElement, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api, { withUserHeaders } from '../api'
 import { CheckCircleIcon, CloseIcon, LockIcon, ProjectIcon } from './Icons'
@@ -17,6 +17,7 @@ function PremiumModal({ isOpen, user, onClose }) {
   const { t } = useTranslation()
   const [loadingPlan, setLoadingPlan] = useState('')
   const [error, setError] = useState('')
+  const dialogRef = useRef(null)
 
   useEffect(() => {
     if (!isOpen) {
@@ -32,6 +33,7 @@ function PremiumModal({ isOpen, user, onClose }) {
     }
 
     window.addEventListener('keydown', handleKeyDown)
+    window.setTimeout(() => dialogRef.current?.querySelector('button')?.focus(), 0)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, onClose])
 
@@ -40,22 +42,34 @@ function PremiumModal({ isOpen, user, onClose }) {
   }
 
   const userId = user?.id || user?._id || ''
+  const canSubscribe = user?.role === 'artisan'
 
   const handleSubscribe = async (subscriptionType) => {
     if (!userId || loadingPlan) return
+
+    if (!canSubscribe) {
+      setError('Only artisans can subscribe to Premium.')
+      return
+    }
 
     setLoadingPlan(subscriptionType)
     setError('')
 
     try {
+      console.info('[premium] creating checkout session', { userId, subscriptionType })
       const response = await api.post(
         '/payments/premium-session',
         { subscriptionType },
         withUserHeaders(userId),
       )
+      console.info('[premium] checkout session created', {
+        sessionId: response.data?.sessionId,
+        hasUrl: Boolean(response.data?.url),
+      })
 
       const stripe = await getStripeClient()
       if (stripe && response.data?.sessionId) {
+        console.info('[premium] redirecting with Stripe.js', { sessionId: response.data.sessionId })
         const result = await stripe.redirectToCheckout({ sessionId: response.data.sessionId })
         if (result?.error?.message) {
           throw new Error(result.error.message)
@@ -64,12 +78,14 @@ function PremiumModal({ isOpen, user, onClose }) {
       }
 
       if (response.data?.url) {
+        console.info('[premium] redirecting with checkout URL fallback')
         window.location.href = response.data.url
         return
       }
 
       throw new Error(t('premium.checkoutStartFailed'))
     } catch (requestError) {
+      console.error('[premium] checkout failed', requestError)
       setError(requestError.response?.data?.message || requestError.message || t('premium.checkoutStartFailed'))
       setLoadingPlan('')
     }
@@ -88,11 +104,13 @@ function PremiumModal({ isOpen, user, onClose }) {
       role="presentation"
     >
       <div
+        ref={dialogRef}
         className="w-full max-w-lg rounded-2xl border border-white/20 bg-white/90 p-6 shadow-xl shadow-slate-950/20 transition-all duration-300 dark:border-slate-700 dark:bg-slate-800/40"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="premium-modal-title"
+        aria-describedby="premium-modal-description"
       >
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -102,7 +120,7 @@ function PremiumModal({ isOpen, user, onClose }) {
             <h2 id="premium-modal-title" className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
               {t('premium.modalTitle', { defaultValue: 'Upgrade to Premium' })}
             </h2>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-300">
+            <p id="premium-modal-description" className="mt-2 text-sm text-slate-500 dark:text-slate-300">
               {t('premium.modalSubtitle', {
                 defaultValue:
                   'Unlock project planning tools and smoother scheduling with a simple premium upgrade.',
@@ -121,23 +139,23 @@ function PremiumModal({ isOpen, user, onClose }) {
         </div>
 
         <div className="mt-6 space-y-3">
-          {benefits.map(({ key, icon: Icon }) => (
+          {benefits.map((benefit) => (
             <div
-              key={key}
+              key={benefit.key}
               className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/75 px-4 py-3 transition-colors duration-300 dark:border-slate-700 dark:bg-slate-900/60"
             >
               <div className="rounded-xl bg-orange-100 p-2 text-orange-600 dark:bg-orange-500/15 dark:text-orange-300">
-                <Icon className="h-4 w-4" />
+                {createElement(benefit.icon, { className: 'h-4 w-4' })}
               </div>
               <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                {t(`premium.benefits.${key}`)}
+                {t(`premium.benefits.${benefit.key}`)}
               </span>
             </div>
           ))}
         </div>
 
         {error ? (
-          <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
+          <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300" role="alert">
             {error}
           </div>
         ) : null}
@@ -145,9 +163,10 @@ function PremiumModal({ isOpen, user, onClose }) {
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <button
             type="button"
-            disabled={Boolean(loadingPlan)}
+            disabled={Boolean(loadingPlan) || !canSubscribe}
             onClick={() => handleSubscribe('monthly')}
             className="rounded-2xl bg-gradient-to-r from-orange-500 to-amber-400 px-5 py-4 text-sm font-semibold text-white shadow-lg shadow-orange-200/60 transition-all duration-300 hover:scale-[1.02] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60 dark:shadow-orange-950/25"
+            aria-label={`Subscribe monthly for ${PLAN_CONFIG.monthly.price}`}
           >
             {loadingPlan === 'monthly'
               ? t('premium.redirecting', { defaultValue: 'Redirecting...' })
@@ -158,9 +177,10 @@ function PremiumModal({ isOpen, user, onClose }) {
 
           <button
             type="button"
-            disabled={Boolean(loadingPlan)}
+            disabled={Boolean(loadingPlan) || !canSubscribe}
             onClick={() => handleSubscribe('yearly')}
             className="rounded-2xl border border-slate-200 bg-white/80 px-5 py-4 text-sm font-semibold text-slate-800 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900/80 dark:text-white dark:hover:border-slate-600 dark:hover:bg-slate-900"
+            aria-label={`Subscribe yearly for ${PLAN_CONFIG.yearly.price}`}
           >
             {loadingPlan === 'yearly'
               ? t('premium.redirecting', { defaultValue: 'Redirecting...' })

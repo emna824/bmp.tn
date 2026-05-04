@@ -24,7 +24,7 @@ module.exports = async function loadRequestUser(req, res, next) {
         }
 
         const user = await User.findById(requestUserId).select(
-            'name email role trade job isPremium subscriptionType isBanned banType banExpiresAt'
+            'name email role trade job isPremium subscriptionType stripeCustomerId stripeSubscriptionId isBanned banType banExpiresAt'
         );
 
         if (!user) {

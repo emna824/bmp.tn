@@ -12,6 +12,7 @@ function formatTradeLabel(value) {
 
 function serializeUser(user, notificationCount = 0) {
     const trade = String(user.trade || user.job || '').trim().toLowerCase();
+    const isArtisan = user.role === 'artisan';
 
     return {
         id: user._id,
@@ -24,8 +25,8 @@ function serializeUser(user, notificationCount = 0) {
         profileImage: user.profileImage || '',
         trade,
         job: user.job || formatTradeLabel(trade),
-        isPremium: Boolean(user.isPremium),
-        subscriptionType: user.subscriptionType || null,
+        isPremium: isArtisan ? Boolean(user.isPremium) : false,
+        subscriptionType: isArtisan ? user.subscriptionType || null : null,
         notificationCount,
     };
 }
