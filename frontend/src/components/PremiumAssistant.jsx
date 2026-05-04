@@ -314,7 +314,7 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
   return (
     <>
       <section
-        className={`fixed bottom-24 right-6 z-[110] flex h-[600px] w-[380px] origin-bottom-right flex-col overflow-hidden rounded-2xl border border-white/15 bg-slate-950/85 text-white shadow-2xl shadow-slate-950/35 backdrop-blur-2xl transition-all duration-300 ease-out dark:border-slate-700/70 dark:bg-slate-950/90 max-sm:bottom-24 max-sm:left-3 max-sm:right-3 max-sm:h-[calc(100dvh-7rem)] max-sm:w-auto ${
+        className={`fixed bottom-24 right-6 z-[110] flex h-[600px] w-[380px] origin-bottom-right flex-col overflow-hidden rounded-2xl border border-white/15 bg-slate-950/85 text-white shadow-2xl shadow-slate-950/35 backdrop-blur-2xl transition-all duration-300 ease-out dark:border-slate-700/70 dark:bg-slate-950/90 max-sm:bottom-20 max-sm:left-3 max-sm:right-3 max-sm:h-[calc(100dvh-6rem)] max-sm:w-auto ${
           isOpen
             ? 'translate-y-0 scale-100 opacity-100'
             : 'pointer-events-none translate-y-5 scale-95 opacity-0'
@@ -380,7 +380,7 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
           </div>
         ) : null}
 
-        <form onSubmit={handleSubmit} className="border-t border-white/10 bg-slate-950/70 p-4">
+        <form onSubmit={handleSubmit} className="sticky bottom-0 border-t border-white/10 bg-slate-950/90 p-3 sm:p-4">
           {isListening ? (
             <div className="mb-3 flex items-center justify-between rounded-2xl border border-orange-300/25 bg-orange-400/10 px-4 py-3 text-orange-100">
               <div className="flex items-center gap-3">

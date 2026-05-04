@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import LanguageSwitcher from './LanguageSwitcher'
 import ThemeToggle from './ThemeToggle'
 import NotificationBell from './NotificationBell'
-import { BrandMark, LogoutIcon, SearchIcon, SettingsIcon } from './Icons'
+import { BrandMark, CloseIcon, LogoutIcon, MenuIcon, SearchIcon, SettingsIcon } from './Icons'
 
 function getUserPlanLabel(user, t) {
   if (user?.role === 'artisan') {
@@ -36,6 +36,7 @@ function DashboardLayout({
 }) {
   const { t } = useTranslation()
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const menuRef = useRef(null)
 
   const userInitials = useMemo(() => {
@@ -63,6 +64,7 @@ function DashboardLayout({
   const handleNavigate = (key) => {
     onNavigate?.(key)
     setIsUserMenuOpen(false)
+    setIsSidebarOpen(false)
   }
 
   const handleLogout = () => {
@@ -76,14 +78,32 @@ function DashboardLayout({
   }
 
   return (
-    <div className="dashboard-shell">
+    <div className={`dashboard-shell ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+      <button
+        type="button"
+        className="sidebar-backdrop"
+        onClick={() => setIsSidebarOpen(false)}
+        aria-label={t('common.close', { defaultValue: 'Close' })}
+      />
+
       <aside className="dashboard-sidebar">
-        <div className="sidebar-brand">
-          <BrandMark className="sidebar-brand-mark" />
-          <div className="sidebar-brand-copy">
-            <strong>BMP</strong>
-            <p>Industrial Elegance</p>
+        <div className="sidebar-brand-row">
+          <div className="sidebar-brand">
+            <BrandMark className="sidebar-brand-mark" />
+            <div className="sidebar-brand-copy">
+              <strong>BMP</strong>
+              <p>Industrial Elegance</p>
+            </div>
           </div>
+
+          <button
+            type="button"
+            className="sidebar-close-btn"
+            onClick={() => setIsSidebarOpen(false)}
+            aria-label={t('common.close', { defaultValue: 'Close' })}
+          >
+            <CloseIcon className="icon tiny" />
+          </button>
         </div>
 
         <nav className="sidebar-nav" aria-label={t('nav.dashboardSections', { defaultValue: 'Dashboard sections' })}>
@@ -121,6 +141,16 @@ function DashboardLayout({
       <div className="dashboard-main">
         <header className="dashboard-header">
           <div className="header-left">
+            <button
+              type="button"
+              className="sidebar-burger-btn"
+              onClick={() => setIsSidebarOpen(true)}
+              aria-label={t('nav.openMenu', { defaultValue: 'Open menu' })}
+              aria-expanded={isSidebarOpen}
+            >
+              <MenuIcon className="icon" />
+            </button>
+
             <label className="dashboard-search">
               <SearchIcon className="icon" />
               <input

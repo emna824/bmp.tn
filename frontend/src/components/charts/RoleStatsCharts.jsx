@@ -280,12 +280,12 @@ function RoleStatsCharts({ role, userId, title = 'Analytics' }) {
     <section className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-blue-600 dark:text-blue-300">{title}</p>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Performance charts</h2>
+          <p className="text-xs font-bold uppercase tracking-wide text-orange-600 dark:text-orange-300">{title}</p>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Performance charts</h2>
         </div>
         <button
           type="button"
-          className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+          className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:border-orange-400/40 dark:hover:bg-orange-500/10 dark:hover:text-orange-200"
           onClick={reload}
         >
           Refresh charts

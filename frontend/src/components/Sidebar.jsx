@@ -1,8 +1,13 @@
-import { BmpLogo } from './Icons'
+import { BmpLogo, CloseIcon } from './Icons'
 
-function Sidebar({ items, activeView, onNavigate }) {
+function Sidebar({ items, activeView, onNavigate, isOpen = false, onClose }) {
+  const handleNavigate = (key) => {
+    onNavigate(key)
+    onClose?.()
+  }
+
   return (
-    <aside className="admin-sidebar">
+    <aside className={`admin-sidebar ${isOpen ? 'open' : ''}`}>
       <div className="admin-sidebar-head">
         <div className="admin-brand">
           <BmpLogo className="admin-brand-logo" />
@@ -11,6 +16,10 @@ function Sidebar({ items, activeView, onNavigate }) {
             <p>Admin moderation</p>
           </div>
         </div>
+
+        <button type="button" className="admin-sidebar-close" onClick={onClose} aria-label="Close menu">
+          <CloseIcon className="icon tiny" />
+        </button>
       </div>
 
       <nav className="admin-sidebar-nav" aria-label="Admin sections">
@@ -21,7 +30,7 @@ function Sidebar({ items, activeView, onNavigate }) {
               key={item.key}
               type="button"
               className={`admin-sidebar-link ${activeView === item.key ? 'active' : ''}`}
-              onClick={() => onNavigate(item.key)}
+              onClick={() => handleNavigate(item.key)}
             >
               <span className="admin-sidebar-link-icon">
                 <Icon className="icon" />

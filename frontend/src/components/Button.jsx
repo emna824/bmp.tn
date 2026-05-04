@@ -3,15 +3,16 @@ function cx(...classes) {
 }
 
 const baseClasses =
-  'relative inline-flex items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 dark:focus-visible:ring-offset-slate-950'
+  'relative inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 dark:focus-visible:ring-offset-slate-950'
 
 const interactiveClasses =
-  'hover:scale-105 hover:brightness-110 active:scale-[0.98]'
+  'hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0'
 
 const primaryClasses =
-  'bg-gradient-to-r from-orange-500 to-yellow-400 text-white shadow-lg shadow-orange-200/60 dark:shadow-orange-950/30'
+  'bg-gradient-to-r from-orange-500 to-amber-400 text-white shadow-sm shadow-orange-200/50 dark:shadow-orange-950/30'
 
-const secondaryClasses = 'bg-transparent shadow-lg shadow-orange-100/30 dark:shadow-slate-950/25'
+const secondaryClasses =
+  'border border-gray-200 bg-white text-slate-700 shadow-sm hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:border-orange-400/40 dark:hover:bg-orange-500/10 dark:hover:text-orange-200'
 
 function Button({
   children,
@@ -37,23 +38,7 @@ function Button({
       )}
       {...props}
     >
-      {isSecondary ? (
-        <>
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-r from-orange-500 to-yellow-400"
-          />
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-px rounded-[11px] bg-white/90 dark:bg-slate-900/90"
-          />
-          <span className="relative bg-gradient-to-r from-orange-500 to-yellow-400 bg-clip-text text-transparent">
-            {children}
-          </span>
-        </>
-      ) : (
-        children
-      )}
+      {children}
     </button>
   )
 }

@@ -7598,3 +7598,878 @@ html.dark .artisan-task-editor:focus {
     align-items: stretch;
   }
 }
+
+/* Final UI polish layer */
+:root {
+  --accent: linear-gradient(135deg, #f97316 0%, #f59e0b 100%);
+  --blue-600: #f97316;
+  --blue-700: #ea580c;
+  --ui-bg: #f8fafc;
+  --ui-surface: #ffffff;
+  --ui-surface-soft: #f1f5f9;
+  --ui-card: #ffffff;
+  --ui-border: #e5e7eb;
+  --ui-text: #111827;
+  --ui-muted: #64748b;
+  --ui-accent: #f97316;
+  --ui-accent-strong: #ea580c;
+  --ui-accent-soft: #fff7ed;
+  --ui-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --ui-shadow-lg: 0 16px 38px rgba(15, 23, 42, 0.08);
+}
+
+html.dark {
+  --bg: #0a0a0a;
+  --card: #111827;
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #f8fafc;
+  --muted: #cbd5e1;
+  --bmp-bg: #0a0a0a;
+  --bmp-surface: #111827;
+  --bmp-surface-soft: #0f172a;
+  --bmp-panel: #111827;
+  --bmp-border: rgba(255, 255, 255, 0.08);
+  --bmp-outline: rgba(255, 255, 255, 0.12);
+  --bmp-text: #f8fafc;
+  --bmp-text-muted: #cbd5e1;
+  --bmp-accent: #f97316;
+  --bmp-accent-soft: #fdba74;
+  --ui-bg: #0a0a0a;
+  --ui-surface: #111827;
+  --ui-surface-soft: #0f172a;
+  --ui-card: #111827;
+  --ui-border: rgba(255, 255, 255, 0.08);
+  --ui-text: #f8fafc;
+  --ui-muted: #cbd5e1;
+  --ui-accent: #f97316;
+  --ui-accent-strong: #ea580c;
+  --ui-accent-soft: rgba(249, 115, 22, 0.12);
+  --ui-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --ui-shadow-lg: 0 18px 44px rgba(0, 0, 0, 0.35);
+}
+
+:where(html:not(.dark)) {
+  --bmp-light-bg: #f8fafc;
+  --bmp-light-surface: #ffffff;
+  --bmp-light-surface-soft: #f1f5f9;
+  --bmp-light-surface-muted: #f8fafc;
+  --bmp-light-border: #e5e7eb;
+  --bmp-light-border-strong: #d1d5db;
+  --bmp-light-outline: rgba(249, 115, 22, 0.22);
+  --bmp-light-text: #111827;
+  --bmp-light-text-strong: #0f172a;
+  --bmp-light-text-muted: #64748b;
+  --bmp-light-accent: #f97316;
+  --bmp-light-accent-strong: #ea580c;
+  --bmp-light-accent-soft: #fff7ed;
+  --bmp-light-info: #2563eb;
+}
+
+html,
+body,
+#root {
+  min-width: 320px;
+  overflow-x: hidden;
+}
+
+body,
+.dashboard-shell,
+.admin-shell,
+.landing-shell,
+.artisan-profile,
+.expert-profile,
+.manufacturer-dashboard,
+.project-details-shell,
+:where(html:not(.dark)) body,
+:where(html:not(.dark)) #root,
+:where(html:not(.dark)) .dashboard-shell,
+:where(html:not(.dark)) .admin-shell,
+html.dark body,
+html.dark #root,
+html.dark .dashboard-shell,
+html.dark .admin-shell {
+  background: var(--ui-bg) !important;
+  color: var(--ui-text);
+}
+
+h1,
+h2,
+h3,
+h4,
+.dashboard-main-content h1,
+.dashboard-main-content h2,
+.dashboard-main-content h3,
+.dashboard-main-content h4,
+.admin-page-title {
+  letter-spacing: 0;
+}
+
+.dashboard-main-content h1,
+.dashboard-main-content h2,
+.admin-page-title {
+  font-size: clamp(1.5rem, 3vw, 2rem) !important;
+  line-height: 1.15;
+  font-weight: 800;
+}
+
+.dashboard-main-content h3,
+.dashboard-main-content h4,
+.admin-card-section h3,
+.panel-header h3 {
+  font-size: 1.25rem !important;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.subtitle,
+.dashboard-main-content p,
+.admin-card p,
+.admin-panel p,
+.market-desc,
+.market-subtitle,
+.inv-desc,
+.product-desc {
+  line-height: 1.6;
+}
+
+.sidebar-item-copy small,
+.admin-sidebar-link-copy small {
+  display: none !important;
+}
+
+button {
+  margin-top: 0;
+  letter-spacing: 0;
+}
+
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid rgba(249, 115, 22, 0.55);
+  outline-offset: 2px;
+}
+
+.secondary-btn,
+.text-btn,
+.mini-btn,
+.view-toggle-btn,
+.header-menu-item,
+.admin-logout-btn,
+.admin-action-neutral {
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  color: var(--ui-text) !important;
+  box-shadow: none !important;
+}
+
+.secondary-btn:hover,
+.mini-btn:hover,
+.view-toggle-btn:hover,
+.header-menu-item:hover,
+.admin-logout-btn:hover,
+.admin-action-neutral:hover {
+  background: var(--ui-accent-soft) !important;
+  border-color: rgba(249, 115, 22, 0.28) !important;
+  color: var(--ui-accent-strong) !important;
+  transform: translateY(-1px);
+}
+
+.text-btn {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: var(--ui-accent) !important;
+  box-shadow: none !important;
+}
+
+.text-btn:hover {
+  background: transparent !important;
+  color: var(--ui-accent-strong) !important;
+}
+
+.dashboard-card,
+.card-panel,
+.stat-card,
+.invitation-card,
+.product-card,
+.market-card,
+.expert-dash-card,
+.expert-panel,
+.summary-pill,
+.admin-card,
+.admin-panel,
+.admin-stat-card,
+.admin-hero-panel,
+.admin-table-panel,
+.manufacturer-page-panel,
+.manufacturer-stat-card,
+.manufacturer-product-card,
+.manufacturer-profile-card,
+.manufacturer-empty-state,
+.project-section-panel,
+.project-details-panel,
+.billing-plan-card,
+.billing-payment-card,
+.billing-usage-card,
+.settings-form-card,
+.artisan-assigned-project-card,
+.artisan-execution-hero,
+.artisan-workspace-panel,
+.artisan-workspace-project-card,
+.artisan-task-card,
+.artisan-hero-metric,
+.report-profile-cta,
+.register-card,
+.notification-dropdown,
+.header-user-menu,
+html.dark .dashboard-main-content .dashboard-card,
+html.dark .dashboard-main-content .stat-card,
+html.dark .dashboard-main-content .card-panel,
+html.dark .dashboard-main-content .invitation-card,
+html.dark .dashboard-main-content .product-card,
+html.dark .dashboard-main-content .market-card,
+html.dark .dashboard-main-content .expert-panel,
+html.dark .project-details-panel,
+html.dark .project-section-panel,
+:where(html:not(.dark)) .dashboard-main-content .dashboard-card,
+:where(html:not(.dark)) .dashboard-main-content .stat-card,
+:where(html:not(.dark)) .dashboard-main-content .card-panel,
+:where(html:not(.dark)) .dashboard-main-content .invitation-card,
+:where(html:not(.dark)) .dashboard-main-content .product-card,
+:where(html:not(.dark)) .dashboard-main-content .market-card,
+:where(html:not(.dark)) .dashboard-main-content .expert-panel,
+:where(html:not(.dark)) .project-details-panel,
+:where(html:not(.dark)) .project-section-panel {
+  border: 1px solid var(--ui-border) !important;
+  border-radius: 1rem !important;
+  background: var(--ui-card) !important;
+  color: var(--ui-text);
+  box-shadow: var(--ui-shadow) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.dashboard-card:hover,
+.card-panel:hover,
+.stat-card:hover,
+.invitation-card:hover,
+.product-card:hover,
+.market-card:hover,
+.expert-panel:hover,
+.admin-card:hover,
+.admin-panel:hover,
+.admin-stat-card:hover,
+.manufacturer-stat-card:hover,
+.manufacturer-product-card:hover {
+  box-shadow: var(--ui-shadow-lg) !important;
+  filter: none !important;
+}
+
+.dashboard-card,
+.card-panel,
+.expert-panel,
+.admin-card,
+.admin-panel,
+.admin-hero-panel,
+.manufacturer-page-panel,
+.billing-plan-card,
+.billing-payment-card,
+.billing-usage-card,
+.settings-form-card,
+.project-section-panel,
+.project-details-panel {
+  padding: clamp(1rem, 2.2vw, 1.5rem) !important;
+}
+
+.dashboard-shell {
+  display: grid !important;
+  grid-template-columns: 280px minmax(0, 1fr);
+  min-height: 100vh;
+  overflow: visible !important;
+}
+
+.dashboard-sidebar {
+  position: sticky !important;
+  top: 0;
+  width: auto !important;
+  height: 100vh !important;
+  padding: 1.25rem 1rem !important;
+  overflow-y: auto;
+  border-right: 1px solid var(--ui-border) !important;
+  background: var(--ui-surface) !important;
+  color: var(--ui-text) !important;
+  box-shadow: none !important;
+}
+
+.sidebar-brand-row,
+.admin-sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.sidebar-brand-copy strong,
+.admin-brand strong {
+  color: var(--ui-text) !important;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.sidebar-brand-copy p,
+.admin-brand p {
+  color: var(--ui-muted) !important;
+  font-size: 0.75rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.sidebar-brand-mark,
+.brand-mark,
+.admin-brand-logo {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 0.875rem !important;
+  filter: none !important;
+  box-shadow: none !important;
+}
+
+.sidebar-nav,
+.admin-sidebar-nav {
+  gap: 0.35rem !important;
+}
+
+.sidebar-item,
+.admin-sidebar-link {
+  width: 100%;
+  border: 1px solid transparent !important;
+  border-radius: 0.875rem !important;
+  background: transparent !important;
+  color: var(--ui-muted) !important;
+  box-shadow: none !important;
+}
+
+.sidebar-item-inner,
+.admin-sidebar-link {
+  padding: 0.75rem 0.875rem !important;
+}
+
+.sidebar-item:hover,
+.admin-sidebar-link:hover {
+  background: var(--ui-surface-soft) !important;
+  color: var(--ui-text) !important;
+}
+
+.sidebar-item.active,
+.admin-sidebar-link.active {
+  background: var(--ui-accent-soft) !important;
+  border-color: rgba(249, 115, 22, 0.22) !important;
+  color: var(--ui-accent-strong) !important;
+  box-shadow: none !important;
+}
+
+html.dark .sidebar-item.active,
+html.dark .admin-sidebar-link.active {
+  color: #fdba74 !important;
+}
+
+.sidebar-item-copy > span,
+.admin-sidebar-link-copy strong {
+  color: inherit !important;
+  font-size: 0.92rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.sidebar-footer,
+.admin-sidebar-note {
+  border-color: var(--ui-border) !important;
+}
+
+.dashboard-main,
+.admin-main {
+  min-width: 0;
+  background: transparent !important;
+}
+
+.dashboard-header,
+.admin-topbar {
+  min-height: 72px;
+  padding: 1rem clamp(1rem, 3vw, 1.75rem) !important;
+  align-items: center !important;
+  gap: 1rem;
+  border-bottom: 1px solid var(--ui-border) !important;
+  background: color-mix(in srgb, var(--ui-bg) 92%, transparent) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.header-left,
+.admin-topbar-left {
+  min-width: 0;
+}
+
+:where(html:not(.dark)) .header-left::before {
+  display: none !important;
+}
+
+.dashboard-search,
+.dashboard-inline-search,
+.project-marketplace-search {
+  width: min(100%, 520px) !important;
+  min-width: 0 !important;
+  min-height: 44px !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: 0.875rem !important;
+  background: var(--ui-surface) !important;
+  box-shadow: none !important;
+}
+
+.dashboard-search-input,
+.project-marketplace-search input {
+  color: var(--ui-text) !important;
+}
+
+.header-actions,
+.admin-topbar-right {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.6rem !important;
+  flex-wrap: wrap;
+}
+
+.header-icon-btn,
+.header-lang-switcher,
+.header-user-btn,
+.admin-mobile-menu-btn,
+.sidebar-close-btn,
+.admin-sidebar-close {
+  min-width: 44px;
+  height: 44px;
+  margin-top: 0;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: 0.875rem !important;
+  background: var(--ui-surface) !important;
+  color: var(--ui-text) !important;
+  box-shadow: none !important;
+}
+
+.header-icon-btn,
+.admin-mobile-menu-btn,
+.sidebar-close-btn,
+.admin-sidebar-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+}
+
+.header-icon-btn:hover,
+.header-lang-switcher:hover,
+.header-user-btn:hover,
+.admin-mobile-menu-btn:hover,
+.sidebar-close-btn:hover,
+.admin-sidebar-close:hover {
+  background: var(--ui-accent-soft) !important;
+  border-color: rgba(249, 115, 22, 0.25) !important;
+  color: var(--ui-accent-strong) !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+.header-lang-switcher {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0 0.65rem !important;
+}
+
+.header-lang-select {
+  width: auto !important;
+  min-width: 3rem !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: inherit !important;
+  box-shadow: none !important;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.header-lang-select option,
+select option {
+  background: var(--ui-card);
+  color: var(--ui-text);
+}
+
+.header-user-btn {
+  max-width: min(260px, 44vw);
+  padding: 0.35rem 0.6rem 0.35rem 0.35rem !important;
+}
+
+.header-user-meta {
+  min-width: 0;
+}
+
+.header-user-meta strong,
+.header-user-meta small {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header-avatar,
+.admin-user-avatar {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 999px !important;
+  border: 0 !important;
+  background: linear-gradient(135deg, #f97316 0%, #f59e0b 100%) !important;
+  color: #ffffff !important;
+}
+
+input,
+textarea,
+select,
+.dashboard-main-content input,
+.dashboard-main-content textarea,
+.dashboard-main-content select,
+html.dark .dashboard-main-content input,
+html.dark .dashboard-main-content textarea,
+html.dark .dashboard-main-content select,
+:where(html:not(.dark)) .dashboard-main-content input,
+:where(html:not(.dark)) .dashboard-main-content textarea,
+:where(html:not(.dark)) .dashboard-main-content select {
+  border: 1px solid var(--ui-border) !important;
+  border-radius: 0.875rem !important;
+  background: var(--ui-surface) !important;
+  color: var(--ui-text) !important;
+  box-shadow: none !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--ui-muted) !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+.dashboard-main-content input:focus,
+.dashboard-main-content textarea:focus,
+.dashboard-main-content select:focus {
+  border-color: rgba(249, 115, 22, 0.45) !important;
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1) !important;
+}
+
+.stat-grid,
+:where(html:not(.dark)) .stat-grid,
+html.dark .stat-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+  gap: 1rem !important;
+}
+
+.stat-card,
+:where(html:not(.dark)) .stat-card,
+html.dark .stat-card {
+  min-height: 128px !important;
+  padding: 1rem !important;
+}
+
+.stat-value,
+:where(html:not(.dark)) .stat-value,
+html.dark .stat-value {
+  font-size: clamp(1.6rem, 4vw, 2.25rem) !important;
+  color: var(--ui-text) !important;
+}
+
+.stat-label,
+.eyebrow,
+.admin-eyebrow,
+.billing-card-label {
+  color: var(--ui-accent) !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase;
+}
+
+.stat-detail,
+.subtitle,
+.admin-card-label,
+.admin-meta-grid span,
+.dashboard-main-content .subtitle,
+html.dark .dashboard-main-content .subtitle,
+:where(html:not(.dark)) .dashboard-main-content .subtitle {
+  color: var(--ui-muted) !important;
+}
+
+.role-item.selected,
+.view-toggle-btn.active,
+.artisan-workspace-project-card.selected,
+.project-detail-tab[aria-current='page'] {
+  border-color: rgba(249, 115, 22, 0.32) !important;
+  background: var(--ui-accent-soft) !important;
+  color: var(--ui-accent-strong) !important;
+  box-shadow: none !important;
+}
+
+html.dark .role-item.selected,
+html.dark .view-toggle-btn.active,
+html.dark .artisan-workspace-project-card.selected {
+  color: #fdba74 !important;
+}
+
+.stat-bar,
+.artisan-project-progress-fill,
+:where(html:not(.dark)) .stat-bar,
+:where(html:not(.dark)) .artisan-project-progress-fill,
+html.dark .stat-bar,
+html.dark .artisan-project-progress-fill {
+  background: linear-gradient(90deg, #f97316 0%, #f59e0b 100%) !important;
+}
+
+.cards-grid,
+.invitation-list.grid,
+.projects-grid,
+.market-grid,
+.manufacturer-products-grid,
+.admin-card-grid,
+.admin-info-grid,
+.admin-overview-grid,
+.artisan-workspace-project-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)) !important;
+}
+
+.dashboard-overview-head,
+.dash-top,
+.project-marketplace-toolbar,
+.panel-header,
+.admin-card-top,
+.admin-card-actions,
+.manufacturer-section-head,
+.manufacturer-page-header {
+  gap: 0.875rem !important;
+}
+
+.table-wrap,
+.admin-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  border-radius: 1rem;
+}
+
+.artisan-table,
+.admin-log-table,
+.dashboard-main-content table {
+  min-width: 640px;
+}
+
+.artisan-table th,
+.artisan-table td,
+.admin-log-table th,
+.admin-log-table td {
+  padding: 0.85rem 1rem !important;
+}
+
+.project-section-panel .h-56,
+.project-section-panel .h-60 {
+  min-width: 0;
+}
+
+.admin-shell {
+  display: grid !important;
+  grid-template-columns: 280px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.admin-sidebar {
+  position: sticky !important;
+  top: 0;
+  height: 100vh !important;
+  padding: 1.25rem 1rem !important;
+  overflow-y: auto;
+  border-right: 1px solid var(--ui-border) !important;
+  background: var(--ui-surface) !important;
+  color: var(--ui-text) !important;
+  box-shadow: none !important;
+}
+
+.admin-sidebar-note {
+  background: var(--ui-surface-soft) !important;
+  color: var(--ui-muted) !important;
+}
+
+.admin-mobile-menu-btn,
+.admin-sidebar-close,
+.sidebar-close-btn,
+.sidebar-backdrop,
+.admin-sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-shell,
+  .admin-shell {
+    display: block !important;
+  }
+
+  .dashboard-sidebar,
+  .admin-sidebar {
+    position: fixed !important;
+    inset: 0 auto 0 0;
+    z-index: 90;
+    width: min(300px, 86vw) !important;
+    height: 100dvh !important;
+    transform: translateX(-105%) !important;
+    transition: transform 220ms ease !important;
+  }
+
+  .dashboard-shell.sidebar-open .dashboard-sidebar,
+  .admin-shell.sidebar-open .admin-sidebar,
+  .admin-sidebar.open {
+    transform: translateX(0) !important;
+  }
+
+  .sidebar-backdrop,
+  .admin-sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: rgba(15, 23, 42, 0.48) !important;
+    opacity: 0;
+    pointer-events: none;
+    box-shadow: none !important;
+    transition: opacity 220ms ease;
+  }
+
+  .dashboard-shell.sidebar-open .sidebar-backdrop,
+  .admin-shell.sidebar-open .admin-sidebar-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .sidebar-burger-btn,
+  .admin-mobile-menu-btn,
+  .sidebar-close-btn,
+  .admin-sidebar-close {
+    display: inline-flex !important;
+  }
+
+  .admin-mobile-menu-btn {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 70;
+  }
+
+  .admin-topbar {
+    padding-left: 4.5rem !important;
+  }
+
+  .dashboard-header,
+  .admin-topbar {
+    flex-wrap: wrap;
+    align-items: stretch !important;
+  }
+
+  .header-left,
+  .dashboard-search,
+  .admin-topbar-left {
+    width: 100% !important;
+  }
+
+  .header-actions,
+  .admin-topbar-right {
+    width: 100%;
+    justify-content: flex-start !important;
+  }
+
+  .dashboard-main-content,
+  .admin-content {
+    padding: 1rem !important;
+  }
+
+  .billing-overview-grid,
+  .settings-forms-grid,
+  .usage-meter-grid,
+  .artisan-workspace-grid,
+  .expert-panels.two,
+  .expert-dash-hero,
+  .manufacturer-profile-grid,
+  .product-preview-body,
+  .offer-card-head,
+  .application-card {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-main-content,
+  .admin-content {
+    gap: 1rem !important;
+  }
+
+  .header-user-meta,
+  .admin-user-chip div:last-child {
+    display: none !important;
+  }
+
+  .header-user-btn {
+    width: auto !important;
+    max-width: none;
+  }
+
+  .role-grid,
+  .artisan-hero-metrics,
+  .artisan-project-card-meta-grid,
+  .usage-meter-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dash-actions,
+  .inline-actions,
+  .hero-actions,
+  .admin-card-actions,
+  .market-card-actions,
+  .artisan-project-card-actions,
+  .billing-plan-actions {
+    width: 100%;
+  }
+
+  .dash-actions > *,
+  .inline-actions > *,
+  .hero-actions > *,
+  .admin-card-actions > *,
+  .market-card-actions > *,
+  .artisan-project-card-actions > *,
+  .billing-plan-actions > * {
+    flex: 1 1 100%;
+  }
+
+  button,
+  .secondary-btn,
+  .mini-btn {
+    max-width: 100%;
+  }
+
+  .artisan-table,
+  .admin-log-table,
+  .dashboard-main-content table {
+    min-width: 560px;
+  }
+}

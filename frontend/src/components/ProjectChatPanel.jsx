@@ -319,12 +319,12 @@ function ProjectChatPanel({ projectId, project, role, userId, assignedArtisans =
   }
 
   return (
-    <div className="project-section-panel rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-md shadow-slate-200/40 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/70 dark:shadow-slate-950/20">
+    <div className="project-section-panel rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-5">
       <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Chat</h3>
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white">Chat</h3>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
-            Exchange project updates directly between artisan and expert.
+            Project updates between artisan and expert.
           </p>
         </div>
 
@@ -359,7 +359,7 @@ function ProjectChatPanel({ projectId, project, role, userId, assignedArtisans =
         </div>
       ) : null}
 
-      <div className="flex h-[26rem] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/40">
+      <div className="flex h-[min(70vh,32rem)] min-h-[24rem] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-950/40 max-sm:h-[calc(100dvh-13rem)]">
         <div className="flex-1 space-y-4 overflow-y-auto p-4">
           {loadingMessages && !messages.length ? (
             <p className="text-sm text-slate-500 dark:text-slate-300">{t('common.loading')}</p>
@@ -423,7 +423,7 @@ function ProjectChatPanel({ projectId, project, role, userId, assignedArtisans =
 
         <form
           onSubmit={handleSendMessage}
-          className="border-t border-slate-200 bg-white/90 p-4 dark:border-slate-800 dark:bg-slate-900/80"
+          className="sticky bottom-0 border-t border-slate-200 bg-white/95 p-3 dark:border-slate-700 dark:bg-slate-800/95 sm:p-4"
         >
           <div className="grid gap-3">
             <textarea
@@ -484,11 +484,11 @@ function ProjectChatPanel({ projectId, project, role, userId, assignedArtisans =
               </div>
             ) : null}
 
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Messages stay scoped to this project.
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                 {isRecording ? (
                   <button
                     type="button"

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import api from '../api'
 import Sidebar from '../components/Sidebar'
 import Topbar from '../components/Topbar'
-import { HomeIcon, InvoiceIcon, MarketplaceIcon, ShieldIcon, UserIcon } from '../components/Icons'
+import { HomeIcon, InvoiceIcon, MarketplaceIcon, MenuIcon, ShieldIcon, UserIcon } from '../components/Icons'
 import RoleStatsCharts from '../components/charts/RoleStatsCharts'
 import AdminLogs from './AdminLogs'
 import ProductsPage from './ProductsPage'
@@ -45,6 +45,7 @@ const NAV_ITEMS = [
 
 function AdminDashboard({ user, onLogout }) {
   const [activeView, setActiveView] = useState('dashboard')
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [overview, setOverview] = useState({
     loading: true,
     error: '',
@@ -102,6 +103,7 @@ function AdminDashboard({ user, onLogout }) {
 
   const handleNavigate = (nextView) => {
     setActiveView(nextView)
+    setIsSidebarOpen(false)
   }
 
   const renderActivePage = () => {
@@ -197,8 +199,31 @@ function AdminDashboard({ user, onLogout }) {
   }
 
   return (
-    <div className="admin-shell">
-      <Sidebar items={NAV_ITEMS} activeView={activeView} onNavigate={handleNavigate} />
+    <div className={`admin-shell ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+      <button
+        type="button"
+        className="admin-mobile-menu-btn"
+        onClick={() => setIsSidebarOpen(true)}
+        aria-label="Open admin menu"
+        aria-expanded={isSidebarOpen}
+      >
+        <MenuIcon className="icon" />
+      </button>
+
+      <button
+        type="button"
+        className="admin-sidebar-backdrop"
+        onClick={() => setIsSidebarOpen(false)}
+        aria-label="Close admin menu"
+      />
+
+      <Sidebar
+        items={NAV_ITEMS}
+        activeView={activeView}
+        onNavigate={handleNavigate}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
       <div className="admin-main">
         <Topbar user={user} onLogout={onLogout} />
