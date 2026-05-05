@@ -1,12 +1,14 @@
 const express = require('express');
 const loadRequestUser = require('../middleware/loadRequestUser');
-const { generateDocumentation } = require('../controllers/aiController');
+const checkAdminRole = require('../middleware/checkAdminRole');
+const { generateDocumentation, getUserInsights } = require('../controllers/aiController');
 const { extractErrorMessage, getProjectInsights } = require('../services/projectInsightsService');
 const { devLog } = require('../utils/devLog');
 
 const router = express.Router();
 
 router.post('/generate-doc', loadRequestUser, generateDocumentation);
+router.post('/user-insights', loadRequestUser, checkAdminRole, getUserInsights);
 
 router.get('/project-insights/:projectId', loadRequestUser, async (req, res) => {
   try {

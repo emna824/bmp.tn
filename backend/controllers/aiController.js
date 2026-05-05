@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { buildAdminInsights } = require('../services/userInsightsService');
 
 const DEFAULT_HF_MODELS = [
     'Qwen/Qwen2.5-7B-Instruct',
@@ -181,6 +182,23 @@ async function generateDocumentation(req, res) {
     }
 }
 
+async function getUserInsights(req, res) {
+    try {
+        const result = await buildAdminInsights({
+            userId: req.body?.userId,
+            metrics: req.body?.metrics,
+            limit: req.body?.limit,
+        });
+
+        return res.status(200).json(result);
+    } catch (error) {
+        return res.status(error.status || 500).json({
+            message: error.message || 'Failed to generate user insights',
+        });
+    }
+}
+
 module.exports = {
     generateDocumentation,
+    getUserInsights,
 };

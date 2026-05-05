@@ -2,11 +2,12 @@ import { Suspense, lazy, useEffect, useState } from 'react'
 import api from '../api'
 import Sidebar from '../components/Sidebar'
 import Topbar from '../components/Topbar'
-import { HomeIcon, InvoiceIcon, MarketplaceIcon, MenuIcon, ShieldIcon, UserIcon } from '../components/Icons'
+import { BotIcon, HomeIcon, InvoiceIcon, MarketplaceIcon, MenuIcon, ShieldIcon, UserIcon } from '../components/Icons'
 import { normalizeProduct, normalizeReport, normalizeUser, withAdminHeaders } from '../utils/adminDashboard'
 
 const RoleStatsCharts = lazy(() => import('../components/charts/RoleStatsCharts'))
 const AdminLogs = lazy(() => import('./AdminLogs'))
+const AIUserInsights = lazy(() => import('./AIUserInsights'))
 const ProductsPage = lazy(() => import('./ProductsPage'))
 const ReportsPage = lazy(() => import('./ReportsPage'))
 const UsersPage = lazy(() => import('./UsersPage'))
@@ -41,6 +42,12 @@ const NAV_ITEMS = [
     label: 'Logs',
     description: 'Audit system activity',
     icon: InvoiceIcon,
+  },
+  {
+    key: 'ai-insights',
+    label: 'AI Insights',
+    description: 'Engagement and premium recommendations',
+    icon: BotIcon,
   },
 ]
 
@@ -136,6 +143,14 @@ function AdminDashboard({ user, onLogout }) {
       return (
         <Suspense fallback={null}>
           <AdminLogs user={user} />
+        </Suspense>
+      )
+    }
+
+    if (activeView === 'ai-insights') {
+      return (
+        <Suspense fallback={null}>
+          <AIUserInsights user={user} />
         </Suspense>
       )
     }
