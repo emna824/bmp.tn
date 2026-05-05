@@ -285,7 +285,7 @@ router.get('/:id/profile', async (req, res) => {
     try {
         const { id } = req.params;
         const user = await User.findById(id).select(
-            'name email role patent address companyPhone profileImage job trade isPremium subscriptionType'
+            'name email role patent address companyPhone profileImage job trade isPremium subscriptionType +faceDescriptor'
         );
 
         if (!user) {

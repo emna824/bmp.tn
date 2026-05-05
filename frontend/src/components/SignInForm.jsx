@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../api'
 import { BmpLogo, LockIcon, MailIcon, SettingsIcon } from './Icons'
+
+const FaceAuthModal = lazy(() => import('./FaceAuthModal'))
 
 const initialForm = {
   email: '',
@@ -24,6 +26,7 @@ function SignInForm({ onLoginSuccess }) {
   const [result, setResult] = useState({ type: '', text: '' })
   const [notification, setNotification] = useState({ show: false, type: '', text: '' })
   const [staySignedIn, setStaySignedIn] = useState(false)
+  const [showFaceLogin, setShowFaceLogin] = useState(false)
   const googleButtonRef = useRef(null)
   const googleInitializedRef = useRef(false)
 
@@ -220,6 +223,18 @@ function SignInForm({ onLoginSuccess }) {
     }
   }
 
+  const handleFaceLoginSuccess = ({ user: faceUser, token }) => {
+    const nextUser = token ? { ...faceUser, authToken: token } : faceUser
+    setResult({ type: 'success', text: t('auth.signIn.success') })
+    setNotification({ show: true, type: 'success', text: 'Face login successful' })
+
+    if (onLoginSuccess && nextUser) {
+      onLoginSuccess(nextUser, staySignedIn)
+    }
+
+    setShowFaceLogin(false)
+  }
+
   return (
     <>
       <div
@@ -359,6 +374,16 @@ function SignInForm({ onLoginSuccess }) {
             {loading ? <span className="btn-loader" aria-hidden="true" /> : null}
             {loading ? t('auth.signIn.submitting') : t('auth.signIn.submit')}
           </button>
+
+          <button
+            type="button"
+            className="secondary-btn face-login-trigger"
+            onClick={() => setShowFaceLogin(true)}
+            disabled={loading}
+          >
+            <SettingsIcon className="icon tiny" />
+            Login with Face
+          </button>
         </form>
 
         <div className="or-divider" role="separator" aria-label={t('auth.signIn.orContinueWith')} />
@@ -370,6 +395,17 @@ function SignInForm({ onLoginSuccess }) {
 
         {result.text ? <p className={`result ${result.type}`}>{result.text}</p> : null}
       </section>
+
+      {showFaceLogin ? (
+        <Suspense fallback={null}>
+          <FaceAuthModal
+            mode="login"
+            staySignedIn={staySignedIn}
+            onClose={() => setShowFaceLogin(false)}
+            onSuccess={handleFaceLoginSuccess}
+          />
+        </Suspense>
+      ) : null}
     </>
   )
 }

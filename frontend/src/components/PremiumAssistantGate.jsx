@@ -12,6 +12,7 @@ function PremiumAssistantGate({ onActivate }) {
       aria-label="Open BMP Assistant"
       aria-expanded={false}
       aria-controls="bmp-assistant-panel"
+      data-tour="artisan-assistant"
     >
       <span className="absolute inset-0 rounded-full bg-orange-300/25 blur-md" aria-hidden="true" />
       <ChatIcon className="relative h-7 w-7" />

@@ -11,6 +11,11 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (!id.includes('node_modules')) return
+          if (
+            id.includes('face-api.js') ||
+            id.includes('react-webcam') ||
+            id.includes('@tensorflow')
+          ) return 'face-auth'
           if (id.includes('react-big-calendar')) return 'calendar'
           if (id.includes('recharts')) return 'charts'
           if (id.includes('@tanstack/react-query')) return 'react-query'

@@ -1,8 +1,10 @@
 /backend/.env
 /backend/.env.example
+/backend/node_modules/
 
 /frontend/.env
 /frontend/.env.example
+/frontend/node_modules/
 
 /ml_task_classifier/artifacts/
 /ml_task_classifier/__pycache__/

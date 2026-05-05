@@ -27,6 +27,7 @@ function serializeUser(user, notificationCount = 0) {
         job: user.job || formatTradeLabel(trade),
         isPremium: isArtisan ? Boolean(user.isPremium) : false,
         subscriptionType: isArtisan ? user.subscriptionType || null : null,
+        hasFaceDescriptor: Array.isArray(user.faceDescriptor) && user.faceDescriptor.length === 128,
         notificationCount,
     };
 }

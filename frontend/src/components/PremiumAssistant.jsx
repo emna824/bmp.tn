@@ -540,6 +540,7 @@ function PremiumAssistant({
         aria-label={isOpen ? 'Close BMP Assistant' : 'Open BMP Assistant'}
         aria-expanded={isOpen}
         aria-controls="bmp-assistant-panel"
+        data-tour="artisan-assistant"
       >
         <span className="absolute inset-0 rounded-full bg-orange-300/25 blur-md" aria-hidden="true" />
         <ChatIcon className="relative h-7 w-7" />

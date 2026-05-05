@@ -11,6 +11,7 @@ function ArtisanLayout({
   onLogout,
   onCancelSubscription,
   cancellingSubscription = false,
+  onStartGuide,
   children,
 }) {
   const { t } = useTranslation()
@@ -66,6 +67,7 @@ function ArtisanLayout({
       onLogout={onLogout}
       onCancelSubscription={onCancelSubscription}
       cancellingSubscription={cancellingSubscription}
+      onStartGuide={onStartGuide}
       settingsTarget={ARTISAN_ROUTES.settings}
     >
       {children}

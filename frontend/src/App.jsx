@@ -29,6 +29,8 @@ function normalizeUser(user) {
     job,
     isPremium: Boolean(user.isPremium),
     subscriptionType: user.subscriptionType || null,
+    hasFaceDescriptor: Boolean(user.hasFaceDescriptor),
+    authToken: user.authToken || user.token || null,
   }
 }
 

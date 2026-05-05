@@ -1,20 +1,17 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useState } from 'react'
+
+const FaceEnrollmentCard = lazy(() => import('../../components/FaceEnrollmentCard'))
 
 function ProfilePage({ profile, saving, onSave }) {
   const [form, setForm] = useState({ name: '', companyName: '' })
-
-  useEffect(() => {
-    setForm({
-      name: profile?.name || '',
-      companyName: profile?.companyName || profile?.name || '',
-    })
-  }, [profile])
+  const nameValue = form.name || profile?.name || ''
+  const companyNameValue = form.companyName || profile?.companyName || profile?.name || ''
 
   const handleSubmit = (event) => {
     event.preventDefault()
     onSave({
-      name: form.name.trim(),
-      companyName: form.companyName.trim(),
+      name: nameValue.trim(),
+      companyName: companyNameValue.trim(),
     })
   }
 
@@ -49,11 +46,14 @@ function ProfilePage({ profile, saving, onSave }) {
         </div>
 
         <div className="manufacturer-page-panel">
+          <Suspense fallback={null}>
+            <FaceEnrollmentCard user={profile} />
+          </Suspense>
           <form className="manufacturer-profile-form" onSubmit={handleSubmit}>
             <label>
               Name
               <input
-                value={form.name}
+                value={nameValue}
                 onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
                 placeholder="Manufacturer name"
               />
@@ -62,7 +62,7 @@ function ProfilePage({ profile, saving, onSave }) {
             <label>
               Company name
               <input
-                value={form.companyName}
+                value={companyNameValue}
                 onChange={(event) =>
                   setForm((current) => ({ ...current, companyName: event.target.value }))
                 }

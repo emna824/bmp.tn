@@ -42,6 +42,22 @@ const userSchema = new mongoose.Schema(
             type: String,
             default: '',
         },
+        faceDescriptor: {
+            type: [Number],
+            default: undefined,
+            select: false,
+            validate: {
+                validator(value) {
+                    if (typeof value === 'undefined') return true;
+                    return (
+                        Array.isArray(value) &&
+                        value.length === 128 &&
+                        value.every((item) => Number.isFinite(Number(item)))
+                    );
+                },
+                message: 'faceDescriptor must be a 128-value numeric vector',
+            },
+        },
         trade: {
             type: String,
             trim: true,

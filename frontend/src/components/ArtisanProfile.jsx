@@ -9,6 +9,7 @@ import { getSafeImageSrc } from '../utils/safeImageSrc'
 import { formatProductPrice, normalizeProduct } from '../utils/adminDashboard'
 import { getStripeClient } from '../utils/stripe'
 import { ARTISAN_ROUTES, resolveArtisanRoute } from '../utils/roleRoutes'
+import { resetArtisanTutorialCompletion } from '../onboarding/tutorialSteps'
 
 const RoleStatsCharts = lazy(() => import('./charts/RoleStatsCharts'))
 const ArtisanDashboard = lazy(() => import('../pages/ArtisanDashboard'))
@@ -16,6 +17,8 @@ const CalendarPage = lazy(() => import('../pages/CalendarPage'))
 const ProjectDetails = lazy(() => import('../pages/ProjectDetails'))
 const CreateProjectForm = lazy(() => import('./CreateProjectForm'))
 const ReportModal = lazy(() => import('./ReportModal'))
+const FaceEnrollmentCard = lazy(() => import('./FaceEnrollmentCard'))
+const DashboardTour = lazy(() => import('./onboarding/DashboardTour'))
 
 const JOB_OPTIONS = ['Painter', 'Mason', 'Electrician', 'Plumber', 'Carpenter', 'Metalworker', 'Laborer']
 
@@ -144,6 +147,9 @@ function ArtisanProfile({
   const [previewProduct, setPreviewProduct] = useState(null)
   const [marketplaceQuantities, setMarketplaceQuantities] = useState({})
   const [reportTarget, setReportTarget] = useState(null)
+  const [tourMounted, setTourMounted] = useState(false)
+  const [tourRunning, setTourRunning] = useState(false)
+  const [tourSession, setTourSession] = useState(0)
   const isPremiumUser = Boolean(profile?.isPremium ?? user?.isPremium ?? isPremium)
   const activeView = useMemo(() => resolveArtisanRoute(currentPath), [currentPath])
   const profilePreviewSrc = useMemo(() => getSafeImageSrc(profileImage), [profileImage])
@@ -893,6 +899,19 @@ function ArtisanProfile({
     setReportTarget(null)
   }, [])
 
+  const handleStartTour = useCallback(() => {
+    resetArtisanTutorialCompletion()
+    setProjectsDisplayMode('dashboard')
+    onNavigate?.(ARTISAN_ROUTES.dashboard)
+    setTourMounted(true)
+    setTourSession((current) => current + 1)
+    window.setTimeout(() => setTourRunning(true), 80)
+  }, [onNavigate])
+
+  const handleCloseTour = useCallback(() => {
+    setTourRunning(false)
+  }, [])
+
   return (
     <div className="artisan-profile">
       <div
@@ -910,10 +929,11 @@ function ArtisanProfile({
         onLogout={onLogout}
         onCancelSubscription={onCancelSubscription}
         cancellingSubscription={cancellingSubscription}
+        onStartGuide={handleStartTour}
       >
         {activeView === ARTISAN_ROUTES.dashboard && (
           <div className="artisan-dashboard">
-            <div className="dashboard-overview-head">
+            <div className="dashboard-overview-head" data-tour="artisan-overview">
               <div className="section-header">
                 <p className="eyebrow">Dashboard</p>
                 <h3>Overview</h3>
@@ -924,6 +944,7 @@ function ArtisanProfile({
                   type="button"
                   onClick={handleOpenSoloProjectCreator}
                   title={!isPremiumUser ? t('premium.featureTooltip') : undefined}
+                  data-tour="artisan-premium"
                 >
                   {!isPremiumUser ? <LockIcon className="icon tiny" /> : null}
                   New Project
@@ -975,7 +996,7 @@ function ArtisanProfile({
             </Suspense>
 
             <div className="cards-grid">
-              <section className="card-panel">
+              <section className="card-panel" data-tour="artisan-quotes-panel">
                 <div className="panel-header">
                   <h3>Open offers</h3>
                   <button type="button" className="text-btn" onClick={() => onNavigate?.(ARTISAN_ROUTES.offers)}>
@@ -1006,7 +1027,7 @@ function ArtisanProfile({
                 </div>
               </section>
 
-              <section className="card-panel">
+              <section className="card-panel" data-tour="artisan-projects-panel">
                 <div className="panel-header">
                   <h3>{t('artisan.assignedProjects')}</h3>
                   <button
@@ -1016,6 +1037,7 @@ function ArtisanProfile({
                       setProjectsDisplayMode('calendar')
                       onNavigate?.(ARTISAN_ROUTES.projects)
                     }}
+                    data-tour="artisan-calendar"
                   >
                     {t('artisan.openCalendar')}
                   </button>
@@ -1043,7 +1065,7 @@ function ArtisanProfile({
                 </div>
               </section>
 
-              <section className="card-panel">
+              <section className="card-panel" data-tour="artisan-marketplace-panel">
                 <div className="panel-header">
                   <h3>Marketplace spotlight</h3>
                   <button type="button" className="text-btn" onClick={() => onNavigate?.(ARTISAN_ROUTES.marketplace)}>
@@ -1071,7 +1093,7 @@ function ArtisanProfile({
         )}
 
         {activeView === ARTISAN_ROUTES.offers && (
-          <section className="dashboard-card">
+          <section className="dashboard-card" data-tour="artisan-quotes">
             <div className="section-header">
               <h3>Open offers</h3>
               <p className="subtitle">Apply to expert job offers with your proposed daily salary.</p>
@@ -1139,7 +1161,7 @@ function ArtisanProfile({
         )}
 
         {activeView === ARTISAN_ROUTES.projects && (
-          <section className="space-y-4">
+          <section className="space-y-4" data-tour="artisan-projects">
             <div className="dashboard-card artisan-projects-toolbar">
               <div className="section-header">
                 <div>
@@ -1208,6 +1230,7 @@ function ArtisanProfile({
                     setProjectsDisplayMode('calendar')
                   }}
                   title={!isPremiumUser ? t('premium.featureTooltip') : undefined}
+                  data-tour="artisan-calendar"
                 >
                   {!isPremiumUser ? <LockIcon className="icon tiny" /> : null}
                   {t('artisan.workspaceCalendar')}
@@ -1301,7 +1324,7 @@ function ArtisanProfile({
         )}
 
         {activeView === ARTISAN_ROUTES.marketplace && (
-          <section className="dashboard-card marketplace-card">
+          <section className="dashboard-card marketplace-card" data-tour="artisan-marketplace">
             <div className="market-top">
               <input
                 type="search"
@@ -1358,7 +1381,7 @@ function ArtisanProfile({
         )}
 
         {activeView === ARTISAN_ROUTES.invoices && (
-          <section className="space-y-4">
+          <section className="space-y-4" data-tour="artisan-invoices">
             <div className="dashboard-card artisan-projects-toolbar">
               <div className="section-header">
                 <div>
@@ -1450,7 +1473,7 @@ function ArtisanProfile({
             {loadingProfile ? <p className="subtitle">Refreshing profile...</p> : null}
 
             <div className="billing-overview-grid">
-              <article className="billing-plan-card">
+              <article className="billing-plan-card" data-tour="artisan-premium">
                 <div className="billing-card-label">Current Plan</div>
                 <h4>{isPremiumUser ? 'Premium Artisan' : 'Standard Artisan'}</h4>
                 <p className="subtitle">
@@ -1623,6 +1646,16 @@ function ArtisanProfile({
                     <p className="subtitle">Keep your artisan account protected.</p>
                   </div>
                 </div>
+                <Suspense fallback={null}>
+                  <FaceEnrollmentCard
+                    user={{ ...profile, id: userId }}
+                    onRegistered={() => {
+                      setProfile((current) => ({ ...(current || {}), hasFaceDescriptor: true }))
+                      onProfileUpdate?.({ ...(profile || {}), hasFaceDescriptor: true })
+                      showNotification('success', 'Face login enabled successfully')
+                    }}
+                  />
+                </Suspense>
                 <form onSubmit={handleChangePassword} noValidate>
                   <label>
                     <span className="label-with-icon">
@@ -1768,6 +1801,16 @@ function ArtisanProfile({
             targetLabel={reportTarget?.targetLabel || ''}
             onClose={closeReportModal}
             onSuccess={(message) => showNotification('success', message)}
+          />
+        </Suspense>
+      ) : null}
+
+      {tourMounted ? (
+        <Suspense fallback={null}>
+          <DashboardTour
+            key={tourSession}
+            run={tourRunning}
+            onClose={handleCloseTour}
           />
         </Suspense>
       ) : null}

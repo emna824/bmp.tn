@@ -4,6 +4,7 @@ import LanguageSwitcher from './LanguageSwitcher'
 import ThemeToggle from './ThemeToggle'
 import NotificationBell from './NotificationBell'
 import SubscriptionStatusBadge from './SubscriptionStatusBadge'
+import GuideButton from './onboarding/GuideButton'
 import { BrandMark, CloseIcon, LogoutIcon, MenuIcon, SearchIcon, SettingsIcon } from './Icons'
 import { getSafeImageSrc } from '../utils/safeImageSrc'
 
@@ -25,6 +26,18 @@ function getUserPlanLabel(user, t) {
   return t('dashboardUi.roleFallback', { defaultValue: 'Workspace' })
 }
 
+function getSidebarTourTarget(key) {
+  const targets = {
+    '/artisan/dashboard': 'artisan-overview-nav',
+    '/artisan/offers': 'artisan-quotes-nav',
+    '/artisan/projects': 'artisan-projects-nav',
+    '/artisan/marketplace': 'artisan-marketplace-nav',
+    '/artisan/invoices': 'artisan-invoices-nav',
+  }
+
+  return targets[key]
+}
+
 function DashboardLayout({
   user,
   menuItems,
@@ -34,6 +47,7 @@ function DashboardLayout({
   onCancelSubscription,
   cancellingSubscription = false,
   settingsTarget = '',
+  onStartGuide,
   children,
 }) {
   const { t } = useTranslation()
@@ -140,6 +154,7 @@ function DashboardLayout({
                 className={`sidebar-item ${isActive ? 'active' : ''}`}
                 onClick={() => handleNavigate(item.key)}
                 aria-current={isActive ? 'page' : undefined}
+                data-tour={getSidebarTourTarget(item.key)}
               >
                 <span className="sidebar-item-inner">
                   <span className="sidebar-item-icon">{Icon ? <Icon className="icon" /> : null}</span>
@@ -192,6 +207,9 @@ function DashboardLayout({
 
           <div className="header-actions">
             <ThemeToggle />
+            {user?.role === 'artisan' && onStartGuide ? (
+              <GuideButton onClick={onStartGuide} />
+            ) : null}
             <LanguageSwitcher />
             <NotificationBell user={user} />
 
@@ -221,7 +239,9 @@ function DashboardLayout({
                 <div className="header-user-meta">
                   <strong>{user?.name || t('common.guest')}</strong>
                   <small>{userPlanLabel}</small>
-                  <SubscriptionStatusBadge role={user?.role} isPremium={Boolean(user?.isPremium)} className="header-plan-badge" />
+                  <span data-tour={user?.role === 'artisan' ? 'artisan-premium' : undefined}>
+                    <SubscriptionStatusBadge role={user?.role} isPremium={Boolean(user?.isPremium)} className="header-plan-badge" />
+                  </span>
                 </div>
 
                 <span className="header-caret" aria-hidden="true">

@@ -9,6 +9,7 @@ const RoleStatsCharts = lazy(() => import('./charts/RoleStatsCharts'))
 const ProjectDetails = lazy(() => import('../pages/ProjectDetails'))
 const CreateProjectForm = lazy(() => import('./CreateProjectForm'))
 const ReportModal = lazy(() => import('./ReportModal'))
+const FaceEnrollmentCard = lazy(() => import('./FaceEnrollmentCard'))
 
 function normalizeProject(project) {
   return {
@@ -681,6 +682,12 @@ function ExpertProfile({
               <p><strong>Role:</strong> Expert</p>
               <p><strong>Expert ID:</strong> {userId || 'Missing'}</p>
             </div>
+            <Suspense fallback={null}>
+              <FaceEnrollmentCard
+                user={{ ...user, id: userId }}
+                onRegistered={() => showNotification('success', 'Face login enabled successfully')}
+              />
+            </Suspense>
             <div className="report-profile-cta">
               <div>
                 <strong>Report this profile</strong>

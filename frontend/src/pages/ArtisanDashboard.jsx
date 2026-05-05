@@ -34,8 +34,8 @@ function ArtisanDashboard({
   ]
 
   return (
-    <section className="artisan-execution-dashboard">
-      <div className="artisan-execution-hero">
+    <section className="artisan-execution-dashboard" data-tour="artisan-projects">
+      <div className="artisan-execution-hero" data-tour="artisan-overview">
         <div className="artisan-execution-layout">
           <div className="artisan-hero-copy">
             <p className="artisan-hero-eyebrow">{t('artisan.execution')}</p>
@@ -57,6 +57,7 @@ function ArtisanDashboard({
               onClick={onOpenCalendar}
               title={!isPremium ? t('premium.featureTooltip') : undefined}
               className="artisan-hero-btn artisan-hero-btn-primary"
+              data-tour="artisan-calendar"
             >
               {!isPremium ? <LockIcon className="icon tiny" /> : null}
               {t('artisan.openCalendar')}
