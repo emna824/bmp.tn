@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { BmpLogo, HomeIcon, MarketplaceIcon, ShieldIcon } from '../Icons'
 import { useTranslation } from 'react-i18next'
 
@@ -47,20 +48,17 @@ function LandingHero({ onSignUp, onLogin }) {
             <span className="landing-status-pill">{t('landing.hero.livePlatform')}</span>
           </div>
 
-          <img
-            className="landing-hero-image"
-            src="https://images.pexels.com/photos/834892/pexels-photo-834892.jpeg?auto=compress&cs=tinysrgb&w=1000&dpr=1"
-            alt={t('landing.hero.imageAlt')}
-            loading="eager"
-            fetchPriority="high"
-            decoding="async"
+          <div
+            className="landing-hero-image landing-hero-dashboard-frame"
+            role="img"
+            aria-label={t('landing.hero.imageAlt')}
           />
 
           <div className="landing-metric-grid">
-            {heroMetrics.map(({ label, value, Icon }) => (
+            {heroMetrics.map(({ label, value, Icon: IconComponent }) => (
               <article key={label} className="landing-metric-card">
                 <div className="landing-metric-icon">
-                  <Icon className="icon" />
+                  <IconComponent className="icon" />
                 </div>
                 <strong>{value}</strong>
                 <span>{label}</span>
@@ -73,4 +71,4 @@ function LandingHero({ onSignUp, onLogin }) {
   )
 }
 
-export default LandingHero
+export default memo(LandingHero)

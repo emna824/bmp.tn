@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import api, { withUserHeaders } from '../../api'
 import { buildPdfDataUrlFromText, downloadDataUrlFile, readFileAsDataUrl } from '../../utils/fileHelpers'
+import { getSafeImageSrc } from '../../utils/safeImageSrc'
 
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024
 
@@ -210,6 +211,8 @@ function ProductForm({ initialValues, mode = 'create', submitting, onSubmit, onC
     })
   }
 
+  const previewImageSrc = getSafeImageSrc(form.image)
+
   return (
     <form className="manufacturer-product-form" onSubmit={handleSubmit}>
       <label>
@@ -310,12 +313,13 @@ function ProductForm({ initialValues, mode = 'create', submitting, onSubmit, onC
         <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handleImagePick} />
       </label>
       <p className="subtitle small">
-        {selectedImageName || (form.image ? 'Image ready' : 'Select a PNG, JPG, or WEBP image.')}
+        {selectedImageName ||
+          (previewImageSrc ? 'Image ready' : form.image ? 'Preview unavailable for this image URL.' : 'Select a PNG, JPG, or WEBP image.')}
       </p>
 
-      {form.image ? (
+      {previewImageSrc ? (
         <div className="manufacturer-product-preview-image">
-          <img src={form.image} alt={form.name || 'Product preview'} />
+          <img src={previewImageSrc} alt={form.name || 'Product preview'} loading="lazy" decoding="async" />
         </div>
       ) : null}
 

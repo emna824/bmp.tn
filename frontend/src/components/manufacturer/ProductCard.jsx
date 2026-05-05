@@ -1,11 +1,14 @@
 import { formatProductPrice } from '../../utils/adminDashboard'
+import { getSafeImageSrc } from '../../utils/safeImageSrc'
 
 function ProductCard({ product, onEdit, onDelete, deleting }) {
+  const productImageSrc = getSafeImageSrc(product.image)
+
   return (
     <article className="manufacturer-product-card">
       <div className="manufacturer-product-media">
-        {product.image ? (
-          <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
+        {productImageSrc ? (
+          <img src={productImageSrc} alt={product.name} loading="lazy" decoding="async" />
         ) : (
           <span>{product.name?.charAt(0)?.toUpperCase() || 'P'}</span>
         )}

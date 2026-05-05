@@ -8,8 +8,12 @@ const api = axios.create({
 })
 
 /** Short-lived GET cache to collapse duplicate reads (same URL/params/user) during navigation. */
-const CACHE_TTL_MS = 2000
+const CACHE_TTL_MS = 8000
 const responseCache = new Map()
+
+function requestMethod(config) {
+  return String(config?.method || 'get').toLowerCase()
+}
 
 function buildCacheKey(config) {
   const url = config.url || ''
@@ -21,11 +25,11 @@ function buildCacheKey(config) {
         : JSON.stringify(config.params)
   const headers = config.headers || {}
   const userId = headers['x-user-id'] || headers['X-User-Id'] || ''
-  return `${String(config.method || 'get').toLowerCase()}:${url}:${params}:${userId}`
+  return `${requestMethod(config)}:${url}:${params}:${userId}`
 }
 
 api.interceptors.request.use((config) => {
-  const method = String(config.method || 'get').toLowerCase()
+  const method = requestMethod(config)
   if (method !== 'get' || config.skipApiCache) return config
 
   const key = buildCacheKey(config)
@@ -46,7 +50,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => {
     const cfg = response.config
-    const method = String(cfg.method || 'get').toLowerCase()
+    const method = requestMethod(cfg)
     if (method !== 'get' || cfg.skipApiCache || response.request?.cached) return response
 
     const key = buildCacheKey(cfg)

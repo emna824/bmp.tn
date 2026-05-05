@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 function LandingHowItWorks() {
@@ -41,4 +42,4 @@ function LandingHowItWorks() {
   )
 }
 
-export default LandingHowItWorks
+export default memo(LandingHowItWorks)

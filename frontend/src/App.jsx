@@ -1,6 +1,7 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api, { withUserHeaders } from './api'
+import { devError, devWarn } from './utils/devLog'
 import { getCurrentPath, getHomePathForRole, isRolePathAllowed, navigateToPath } from './utils/roleRoutes'
 import PremiumAssistantGate from './components/PremiumAssistantGate'
 import './App.css'
@@ -66,6 +67,24 @@ function App() {
   const [cancellingPremium, setCancellingPremium] = useState(false)
   const [premiumNotice, setPremiumNotice] = useState({ type: '', text: '' })
   const [assistantBundleLoaded, setAssistantBundleLoaded] = useState(false)
+  const assistantUnloadTimerRef = useRef(null)
+
+  const cancelAssistantUnload = useCallback(() => {
+    if (assistantUnloadTimerRef.current) {
+      window.clearTimeout(assistantUnloadTimerRef.current)
+      assistantUnloadTimerRef.current = null
+    }
+  }, [])
+
+  const scheduleAssistantUnload = useCallback(() => {
+    cancelAssistantUnload()
+    assistantUnloadTimerRef.current = window.setTimeout(() => {
+      setAssistantBundleLoaded(false)
+      assistantUnloadTimerRef.current = null
+    }, 90_000)
+  }, [cancelAssistantUnload])
+
+  useEffect(() => () => cancelAssistantUnload(), [cancelAssistantUnload])
 
   const applyUserUpdate = useCallback((nextUser) => {
     const normalizedUser = normalizeUser(nextUser)
@@ -93,7 +112,7 @@ function App() {
         return applyUserUpdate(subscriptionResponse.data.user)
       }
     } catch (error) {
-      console.warn('[premium] subscription status refresh failed', error)
+      devWarn('[premium] subscription status refresh failed', error)
     }
 
     return refreshedUser
@@ -229,14 +248,9 @@ function App() {
 
     const confirmPremium = async () => {
       setProcessingPremium(true)
-      console.info('[premium] checkout return detected', {
-        subscriptionStatus,
-        hasSessionId: Boolean(sessionId),
-      })
 
       try {
         if (subscriptionStatus === 'success' && sessionId) {
-          console.info('[premium] confirming checkout session', { sessionId })
           const response = await api.post(
             '/payments/confirm-premium',
             { sessionId },
@@ -266,7 +280,7 @@ function App() {
           })
         }
       } catch (error) {
-        console.error('[premium] checkout confirmation failed', error)
+        devError('[premium] checkout confirmation failed', error)
         if (!active) return
         setShowPremiumModal(true)
         setPremiumNotice({
@@ -308,8 +322,7 @@ function App() {
       try {
         await refreshCurrentUser(user.id)
       } catch (error) {
-        console.warn('[premium] profile refresh failed', error)
-        // Keep the stored session usable if the profile refresh is temporarily unavailable.
+        devWarn('[premium] profile refresh failed', error)
       }
     }
 
@@ -413,7 +426,12 @@ function App() {
       <Suspense fallback={null}>{content}</Suspense>
 
       {shouldShowAssistant && !assistantBundleLoaded ? (
-        <PremiumAssistantGate onActivate={() => setAssistantBundleLoaded(true)} />
+        <PremiumAssistantGate
+          onActivate={() => {
+            cancelAssistantUnload()
+            setAssistantBundleLoaded(true)
+          }}
+        />
       ) : null}
 
       {shouldShowAssistant && assistantBundleLoaded ? (
@@ -424,6 +442,8 @@ function App() {
             onNavigate={navigateToPath}
             onRequirePremium={handleOpenPremiumModal}
             defaultOpen
+            onCancelScheduledUnload={cancelAssistantUnload}
+            onScheduleUnload={scheduleAssistantUnload}
           />
         </Suspense>
       ) : null}

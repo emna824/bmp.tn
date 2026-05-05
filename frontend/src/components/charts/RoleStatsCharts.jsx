@@ -1,4 +1,5 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
   Bar,
   BarChart,
@@ -143,40 +144,6 @@ const PieMetricChart = memo(function PieMetricChart({ data }) {
   )
 })
 
-function useRoleStats(role, userId) {
-  const [state, setState] = useState({ loading: true, error: '', data: null })
-
-  const loadStats = useCallback(async () => {
-    if (!role || !userId) {
-      setState({ loading: false, error: '', data: null })
-      return
-    }
-
-    setState((current) => ({ ...current, loading: true, error: '' }))
-
-    try {
-      const response = await api.get(`/stats/${role}`, withUserHeaders(userId))
-      setState({ loading: false, error: '', data: response.data || {} })
-    } catch (error) {
-      setState({
-        loading: false,
-        error: error.response?.data?.message || 'Failed to load chart data',
-        data: null,
-      })
-    }
-  }, [role, userId])
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      loadStats()
-    }, 0)
-
-    return () => window.clearTimeout(timer)
-  }, [loadStats])
-
-  return { ...state, reload: loadStats }
-}
-
 function ErrorPanel({ message, onRetry }) {
   if (!message) return null
 
@@ -289,7 +256,32 @@ function AdminCharts({ data, loading }) {
 function RoleStatsCharts({ role, userId, title = 'Analytics' }) {
   const sectionRef = useRef(null)
   const [isVisible, setIsVisible] = useState(false)
-  const { data, loading, error, reload } = useRoleStats(role, userId)
+
+  const {
+    data = null,
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['role-stats', role, userId],
+    queryFn: async () => {
+      const response = await api.get(`/stats/${role}`, withUserHeaders(userId))
+      return response.data || {}
+    },
+    enabled: Boolean(isVisible && role && userId),
+    staleTime: 90_000,
+    gcTime: 20 * 60_000,
+  })
+
+  const loading = Boolean(isVisible && (isLoading || isFetching))
+  const errorMessage = error
+    ? error.response?.data?.message || error.message || 'Failed to load chart data'
+    : ''
+  const reload = () => {
+    void refetch()
+  }
+
   const Charts = useMemo(
     () =>
       ({
@@ -338,7 +330,7 @@ function RoleStatsCharts({ role, userId, title = 'Analytics' }) {
         </button>
       </div>
 
-      <ErrorPanel message={error} onRetry={reload} />
+      <ErrorPanel message={errorMessage} onRetry={reload} />
 
       {isVisible ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">

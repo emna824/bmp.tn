@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { HomeIcon, MarketplaceIcon, ShieldIcon, UserIcon } from '../Icons'
 import { useTranslation } from 'react-i18next'
 
@@ -35,10 +36,10 @@ function LandingFeatures() {
       </div>
 
       <div className="landing-feature-grid">
-        {features.map(({ title, description, Icon }) => (
+        {features.map(({ title, description, Icon: IconComponent }) => (
           <article key={title} className="landing-feature-card">
             <div className="landing-feature-icon">
-              <Icon className="icon" />
+              <IconComponent className="icon" />
             </div>
             <h3>{title}</h3>
             <p>{description}</p>
@@ -49,4 +50,4 @@ function LandingFeatures() {
   )
 }
 
-export default LandingFeatures
+export default memo(LandingFeatures)

@@ -7,6 +7,7 @@ const Notification = require('../models/notification');
 const loadRequestUser = require('../middleware/loadRequestUser');
 const { serializeUser } = require('../controllers/userController');
 const { logAction } = require('../utils/logAction');
+const { devLog } = require('../utils/devLog');
 
 const router = express.Router();
 
@@ -100,7 +101,7 @@ const PREMIUM_SUBSCRIPTION_CHECKOUT_ENABLED =
     String(process.env.PREMIUM_SUBSCRIPTION_CHECKOUT_ENABLED || 'true').trim().toLowerCase() !== 'false';
 
 function logPaymentDebug(message, meta = {}) {
-    console.log(`[payments] ${message}`, meta);
+    devLog(`[payments] ${message}`, meta);
 }
 
 function logPaymentError(message, error, meta = {}) {

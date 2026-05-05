@@ -5,6 +5,7 @@ import ThemeToggle from './ThemeToggle'
 import NotificationBell from './NotificationBell'
 import SubscriptionStatusBadge from './SubscriptionStatusBadge'
 import { BrandMark, CloseIcon, LogoutIcon, MenuIcon, SearchIcon, SettingsIcon } from './Icons'
+import { getSafeImageSrc } from '../utils/safeImageSrc'
 
 function getUserPlanLabel(user, t) {
   if (user?.role === 'artisan') {
@@ -48,6 +49,8 @@ function DashboardLayout({
   }, [t, user?.name])
 
   const userPlanLabel = useMemo(() => getUserPlanLabel(user, t), [t, user])
+
+  const headerAvatarSrc = useMemo(() => getSafeImageSrc(user?.profileImage), [user?.profileImage])
 
   useEffect(() => {
     if (!isUserMenuOpen) return undefined
@@ -203,9 +206,9 @@ function DashboardLayout({
                 aria-label={`${user?.name || t('common.guest')} account menu`}
               >
                 <div className="header-avatar">
-                  {user?.profileImage ? (
+                  {headerAvatarSrc ? (
                     <img
-                      src={user.profileImage}
+                      src={headerAvatarSrc}
                       alt={`${user?.name || t('common.guest')} profile`}
                       loading="lazy"
                       decoding="async"

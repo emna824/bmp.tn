@@ -1,13 +1,16 @@
 import { memo } from 'react'
 import { formatDashboardDate, getInitials } from '../utils/adminDashboard'
+import { getSafeImageSrc } from '../utils/safeImageSrc'
 
 const UserCard = memo(function UserCard({ user, isBusy, onBan, onUnban }) {
+  const avatarSrc = getSafeImageSrc(user.profileImage)
+
   return (
     <article className="admin-card user-card">
       <div className="admin-user-row">
         <div className="admin-user-avatar large">
-          {user.profileImage ? (
-            <img src={user.profileImage} alt={user.name} loading="lazy" decoding="async" />
+          {avatarSrc ? (
+            <img src={avatarSrc} alt={user.name} loading="lazy" decoding="async" />
           ) : (
             <span>{getInitials(user.name)}</span>
           )}

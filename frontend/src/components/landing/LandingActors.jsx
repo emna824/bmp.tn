@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { MarketplaceIcon, ShieldIcon, UserIcon } from '../Icons'
 import { useTranslation } from 'react-i18next'
 
@@ -30,10 +31,10 @@ function LandingActors() {
       </div>
 
       <div className="landing-actor-grid">
-        {actors.map(({ title, description, Icon }) => (
+        {actors.map(({ title, description, Icon: IconComponent }) => (
           <article key={title} className="landing-actor-card">
             <div className="landing-actor-icon">
-              <Icon className="icon" />
+              <IconComponent className="icon" />
             </div>
             <h3>{title}</h3>
             <p>{description}</p>
@@ -44,4 +45,4 @@ function LandingActors() {
   )
 }
 
-export default LandingActors
+export default memo(LandingActors)

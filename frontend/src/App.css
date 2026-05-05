@@ -11,7 +11,7 @@
   --gray-100: #f4f7fb;
   --gray-200: #e6edf5;
   --accent: linear-gradient(120deg, var(--blue-600), var(--green-600));
-  font-family: 'Manrope', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 *,
@@ -282,6 +282,30 @@ body {
   border: 1px solid #d8e4f3;
 }
 
+/* Lightweight above-the-fold visual: no network, fast LCP vs remote raster */
+.landing-hero-dashboard-frame {
+  object-fit: unset;
+  background-color: #e8f1fb;
+  background-image:
+    linear-gradient(135deg, rgba(31, 112, 209, 0.14) 0%, transparent 42%),
+    linear-gradient(315deg, rgba(21, 149, 96, 0.12) 0%, transparent 45%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(148, 163, 184, 0.12) 0,
+      rgba(148, 163, 184, 0.12) 1px,
+      transparent 1px,
+      transparent 56px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(148, 163, 184, 0.08) 0,
+      rgba(148, 163, 184, 0.08) 1px,
+      transparent 1px,
+      transparent 48px
+    );
+  contain: strict;
+}
+
 .landing-metric-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -484,6 +508,13 @@ body {
 
 .landing-auth-panel {
   gap: 16px;
+}
+
+.landing-auth-forms-placeholder {
+  min-height: 380px;
+  border-radius: 18px;
+  background: rgba(241, 245, 249, 0.75);
+  border: 1px dashed rgba(148, 163, 184, 0.55);
 }
 
 .landing-auth-panel .auth-toggle {
@@ -6249,7 +6280,7 @@ html.dark .profile-preview {
 
 :where(html:not(.dark)) .sidebar-item-copy > span {
   color: inherit;
-  font-family: "Manrope", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 0.84rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -8607,6 +8638,28 @@ html.dark .landing-metric-icon {
 html.dark .landing-hero-image {
   border-color: var(--landing-dark-border) !important;
   filter: saturate(0.92) brightness(0.82);
+}
+
+html.dark .landing-hero-dashboard-frame {
+  filter: none;
+  background-color: rgba(15, 23, 42, 0.55);
+  background-image:
+    linear-gradient(135deg, rgba(59, 130, 246, 0.22) 0%, transparent 45%),
+    linear-gradient(315deg, rgba(16, 185, 129, 0.18) 0%, transparent 48%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(148, 163, 184, 0.14) 0,
+      rgba(148, 163, 184, 0.14) 1px,
+      transparent 1px,
+      transparent 56px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(148, 163, 184, 0.1) 0,
+      rgba(148, 163, 184, 0.1) 1px,
+      transparent 1px,
+      transparent 48px
+    );
 }
 
 html.dark .landing-shell button:not(.secondary-btn):not(.text-btn):not(.landing-nav-burger):not(.header-icon-btn):not(.toggle-btn),

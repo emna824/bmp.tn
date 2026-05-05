@@ -2,7 +2,9 @@ const path = require('path');
 const dotenv = require('dotenv');
 // Load env variables from backend/.env explicitly (works even if server started from repo root)
 dotenv.config({ path: path.join(__dirname, '.env') });
-console.log(`[config] GOOGLE_CLIENT_ID loaded: ${Boolean(process.env.GOOGLE_CLIENT_ID)}`);
+if (process.env.NODE_ENV !== 'production') {
+    console.log(`[config] GOOGLE_CLIENT_ID loaded: ${Boolean(process.env.GOOGLE_CLIENT_ID)}`);
+}
 
 const express = require('express');
 const cors = require('cors');

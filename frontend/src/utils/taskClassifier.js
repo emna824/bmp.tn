@@ -365,7 +365,7 @@ async function remotePredict(text) {
       best_practices: Array.isArray(payload.best_practices) ? payload.best_practices : [],
       safety: Array.isArray(payload.safety) ? payload.safety : [],
     }
-  } catch (error) {
+  } catch {
     if (REMOTE_CLASSIFIER_URL) {
       remoteClassifierAvailable = false
     }

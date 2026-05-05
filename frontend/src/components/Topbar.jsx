@@ -3,9 +3,11 @@ import LanguageSwitcher from './LanguageSwitcher'
 import ThemeToggle from './ThemeToggle'
 import { LogoutIcon, ShieldIcon } from './Icons'
 import { getInitials } from '../utils/adminDashboard'
+import { getSafeImageSrc } from '../utils/safeImageSrc'
 
 function Topbar({ user, onLogout }) {
   const { t } = useTranslation()
+  const avatarSrc = getSafeImageSrc(user?.profileImage)
 
   return (
     <header className="admin-topbar">
@@ -21,8 +23,8 @@ function Topbar({ user, onLogout }) {
         <ThemeToggle />
         <div className="admin-user-chip">
           <div className="admin-user-avatar">
-            {user?.profileImage ? (
-              <img src={user.profileImage} alt={user?.name || t('admin.adminUser')} />
+            {avatarSrc ? (
+              <img src={avatarSrc} alt={user?.name || t('admin.adminUser')} loading="lazy" decoding="async" />
             ) : (
               <span>{getInitials(user?.name)}</span>
             )}

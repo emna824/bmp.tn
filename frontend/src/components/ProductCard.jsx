@@ -1,4 +1,5 @@
 import { formatDashboardDate, formatProductPrice } from '../utils/adminDashboard'
+import { getSafeImageSrc } from '../utils/safeImageSrc'
 
 function ProductCard({
   product,
@@ -16,12 +17,13 @@ function ProductCard({
 }) {
   if (variant === 'marketplace') {
     const isOutOfStock = Number(product.stock ?? 0) <= 0
+    const productImageSrc = getSafeImageSrc(product.image)
 
     return (
       <article className="market-card">
         <div className="market-card-image">
-          {product.image ? (
-            <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
+          {productImageSrc ? (
+            <img src={productImageSrc} alt={product.name} loading="lazy" decoding="async" />
           ) : (
             <div className="market-img-fallback">{product.name?.charAt(0) || 'P'}</div>
           )}
@@ -123,11 +125,13 @@ function ProductCard({
     )
   }
 
+  const adminProductImageSrc = getSafeImageSrc(product.image)
+
   return (
     <article className="admin-card product-card">
       <div className="admin-product-media">
-        {product.image ? (
-          <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
+        {adminProductImageSrc ? (
+          <img src={adminProductImageSrc} alt={product.name} loading="lazy" decoding="async" />
         ) : (
           <span>{product.name.charAt(0).toUpperCase()}</span>
         )}

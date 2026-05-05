@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BmpLogo } from '../Icons'
 
@@ -45,4 +46,4 @@ function LandingFooter() {
   )
 }
 
-export default LandingFooter
+export default memo(LandingFooter)

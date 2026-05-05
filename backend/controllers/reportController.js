@@ -412,10 +412,6 @@ async function resolveReport(req, res) {
                     reporterId: String(report.reporterId),
                 },
             });
-
-            console.info(
-                `[moderation] admin=${req.user._id} action=delete_product report=${report._id} target=${report.targetId}`
-            );
         } else {
             const validation = validateUserBanPayload(req.body);
             if (validation.error) {
@@ -445,10 +441,6 @@ async function resolveReport(req, res) {
                     reporterId: String(report.reporterId),
                 },
             });
-
-            console.info(
-                `[moderation] admin=${req.user._id} action=ban_user report=${report._id} target=${report.targetId} banType=${validation.value.banType}`
-            );
         }
 
         report.status = 'resolved';

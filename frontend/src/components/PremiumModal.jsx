@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import api, { withUserHeaders } from '../api'
 import { CheckCircleIcon, CloseIcon, LockIcon, ProjectIcon } from './Icons'
 import { getStripeClient } from '../utils/stripe'
+import { devError } from '../utils/devLog'
 
 const PLAN_CONFIG = {
   monthly: {
@@ -56,20 +57,14 @@ function PremiumModal({ isOpen, user, onClose }) {
     setError('')
 
     try {
-      console.info('[premium] creating checkout session', { userId, subscriptionType })
       const response = await api.post(
         '/payments/premium-session',
         { subscriptionType },
         withUserHeaders(userId),
       )
-      console.info('[premium] checkout session created', {
-        sessionId: response.data?.sessionId,
-        hasUrl: Boolean(response.data?.url),
-      })
 
       const stripe = await getStripeClient()
       if (stripe && response.data?.sessionId) {
-        console.info('[premium] redirecting with Stripe.js', { sessionId: response.data.sessionId })
         const result = await stripe.redirectToCheckout({ sessionId: response.data.sessionId })
         if (result?.error?.message) {
           throw new Error(result.error.message)
@@ -78,14 +73,13 @@ function PremiumModal({ isOpen, user, onClose }) {
       }
 
       if (response.data?.url) {
-        console.info('[premium] redirecting with checkout URL fallback')
         window.location.href = response.data.url
         return
       }
 
       throw new Error(t('premium.checkoutStartFailed'))
     } catch (requestError) {
-      console.error('[premium] checkout failed', requestError)
+      devError('[premium] checkout failed', requestError)
       setError(requestError.response?.data?.message || requestError.message || t('premium.checkoutStartFailed'))
       setLoadingPlan('')
     }

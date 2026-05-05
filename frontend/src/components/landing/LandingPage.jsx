@@ -1,6 +1,4 @@
 import { Suspense, lazy, useCallback } from 'react'
-import SignInForm from '../SignInForm'
-import SignUpForm from '../SignUpForm'
 import LanguageSwitcher from '../LanguageSwitcher'
 import ThemeToggle from '../ThemeToggle'
 import { BmpLogo, LockIcon, UserIcon } from '../Icons'
@@ -11,6 +9,8 @@ const LandingFeatures = lazy(() => import('./LandingFeatures'))
 const LandingActors = lazy(() => import('./LandingActors'))
 const LandingHowItWorks = lazy(() => import('./LandingHowItWorks'))
 const LandingFooter = lazy(() => import('./LandingFooter'))
+const SignInForm = lazy(() => import('../SignInForm'))
+const SignUpForm = lazy(() => import('../SignUpForm'))
 
 function scrollToSection(sectionId) {
   if (typeof document === 'undefined') return
@@ -135,11 +135,13 @@ function LandingPage({ mode, navOpen, onToggleNav, onSelectMode, onLoginSuccess 
                 </button>
               </div>
 
-              {mode === 'signin' ? (
-                <SignInForm onLoginSuccess={onLoginSuccess} />
-              ) : (
-                <SignUpForm onRegisterSuccess={() => onSelectMode('signin')} />
-              )}
+              <Suspense fallback={<div className="landing-auth-forms-placeholder" aria-hidden />}>
+                {mode === 'signin' ? (
+                  <SignInForm onLoginSuccess={onLoginSuccess} />
+                ) : (
+                  <SignUpForm onRegisterSuccess={() => onSelectMode('signin')} />
+                )}
+              </Suspense>
             </div>
           </section>
         </div>

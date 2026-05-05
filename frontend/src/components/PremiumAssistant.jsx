@@ -99,7 +99,15 @@ const MessageBubble = memo(function MessageBubble({ message, reduceMotion }) {
   )
 })
 
-function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremium, defaultOpen = false }) {
+function PremiumAssistant({
+  user,
+  currentPath = '/',
+  onNavigate,
+  onRequirePremium,
+  defaultOpen = false,
+  onScheduleUnload,
+  onCancelScheduledUnload,
+}) {
   const [isOpen, setIsOpen] = useState(defaultOpen)
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState(() => buildInitialMessages(user))
@@ -118,6 +126,23 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
 
   const quickActions = useMemo(() => QUICK_ACTIONS[user?.role || ''] || [], [user?.role])
   const speechSupported = Boolean(getSpeechRecognitionConstructor())
+
+  useEffect(() => {
+    if (!onScheduleUnload && !onCancelScheduledUnload) return undefined
+    if (isOpen) {
+      onCancelScheduledUnload?.()
+    } else {
+      onScheduleUnload?.()
+    }
+    return undefined
+  }, [isOpen, onCancelScheduledUnload, onScheduleUnload])
+
+  useEffect(() => {
+    if (isOpen) return undefined
+    recognitionRef.current?.abort()
+    setIsListening(false)
+    return undefined
+  }, [isOpen])
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return undefined
@@ -355,7 +380,7 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
     <>
       <section
         id="bmp-assistant-panel"
-        className={`fixed bottom-24 right-6 z-[110] flex h-[600px] w-[380px] origin-bottom-right flex-col overflow-hidden rounded-2xl border border-white/15 bg-slate-950/85 text-white shadow-2xl shadow-slate-950/35 backdrop-blur-sm transition-all duration-300 ease-out dark:border-slate-700/70 dark:bg-slate-950/90 max-sm:bottom-20 max-sm:left-3 max-sm:right-3 max-sm:h-[calc(100dvh-6rem)] max-sm:w-auto ${
+        className={`fixed bottom-24 right-6 z-[110] flex h-[600px] w-[380px] origin-bottom-right flex-col overflow-hidden rounded-2xl border border-white/15 bg-slate-950/92 text-white shadow-xl shadow-slate-950/25 backdrop-blur-[2px] transition-all duration-300 ease-out dark:border-slate-700/70 dark:bg-slate-950/94 max-sm:bottom-20 max-sm:left-3 max-sm:right-3 max-sm:h-[calc(100dvh-6rem)] max-sm:w-auto ${
           isOpen
             ? 'translate-y-0 scale-100 opacity-100'
             : 'pointer-events-none translate-y-5 scale-95 opacity-0'
@@ -516,7 +541,7 @@ function PremiumAssistant({ user, currentPath = '/', onNavigate, onRequirePremiu
         aria-expanded={isOpen}
         aria-controls="bmp-assistant-panel"
       >
-        <span className="absolute inset-0 rounded-full bg-orange-300/25 blur-xl" aria-hidden="true" />
+        <span className="absolute inset-0 rounded-full bg-orange-300/25 blur-md" aria-hidden="true" />
         <ChatIcon className="relative h-7 w-7" />
       </button>
     </>

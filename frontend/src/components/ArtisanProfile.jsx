@@ -5,6 +5,7 @@ import { LockIcon, SettingsIcon, UserIcon } from './Icons'
 import ArtisanLayout from '../layouts/ArtisanLayout'
 import ProductCard from './ProductCard'
 import { downloadFileReference } from '../utils/fileHelpers'
+import { getSafeImageSrc } from '../utils/safeImageSrc'
 import { formatProductPrice, normalizeProduct } from '../utils/adminDashboard'
 import { getStripeClient } from '../utils/stripe'
 import { ARTISAN_ROUTES, resolveArtisanRoute } from '../utils/roleRoutes'
@@ -145,6 +146,8 @@ function ArtisanProfile({
   const [reportTarget, setReportTarget] = useState(null)
   const isPremiumUser = Boolean(profile?.isPremium ?? user?.isPremium ?? isPremium)
   const activeView = useMemo(() => resolveArtisanRoute(currentPath), [currentPath])
+  const profilePreviewSrc = useMemo(() => getSafeImageSrc(profileImage), [profileImage])
+  const previewProductImageSrc = useMemo(() => getSafeImageSrc(previewProduct?.image), [previewProduct?.image])
 
   const getMarketplaceQuantity = useCallback(
     (productId, stock) => normalizeQuantity(marketplaceQuantities[productId], stock),
@@ -1578,7 +1581,9 @@ function ArtisanProfile({
                     <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handleImagePick} />
                   </label>
 
-                  {profileImage ? <img src={profileImage} alt="Profile preview" className="profile-preview" /> : null}
+                  {profilePreviewSrc ? (
+                    <img src={profilePreviewSrc} alt="Profile preview" className="profile-preview" />
+                  ) : null}
 
                   <div className="image-actions">
                     <button type="button" onClick={handleSaveImage} disabled={savingImage}>
@@ -1664,8 +1669,8 @@ function ArtisanProfile({
             </div>
             <div className="product-preview-body">
               <div className="product-preview-media">
-                {previewProduct.image ? (
-                  <img src={previewProduct.image} alt={previewProduct.name} />
+                {previewProductImageSrc ? (
+                  <img src={previewProductImageSrc} alt={previewProduct.name} loading="lazy" decoding="async" />
                 ) : (
                   <div className="market-img-fallback">{previewProduct.name?.charAt(0) || 'P'}</div>
                 )}

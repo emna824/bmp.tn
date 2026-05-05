@@ -13,7 +13,7 @@ function PremiumAssistantGate({ onActivate }) {
       aria-expanded={false}
       aria-controls="bmp-assistant-panel"
     >
-      <span className="absolute inset-0 rounded-full bg-orange-300/25 blur-xl" aria-hidden="true" />
+      <span className="absolute inset-0 rounded-full bg-orange-300/25 blur-md" aria-hidden="true" />
       <ChatIcon className="relative h-7 w-7" />
     </button>
   )

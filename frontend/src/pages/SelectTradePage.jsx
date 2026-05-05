@@ -237,7 +237,7 @@ function SelectTradePage({ user, onTradeSaved, onLogout }) {
     <div className="min-h-screen bg-slate-100 transition-colors duration-300 dark:bg-slate-950">
       <div className="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-4 py-10 sm:px-6">
         <div className="grid w-full gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-          <section className="rounded-[2rem] bg-slate-950 p-8 text-white shadow-2xl">
+          <section className="rounded-[2rem] bg-slate-950 p-8 text-white shadow-xl">
             <div className="flex items-center justify-between gap-4">
               <div className="inline-flex items-center gap-3">
                 <BmpLogo className="h-12 w-12" />
