@@ -1,3 +1,5 @@
+
+const client=require("prom-client")
 const path = require('path');
 const dotenv = require('dotenv');
 // Load env variables from backend/.env explicitly (works even if server started from repo root)
@@ -31,6 +33,44 @@ const adminRoutes = require('./routes/adminRoutes');
 const statsRoutes = require('./routes/statsRoutes');
 
 const app = express();
+const register = new client.Registry();
+
+client.collectDefaultMetrics({ register });
+
+app.get("/metrics", async (req, res) => {
+  res.set("Content-Type", register.contentType);
+  res.end(await register.metrics());
+});
+
+// Enhanced metrics endpoint with application-level details
+app.get("/api/metrics", async (req, res) => {
+  const uptime = process.uptime();
+  const memoryUsage = process.memoryUsage();
+  
+  res.json({
+    timestamp: new Date().toISOString(),
+    uptime: {
+      seconds: Math.floor(uptime),
+      formatted: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${Math.floor(uptime % 60)}s`
+    },
+    memory: {
+      heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024) + " MB",
+      heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024) + " MB",
+      external: Math.round(memoryUsage.external / 1024 / 1024) + " MB",
+      rss: Math.round(memoryUsage.rss / 1024 / 1024) + " MB"
+    },
+    database: {
+      status: mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+      readyState: mongoose.connection.readyState
+    },
+    process: {
+      pid: process.pid,
+      platform: process.platform,
+      nodeVersion: process.version
+    }
+  });
+});
+
 const PORT = process.env.PORT || 5000;
 
 // Allow multiple origins (dev previews, localhost, deployed frontends)
